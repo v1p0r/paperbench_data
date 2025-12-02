@@ -37,7 +37,7 @@ dataset/
 The following papers in the dataset **do not** include a `.tar.gz` archive and contain **only the PDF version**:
 | Data |  File Name | Paper Name |
 |----------------|-----------------|-----------------|
-| bridging-data-gaps    | `paper_XX.pdf`    | Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning |
+| bridging-data-gaps    | `icml2024.pdf`    | Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning |
 
 ## File Descriptions
 
