@@ -5,7 +5,7 @@
 This dataset contains **20 research papers**, each provided in two formats:
 
 - **PDF file** — the readable paper.
-- **tar.gz archive** — supplementary materials, source files, or data associated with the paper.
+- **tar.gz archive** — LaTex source code from arXiv.
 
 Some papers may **only include a PDF** if no supplementary material was available.
 
@@ -38,9 +38,7 @@ dataset/
 
 The following papers in the dataset **do not** include a `.tar.gz` archive and contain **only the PDF version**:
 
-- `paper_XX.pdf`
-- `paper_YY.pdf`
-- `paper_ZZ.pdf`
+- bridging-data-gaps : `paper_XX.pdf`
 
 *(Replace with the actual paper names.)*
 
