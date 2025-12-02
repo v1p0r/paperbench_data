@@ -13,6 +13,7 @@ Some papers may **only include a PDF** if no supplementary material was availabl
 
 ## File Structure
 
+'''text
 dataset/
 │
 ├── paper_01/
@@ -30,7 +31,7 @@ dataset/
 │ └── paper_20.tar.gz
 │
 └── README.md
-
+'''
 ---
 
 ## Papers With Only PDF Files
