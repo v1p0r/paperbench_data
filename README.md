@@ -7,9 +7,8 @@ This dataset contains **20 research papers**, each provided in two formats:
 - **PDF file** — the readable paper.
 - **tar.gz archive** — LaTex source code from arXiv.
 
+This collection is curated as part of the **Meta PaperBench** dataset initiative, which aims to provide standardized research paper corpora for evaluation, benchmarking, and reproducible experimentation.
 Some papers may **only include a PDF** if no supplementary material was available.
-
----
 
 ## File Structure
 
@@ -32,20 +31,13 @@ dataset/
 │
 └── README.md
 ```
----
 
 ## Papers With Only PDF Files
 
 The following papers in the dataset **do not** include a `.tar.gz` archive and contain **only the PDF version**:
 | Data |  File Name | Paper Name |
-|----------------------|-----------------|-----------------|
+|----------------|-----------------|-----------------|
 | bridging-data-gaps    | `paper_XX.pdf`    | Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning |
-| Row 2 Data A    | Row 2 Data B    | Row 2 Data C    |
-- bridging-data-gaps : `paper_XX.pdf`
-
-*(Replace with the actual paper names.)*
-
----
 
 ## File Descriptions
 
