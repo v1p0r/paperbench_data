@@ -1,8 +1,6 @@
-# paperbench_data
+# Dataset: PaperBench Research Papers Collection (20 Papers)
 
-# Dataset: Research Papers Collection (20 Papers)
-
-This dataset contains **20 research papers**, each provided in two formats:
+This dataset contains **23 research papers**, each provided in two formats:
 
 - **PDF file** — the readable paper.
 - **tar.gz archive** — LaTex source code from arXiv.
@@ -57,7 +55,7 @@ Each `.tar.gz` archive may contain one or more of:
 
 ## Total Dataset Contents
 
-- **20 PDF files**
-- **Up to 20 tar.gz files**
-- **Structured into 20 directories**
+- **23 PDF files**
+- **Up to 22 tar.gz files**
+- **Structured into 23 directories**
 
