@@ -45,10 +45,8 @@ Each `.pdf` file contains the complete research paper.
 ### tar.gz files
 Each `.tar.gz` archive may contain one or more of:
 
-- Source code
-- Experimental data
-- Figures and images
 - LaTeX or manuscript source files
+- Figures and images
 - Other supplementary materials
 
 ---
