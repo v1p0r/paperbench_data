@@ -13,7 +13,7 @@ Some papers may **only include a PDF** if no supplementary material was availabl
 
 ## File Structure
 
-```text
+```
 dataset/
 │
 ├── paper_01/
