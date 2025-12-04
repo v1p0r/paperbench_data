@@ -1,0 +1,4295 @@
+[
+    {
+        "type": "text",
+        "text": "BBOX-ADAPTER: Lightweight Adapting for Black-Box Large Language Models ",
+        "text_level": 1,
+        "bbox": [
+            93,
+            109,
+            885,
+            132
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Haotian Sun\\* 1 Yuchen Zhuang\\* 1 Wei Wei 2 Chao Zhang 1 Bo Dai 1 ",
+        "bbox": [
+            240,
+            176,
+            730,
+            193
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Abstract ",
+        "text_level": 1,
+        "bbox": [
+            243,
+            219,
+            318,
+            236
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Adapting state-of-the-art Large Language Models (LLMs) like GPT-4 and Gemini for specific tasks is challenging. Due to the opacity in their parameters, embeddings, and even output probabilities, existing fine-tuning adaptation methods are inapplicable. Consequently, adapting these black-box LLMs is only possible through their API services, raising concerns about transparency, privacy, and cost. To address these challenges, we introduce BBOX-ADAPTER, a novel lightweight adapter for black-box LLMs. BBOX-ADAPTER distinguishes target and source domain data by treating target data as positive and source data as negative. It employs a ranking-based Noise Contrastive Estimation (NCE) loss to promote the likelihood of target domain data while penalizing that of the source domain. Furthermore, it features an online adaptation mechanism, which incorporates realtime positive data sampling from ground-truth, human, or AI feedback, coupled with negative data from previous adaptations. Extensive experiments demonstrate BBOX-ADAPTER’s effectiveness and cost efficiency. It improves model performance by up to $6 . 7 7 \\%$ across diverse tasks and domains, while reducing training and inference costs by $3 1 . 3 0 \\mathrm { x }$ and $1 . 8 4 \\mathbf { x }$ , respectively. ",
+        "bbox": [
+            120,
+            244,
+            442,
+            635
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "1. Introduction ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            674,
+            215,
+            690
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Large Language Models (LLMs) have demonstrated exceptional abilities in comprehending and generating text across a wide range of tasks (Radford et al., 2018; 2019; Brown et al., 2020; OpenAI, 2023; Chowdhery et al., 2022). Despite their growing capabilities, general-purpose, pre-trained LLMs still require further customization to achieve optimal performance on specific use cases. However, adapting blackbox LLMs like GPT-3.5 (OpenAI, 2022) and Gemini (Team et al., 2023) presents significant challenges due to the lack of direct access to internal model parameters. ",
+        "bbox": [
+            88,
+            700,
+            473,
+            805
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "image",
+        "img_path": "images/dae95bf149ab740c98553c48e07381438c42628f40afddfa6a2991e493249861.jpg",
+        "image_caption": [
+            "Figure 1. Illustration of white-box, grey-box, and black-box LLM adaptation. White-box has complete access to both model parameters and output probabilities, grey-box has access only to output probabilities, and black-box lacks access to both. indicates the models with trainable parameters, whereas indicates the inaccessible fixed parameters. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            509,
+            219,
+            875,
+            463
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            500,
+            582,
+            885,
+            626
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Adapting black-box LLMs can be achieved by preparing and uploading training data through fine-tuning APIs, such as the OpenAI GPT-3.5-turbo fine-tuning API (Peng et al., 2023). However, employing fine-tuning APIs for LLM adaptation has several critical issues: (1) Transparency: Aside from a restricted set of adjustable hyperparameters (e.g., the number of tuning epochs), the fine-tuning process remains largely opaque. Crucial aspects, such as the extent of trainable layers and specific model weights, are often undisclosed, hindering optimal customization. (2) Privacy: Uploading training data via APIs introduces potential risks of privacy breaches, limiting the use of LLMs in sensitive domains. For instance, electronic health records containing confidential healthcare information require stringent privacy measures. (3) Cost: The cost associated with fine-tuning APIs is considerably higher compared to inference, making the adaptation expensive. The fine-tuning cost will significantly increase with hyperparameter tuning. ",
+        "bbox": [
+            501,
+            633,
+            885,
+            905
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "\\*Equal contribution 1Georgia Tech 2Accenture. Correspondence to: Haotian Sun <haotian.sun@gatech.edu>, Bo Dai <boda $@$ cc.gatech.edu>. ",
+        "bbox": [
+            88,
+            815,
+            473,
+            854
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "Proceedings of the $\\mathit { 4 1 } ^ { s t }$ International Conference on Machine Learning, Vienna, Austria. PMLR 235, 2024. Copyright 2024 by the author(s). ",
+        "bbox": [
+            88,
+            866,
+            472,
+            905
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            22,
+            252,
+            62,
+            709
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "1 ",
+        "bbox": [
+            482,
+            922,
+            490,
+            934
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "table",
+        "img_path": "images/fe438e6a89f7e8727a60fbb1a90cdf241c628fed7250dfd7b0e881ed0ec27657.jpg",
+        "table_caption": [
+            "Table 1. Comparison of existing LLM adaptation methods based on five aspects: (1) Model parameters accessibility, (2) Access to high-dimensional representations of input sequences or output generations, (3) Token probability availability, (4) Retrieval corpus necessity, and (5) Utilization of a smaller adapter model. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Methods</td><td>Parameters</td><td>w/o Modelw/o High-Dimensionalw/o Token Representation</td><td>Probabilities</td><td>w/o Retrieval w/ Smaller Corpus</td><td>Adapter</td></tr><tr><td colspan=\"6\">White-Box LLMFine-Tuning</td></tr><tr><td>Fine-Tuning (Devlin et al., 2019)</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>Instruction-Tuning (Wei et al.,2021)</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>Continual Pre-Training (Gururangan et al., 2020)</td><td></td><td></td><td>X</td><td>：</td><td></td></tr><tr><td>Adapter (Houlsby et al., 2019)</td><td></td><td></td><td></td><td>√</td><td></td></tr><tr><td>Prefix-Tuning (Liu et al.,2022)</td><td></td><td></td><td>×</td><td></td><td></td></tr><tr><td>LoRA (Hu et al., 2021)</td><td></td><td>X</td><td>X</td><td></td><td></td></tr><tr><td colspan=\"6\">Grey-Box LLM Adaptation</td></tr><tr><td>LMaaS (Sun et al., 2022)</td><td></td><td></td><td>X</td><td></td><td></td></tr><tr><td> kNN-Adapter (Huang et al., 2023)</td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>CombLM(Ormazabal et al., 2023)</td><td></td><td></td><td>×</td><td>×</td><td></td></tr><tr><td>IPA (Lu et al., 2023)</td><td>三</td><td></td><td></td><td></td><td></td></tr><tr><td>Proxy-Tuning (Liu et al.,2024)</td><td></td><td></td><td>X</td><td></td><td>三</td></tr><tr><td colspan=\"6\">Black-Box LLM Adaptation</td></tr><tr><td> BBOX-ADAPTER (Ours)</td><td></td><td></td><td></td><td></td><td></td></tr></table>",
+        "bbox": [
+            125,
+            135,
+            846,
+            395
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "The adaptation of black-box LLMs without the use of APIs remains an unresolved challenge. Recent studies have explored adapting LLMs without accessing model weights, by integrating outputs with tunable white-box models (Sun et al., 2022; Ormazabal et al., 2023; Lu et al., 2023; Liu et al., 2024) or external data sources (Huang et al., 2023). However, such approaches (depicted as grey-box adaptation in Figure 1) still require access to the token probabilities of the output sequences, only available in models preceding GPT-3 (Brown et al., 2020) or white-box LLMs like LLaMA-2 (Touvron et al., 2023). Output probabilities, unfortunately, are inaccessible in recent black-box LLMs 1 like GPT-3.5 (OpenAI, 2022) and PaLM-2 (Anil et al., 2023), making these techniques inapplicable for state-of-the-art black-box LLMs. ",
+        "bbox": [
+            89,
+            412,
+            473,
+            637
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "We propose BBOX-ADAPTER, a lightweight adapter that adapts black-box LLMs for specific tasks by fine-tuning a smaller language model (LM) with just 0.1B-0.3B parameters. We formulate the black-box LLM adaptation process as a sampling problem from an energy-based model (EBM). To effectively distinguish between source and target domain data, we design a ranking-based noise contrastive estimation (NCE) loss for adapter updates. We combine outputs from the black-box LLM and the adapter for adaptive inference. BBOX-ADAPTER employs an online adaptation framework, iteratively sampling from previous inferences and updating the adapter. Notably, the adapter facilitates self-improvement through AI feedback during training, reducing the reliance on ground-truth training data as positive samples in the online adaptation process. ",
+        "bbox": [
+            89,
+            647,
+            473,
+            857
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            501,
+            412,
+            767,
+            426
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Extensive experiments across three diverse datasets demonstrate the effectiveness of BBOX-ADAPTER in adapting black-box LLMs to downstream tasks, achieving performance gains of up to $6 . 7 7 \\%$ , while significantly reducing training and inference costs of fine-tuning methods. Moreover, BBOX-ADAPTER accomplishes black-box LLM adaptation without requiring access to model parameters or output probabilities, enabling transparent, privacy-conscious, and cost-effective customization of cutting-edge LLMs. We summarize the main contributions as follows: ",
+        "bbox": [
+            501,
+            435,
+            885,
+            585
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "• We first categorize the adaptation methods systematically based on the accessible information for the algorithms. ",
+        "bbox": [
+            500,
+            593,
+            883,
+            623
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "• We introduce BBOX-ADAPTER, a novel energy-based adapter that fine-tunes a smaller LM to facilitate black-box LLM adaptation without fine-tuning APIs. To the best of our knowledge, BBOX-ADAPTER is the first black-box adapter to enable state-of-the-art LLM (e.g., GPT-3.5) adaptation without model weights or output probabilities. ",
+        "bbox": [
+            500,
+            631,
+            883,
+            720
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "• BBOX-ADAPTER is lightweight, using a small model with just 0.1B-0.3B parameters as the adapter. It surpasses supervised fine-tuning (SFT) by 31.30 times during training and 1.84 times during inference in terms of cost. ",
+        "bbox": [
+            500,
+            729,
+            883,
+            789
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "• BBOX-ADAPTER is also applicable without ground-truth data for the task. Its online adaptation framework can use negative samples from previous model inferences and positive samples from various sources, including AI feedback. This allows BBOX-ADAPTER to remain effective even when ground-truth data is limited or unavailable. ",
+        "bbox": [
+            500,
+            797,
+            885,
+            887
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "discarded",
+        "text": "1We explain the inaccessibility of output token probabilities in state-of-the-art black-box LLMs in Appendix C. ",
+        "bbox": [
+            88,
+            867,
+            473,
+            893
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "discarded",
+        "text": "2 ",
+        "bbox": [
+            482,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "• BBOX-ADAPTER offers a generalizable and flexible solution for LLM adaptation. It can be applied to a wide range of tasks, domains, and models of varying sizes. Once the adapter is tuned for a specific task or domain, it can be directly applied to other black-box LLMs in a plug-and-play manner, eliminating the need for further retraining. ",
+        "bbox": [
+            88,
+            85,
+            473,
+            175
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "2. Categorization of LLM Adaptation ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            194,
+            403,
+            212
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Based on the accessibility to internal model parameters and output probabilities, we categorize LLM adaptation methods into three main groups (Table 1): white-box fine-tuning (full access), grey-box adaptation (access to output probabilities only), and black-box adaptation (no access). ",
+        "bbox": [
+            89,
+            220,
+            472,
+            296
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "White-Box LLM Fine-Tuning. To fully leverage the capabilities of LLMs in language comprehension and enhance their performance, many users still need to customize them for specific tasks and domains (Chung et al., 2022). A straightforward approach to achieve this involves finetuning (Wei et al., 2021; Wang et al., 2022b) or continuous pre-training (Ke et al., 2022; Gupta et al., 2023) the LM on domain-specific data. However, these methods require extensive computational resources and memory, which becomes increasingly challenging as model sizes grow exponentially. To mitigate the computational and memory burdens for LLM fine-tuning, Parameter-Efficient Fine-Tuning (PEFT) methods (Hu et al., 2021; Houlsby et al., 2019; He et al., 2021; Li & Liang, 2021) have been proposed that focus on training only a small subset of parameters rather than the entire model. Examples of such techniques include adapters (Houlsby et al., 2019), prefix tuning (Liu et al., 2022; Li & Liang, 2021), and low-rank adaptation (Hu et al., 2021). Unfortunately, these techniques require direct access to the internal parameters of the original model and complete backward passes, making them incompatible with black-box models. ",
+        "bbox": [
+            89,
+            304,
+            473,
+            635
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Grey-Box LLM Adaptation. For grey-box LLM adaptation, existing approaches make different assumptions about the transparency of the LLM. One line of research assumes that only the gradient information is unavailable, while the high-dimensional input and output sequences are accessible. For example, LMaaS (Sun et al., 2022) trains a small, derivative-free optimizer for discrete prompt tuning to enhance the probabilities of ground-truth tokens from the target domain. Another line of research assumes that only output token probabilities from black-box LLMs are available. kNN-Adapter (Huang et al., 2023) augments a black-box LLM with k-nearest neighbor retrieval from an external, domain-specific datastore. It adaptively interpolates LM outputs with retrieval results from the target domain. CombLM (Ormazabal et al., 2023) employs fine-tuning on a smaller white-box model to align the output token probabilities of a black-box LLM with the target distribution. Similarly, proxy-tuning (Liu et al., 2024) fine-tunes a smaller LM as an ‘expert’ while its untuned version serves as an ‘anti-expert’. The method involves adjusting the black-box LLM outputs by adding the logit offsets from their tokenlevel predictions for adaptation. CaMeLS (Hu et al., 2023) meta-trains a compact, autoregressive model to dynamically adjust the language modeling loss for each token during online fine-tuning. However, these methods are inapplicable to the latest state-of-the-art black-box LLMs, such as GPT-4 (OpenAI, 2023) and PaLM2 (Anil et al., 2023), due to the inaccessibility of token probabilities. ",
+        "bbox": [
+            89,
+            643,
+            473,
+            900
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            501,
+            85,
+            885,
+            251
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Black-Box LLM Adaptation. Due to the black-box nature, users are unable to access (1) internal model parameters, (2) high-dimensional representations of input sequences or output generations, and (3) output token probabilities for their specific use cases in black-box adaptation. Notably, existing methods, except ours, fail to support black-box LLM adaptations, where neither model parameters nor output probabilities can be accessed in most recent LLMs like GPT-3.5 (OpenAI, 2022) and Gemini (Team et al., 2023). ",
+        "bbox": [
+            500,
+            258,
+            885,
+            393
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "3. Method ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            414,
+            586,
+            430
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "In this section, we present BBOX-ADAPTER, a lightweight method for adapting black-box LLMs to specific tasks (Figure 2). We first frame the black-box LLM adaptation process as a sampling problem from an EBM (Section 3.1). Following this EBM perspective, we derive a ranking-based NCE loss for adapter updates (Section 3.2), enabling the distinction between source and target domain data. We then describe the process of combining outputs from the black-box LLM and the adapter for adapted inference (Section 3.3). To model the real distributions of both source and target domains, we introduce BBOX-ADAPTER as an online adaptation framework that iteratively samples from the previously adapted inferences and updates the adapters accordingly (Section 3.4). ",
+        "bbox": [
+            501,
+            440,
+            885,
+            650
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "3.1. Black-Box LLM Adaptation as EBM ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            667,
+            785,
+            683
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "To effectively adapt a black-box LLM, our objective is to calibrate its output generation from the original source domain to align with a specific target domain. This process involves conceptualizing the source and target domains as distributions within a joint space, $\\mathcal { V } \\sim \\mathcal { V } ^ { S } \\times \\mathcal { V } ^ { T }$ , where $y ^ { S }$ and $\\mathcal { V } ^ { T }$ represent the text generations of the source and target domains, respectively. Specifically, given a target domain dataset $\\mathcal { D } = \\{ ( \\mathbf { x } _ { i } , \\mathbf { y } _ { i } ^ { t } ) \\} _ { i = 1 } ^ { N }$ , our goal is to steer the output of the black-box LLM $\\hat { \\mathbf { y } } _ { i }$ towards a transition from the source domain output $\\hat { \\mathbf { y } } _ { i } ^ { s } \\in \\mathcal { V } ^ { S }$ to the target domain’s ground-truth response $\\mathbf { y } _ { i } ^ { t } \\in \\mathcal { V } ^ { T }$ for each input sequence $\\mathbf { x } _ { i }$ This transition is crucial to ensuring that the model’s outputs become more tailored to the desired target domain. ",
+        "bbox": [
+            501,
+            691,
+            885,
+            887
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "discarded",
+        "text": "3 ",
+        "bbox": [
+            482,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "image",
+        "img_path": "images/93695ece2d7f2b81ac7a252044ddb9bf021ffe0c2cf1be27c2342d92c2718bc6.jpg",
+        "image_caption": [
+            "Figure 2. Overview of BBOX-ADAPTER for black-box LLM adaptation from the source to the target domain. BBOX-ADAPTER adopts an online adaptation framework, iteratively sampling from previous inferences and updating the adapter. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            96,
+            80,
+            882,
+            284
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "We frame black-box LLMs adaptation as a problem of sampling from a specialized energy-based sequence model $p _ { \\theta }$ . This model defines a globally normalized probability distribution that satisfies the desired constraints we aim to integrate during the adaptation process. Consequently, we can parameterize the distribution of the adaptation as follows: ",
+        "bbox": [
+            88,
+            349,
+            475,
+            440
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/a51e4ab63ec68f6b95fdc0b3385d34d4f778954c4d96b63de8da693654f5d4b8.jpg",
+        "text": "$$\np _ { \\theta } ( \\mathbf { y } \\vert \\mathbf { x } ) = p _ { \\mathrm { L L M } } ( \\mathbf { y } \\vert \\mathbf { x } ) \\frac { \\exp ( g _ { \\theta } ( \\mathbf { x } , \\mathbf { y } ) ) } { Z _ { \\theta } ( \\mathbf { x } ) } ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            155,
+            452,
+            405,
+            487
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "where $\\begin{array} { r } { Z _ { \\theta } ( \\mathbf { x } ) = \\int p _ { \\mathrm { L L M } } ( \\mathbf { y } | \\mathbf { x } ) \\exp ( g _ { \\theta } ( \\mathbf { x } , \\mathbf { y } ) ) d \\mathbf { y } } \\end{array}$ is the normalizing factor known as the partition function, $p _ { \\theta }$ denotes the adapted model, $p _ { \\mathrm { L L M } }$ remains fixed as the black-box model, and $g _ { \\theta }$ represents the adapter. The goal of training is to learn the adapter’s parameters such that the joint model distribution approaches the data distribution. For notation clarity, we will omit the conditioning variables in the subsequent discussion. Thus, the equation above can be rewritten as $\\begin{array} { r } { p _ { \\theta } ( \\mathbf { x } ) = p _ { \\mathrm { L L M } } ( \\mathbf { x } ) \\frac { \\exp \\left( g _ { \\theta } ( \\mathbf { x } ) \\right) } { Z ( \\theta ) } } \\end{array}$ . ",
+        "bbox": [
+            88,
+            498,
+            473,
+            641
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "3.2. Adapter Update ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            655,
+            232,
+            671
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "As $Z ( \\theta )$ is intractable, the maximum likelihood estimation (MLE) of $p _ { \\theta } ( \\mathbf { x } )$ requires either sampling from the model distributions or approximation operations, which are computationally intensive and often imprecise. To address this, we employ NCE (Gutmann & Hyvarinen¨ , 2010; Ma & Collins, 2018; Oord et al., 2018; Deng et al., 2020) as an efficient estimator for $g _ { \\boldsymbol { \\theta } } \\left( \\mathbf { x } \\right)$ . Our approach extends beyond the conventional NCE, which only categorizes samples as either ‘real’ or ‘noise’. Instead, we employ a ranking-based NCE loss that prioritizes ranking true data samples higher than noise (Ma & Collins, 2018). We denote the posterior $q ( k | \\{ \\mathbf { x } _ { k } \\} _ { k = 1 } ^ { K } )$ to be $q ( x _ { k }$ is positive $| \\{ x _ { k } \\} _ { k = 1 } ^ { K } )$ . Specifically, this denotes the probability that the $k$ -th sample is drawn from the ground-truth dataset. Here $[ x _ { k }$ is positive] is the indicator of $x _ { k }$ being the positive sample. Similarly, we apply the simplified notation on $p _ { \\theta } ( k | \\{ \\mathbf { x } _ { k } \\} _ { k = 1 } ^ { K } )$ . Assuming the auxiliary label differentiates between a positive sample from data and a negative one from the LLM, we consider the samples {xk}Kk=1 to estimate the posterior of the label distribution: ",
+        "bbox": [
+            88,
+            679,
+            473,
+            905
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            500,
+            349,
+            885,
+            425
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/086bb4d0447d513fd8281027c98d379dd22501730846695a6dd700e31a2afe1e.jpg",
+        "text": "$$\nq ( k | \\{ \\mathbf { x } _ { k } \\} _ { k = 1 } ^ { K } ) = \\frac { p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) \\prod _ { i \\neq k } p _ { \\mathrm { L L M } } ( \\mathbf { x } _ { i } ) } { \\sum _ { k } p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) \\prod _ { i \\neq k } p _ { \\mathrm { L L M } } ( \\mathbf { x } _ { i } ) } = \\frac { \\frac { p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) } { p _ { \\mathrm { L L M } } ( \\mathbf { x } _ { k } ) } } { \\sum _ { k } \\frac { p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) } { p _ { \\mathrm { L L M } } ( \\mathbf { x } _ { k } ) } } .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            498,
+            428,
+            892,
+            469
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "We can parameterize $p _ { \\theta } ( k | \\{ \\mathbf { x } _ { k } \\} _ { k = 1 } ^ { K } )$ as: ",
+        "bbox": [
+            501,
+            474,
+            763,
+            491
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/796cc72322c8cebbf02038ae1f9766d85d1029a3f02da1af732df77aeac9b657.jpg",
+        "text": "$$\np _ { \\theta } ( k | \\{ \\mathbf { x } _ { k } \\} _ { k = 1 } ^ { K } ) = \\frac { \\exp ( g _ { \\theta } ( \\mathbf { x } _ { k } ) ) } { \\sum _ { k } \\exp ( g _ { \\theta } ( \\mathbf { x } _ { k } ) ) } .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            568,
+            494,
+            813,
+            531
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "By minimizing the KL-divergence between $p _ { \\theta } ( k | \\{ \\mathbf { x } _ { k } \\} _ { k = 1 } ^ { K } )$ and $q ( k | \\{ \\mathbf { x } _ { k } \\} _ { k = 1 } ^ { K } )$ , we can frame the problem as: ",
+        "bbox": [
+            500,
+            536,
+            885,
+            566
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/780c0b65fa82b2822b3ac49333a4c87cb6f45e4d34f8818fe9c36e735b09d21b.jpg",
+        "text": "$$\n\\operatorname* { m i n } _ { \\theta } \\ell ( \\theta ) = \\operatorname* { m a x } _ { \\theta } \\mathbb { E } _ { p _ { \\mathrm { d a t a } } ( \\mathbf { x } ) } [ g _ { \\theta } ( \\mathbf { x } ) - \\log \\sum _ { k } \\exp ( g _ { \\theta } ( \\mathbf { x } _ { k } ) ) ] .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            504,
+            571,
+            877,
+            606
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "We then have the optimal $\\theta$ satisfies: ",
+        "bbox": [
+            501,
+            617,
+            740,
+            632
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/42f8d127e42a6d33fae69c114a5ed6a159d104f8bbcdc4fa8b024e5e215e6d2f.jpg",
+        "text": "$$\np _ { \\theta } ( k | \\{ \\mathbf { x } _ { k } \\} _ { k = 1 } ^ { K } ) = q ( k | \\{ \\mathbf { x } _ { k } \\} _ { k = 1 } ^ { K } ) ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            580,
+            637,
+            802,
+            656
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "which implies, ",
+        "bbox": [
+            500,
+            662,
+            598,
+            676
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/4904992dbb4be668b628b73fba91fa24de87afe1a20c72aae82fc70152c3828f.jpg",
+        "text": "$$\np _ { \\theta } ( \\mathbf { x } ) : = p _ { \\mathrm { L L M } } ( \\mathbf { x } ) \\mathrm { e x p } ( g _ { \\theta } ( \\mathbf { x } ) ) = p _ { \\mathrm { d a t a } } ( \\mathbf { x } ) .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            553,
+            683,
+            830,
+            700
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Arbitrary energy models based on outputs, such as $g _ { \\theta }$ , may experience sharp gradients, leading to instability during training. To address this, we incorporate spectral normalization (Du & Mordatch, 2019) to Eq.(2). Consequently, we can derive the gradient of the loss function as follows: ",
+        "bbox": [
+            500,
+            713,
+            887,
+            789
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/42478ef13d19a6797daf6bd78f5eef6a6079606eec8a2d98d2cb160c77dba55a.jpg",
+        "text": "$$\n\\nabla _ { \\theta } \\ell ( \\theta ) = \\nabla _ { \\theta } \\{ - \\mathbb { E } _ { p _ { \\mathrm { d a t a } } } [ g _ { \\theta } ( \\mathbf { x } ) ] + \\mathbb { E } _ { p _ { \\theta } } [ g _ { \\theta } ( \\mathbf { x } ) ] + \\alpha \\mathbb { E } [ g _ { \\theta } ( \\mathbf { x } ) ^ { 2 } ] \\} .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            498,
+            794,
+            892,
+            813
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Considering the complete format of Eq.(1), we can rewrite the gradient as: ",
+        "bbox": [
+            500,
+            819,
+            887,
+            848
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/a4ba3c550ad0e2d7c2ad1905b25e9b1198fdab92d1dbe13604764606a2b02d74.jpg",
+        "text": "$$\n\\begin{array} { r l } & { \\nabla _ { \\theta } \\ell ( \\theta ) = \\nabla _ { \\theta } \\{ - \\mathbb { E } _ { { \\mathbf { y } } _ { + } \\sim p _ { \\mathrm { d a t a } } } ( { \\mathbf { y } } \\vert { \\mathbf { x } } ) \\big [ g _ { \\theta } ( { \\mathbf { x } } , { \\mathbf { y } } _ { + } ) \\big ] + \\alpha \\mathbb { E } [ g _ { \\theta } ( { \\mathbf { x } } , { \\mathbf { y } } _ { + } ) ^ { 2 } ] } \\\\ & { \\quad \\quad \\quad + \\mathbb { E } _ { { \\mathbf { y } } _ { - } \\sim p _ { \\theta } ( { \\mathbf { y } } \\vert { \\mathbf { x } } ) } \\big [ g _ { \\theta } ( { \\mathbf { x } } , { \\mathbf { y } } _ { - } ) \\big ] + \\alpha \\mathbb { E } [ g _ { \\theta } ( { \\mathbf { x } } , { \\mathbf { y } } _ { - } ) ^ { 2 } ] \\} . } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            498,
+            853,
+            897,
+            895
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "discarded",
+        "text": "4 ",
+        "bbox": [
+            480,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "3.3. Adapted Inference ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            85,
+            248,
+            99
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "During model inference, we conceptualize the black-box LLM as a proposal generator, while the adapter serves as an evaluator. This framework allows us to decompose complicated tasks, such as multi-step reasoning and paragraph generation, into a more manageable sentence-level beam search process. The complete solution $\\mathbf { y }$ is sequentially generated at the sentence level over several time steps, represented as $\\mathbf { y } = [ \\mathbf { s } ^ { 1 } , \\mathbf { s } ^ { 2 } , \\cdot \\cdot \\cdot , \\mathbf { s } ^ { L } ] = \\mathbf { s } ^ { 1 : L }$ , where $\\mathbf { s } ^ { l }$ denotes the $l$ -th sentence in the generation sequence. We can then factorize the adapted inference process $p _ { \\boldsymbol { \\theta } } ( \\mathbf { y } | \\mathbf { x } )$ in an autoregressive manner: ",
+        "bbox": [
+            89,
+            108,
+            473,
+            273
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "img_path": "images/cdc037507176835ccd5c7aa326c3edb2dc5d6fb9b56897d2781061ee78883d7f.jpg",
+        "text": "$$\n\\begin{array} { l } { { \\displaystyle p _ { \\theta } ( \\mathbf { y } | \\mathbf { x } ) = p _ { \\theta } ( \\mathbf { s } ^ { 1 : L } | \\mathbf { x } ) = p _ { \\mathrm { L L M } } ( \\mathbf { s } ^ { 1 : L } | \\mathbf { x } ) \\exp ( g _ { \\theta } ( \\mathbf { s } ^ { 1 : L } , \\mathbf { x } ) ) } \\ ~ } \\\\ { { \\displaystyle ~ = \\exp ( g _ { \\theta } ( \\mathbf { s } ^ { 1 : L } , \\mathbf { x } ) ) \\prod _ { l } p _ { \\mathrm { L L M } } ( \\mathbf { s } ^ { l } | \\mathbf { x } , \\mathbf { s } ^ { 1 : l - 1 } ) } . } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            94,
+            286,
+            465,
+            344
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "To this end, various outputs generated by the black-box LLM are treated as distinct nodes. The adapter then assigns scores to these nodes, thereby facilitating a heuristic selection of the most promising solution path that navigates through these sentence nodes. For a beam size of $k$ , at each step $l$ , we generate $n$ samples of $\\mathbf { s } ^ { l }$ based on $P _ { \\mathrm { L L M } } ( \\mathbf { s } ^ { l } | \\mathbf { x } , \\mathbf { s } ^ { 1 : \\bar { l } - 1 } )$ for each beam. This results in nk candidate chain hypotheses of $\\mathbf { s } ^ { 1 : l }$ , forming the candidate set $\\mathcal { C }$ We then select the top- $k$ beams with the highest scores $g _ { \\boldsymbol { \\theta } } ( \\mathbf { s } ^ { 1 : l } , \\mathbf { x } )$ given by the adapter, effectively pruning the beam options. Once a pre-defined number of $L$ iterations is reached or all beams encounter a stop signal, we obtain $k$ reasoning steps. The adapted generation is then selected based on the highest-scoring option evaluated by the adapter. ",
+        "bbox": [
+            88,
+            357,
+            473,
+            568
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "3.4. Online Adaptation ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            585,
+            248,
+            601
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "According to the NCE loss function in Eq.(3), it is essential to draw positive samples from the real distribution of the target domain, denoted as $\\mathbf { y } _ { + } \\sim p _ { \\mathrm { d a t a } } ( \\mathbf { y } | \\mathbf { x } )$ , and negative samples from its own generations, $\\mathbf { y } _ { - } \\sim p _ { \\theta } ( \\mathbf { y } | \\mathbf { x } )$ , to update the adapter parameters $\\theta$ . However, an obvious disparity may arise between the real data distribution (i.e., the target domain) and its adapted generations (i.e., the source domain), resulting in overfitting to simplistic patterns and hindering the adapter from self-improvement. ",
+        "bbox": [
+            89,
+            608,
+            473,
+            744
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "We propose an online adaptation framework (Algorithm 1) with iterative sampling and training to address these challenges, drawing training samples from dynamic distributions. Initially, we establish and maintain separate sets for positive and negative samples. Then, for each iteration $t$ , the online adaption framework involves three steps: (1) Sampling from the adapted inference $p _ { \\theta _ { t } } ( \\mathbf { y } | \\mathbf { x } )$ ; (2) Updating the positive $\\mathbf { y } _ { + } ^ { ( t ) }$ and negative cases $\\mathbf { y } _ { - } ^ { ( t ) }$ based on feedback from human or AI; and (3) Updating the adapter parameters $\\theta _ { t + 1 }$ for the next iteration. ",
+        "bbox": [
+            89,
+            752,
+            473,
+            905
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Algorithm 1 Overview of BBOX-ADAPTER. ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            84,
+            795,
+            99
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "1: Input: $\\boldsymbol { \\mathcal { D } } ~ = ~ \\{ ( \\mathbf { x } _ { i } , \\mathbf { y } _ { i } ) \\} _ { i = 1 } ^ { N }$ : Supervised fine-tuning dataset; $p _ { \\mathrm { L L M } }$ : Unadapted black-box LLM; $p _ { \\theta }$ : Adapted LLM; $T$ : Number of iterations; $\\eta$ : Learning rate; Beam size: $M$ ; # Candidates generated per step: $K$ .   \n2: $p _ { \\theta } ^ { ( 0 ) }$ random initialization;   \n3: for $t = 0 , \\cdots , T - 1$ do   \n4: for $i = 1 , \\cdots , N$ do   \n5: Sample the candidates $\\{ \\hat { \\mathbf { y } } _ { i , m } \\} _ { m = 1 } ^ { M }$ from the adapted inference via Eq.(4);   \n6: Update the positive samples $\\mathbf { y } _ { i + } ^ { ( t ) }$ via Eq.(5);   \n7: Update the negative samples $\\mathbf { y } _ { i - } ^ { ( t ) }$ via Eq.(6);   \n8: end for   \n9: Compute $\\nabla _ { \\boldsymbol { \\theta } } \\ell ( \\boldsymbol { \\theta } _ { t } )$ with $\\mathbf { y } _ { i + } ^ { ( t ) }$ and $\\mathbf { y } _ { i - } ^ { ( t ) }$ via Eq.(3);   \n10: Update the adapter via Eq.(7);   \n11: end for Output: Fine-tuned $\\theta _ { T }$ after $T$ -round iteration. ",
+        "bbox": [
+            504,
+            103,
+            885,
+            356
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Initialization. Prior to the iterative process, we establish two initial sets of positive and negative samples for adapter training. Typically, positive samples are obtained from the ground-truth solutions, while negative samples are derived from the adapted inference $p _ { \\theta _ { 0 } }$ by a randomly initialized adapter $\\theta _ { 0 }$ . In scenarios lacking ground-truth solutions, we alternatively employ human preferences for sourcing positive samples, or we utilize advanced LLMs (e.g., GPT-4) to generate AI feedback that closely aligns with human judgment (Lee et al., 2023; Bai et al., 2022; Gilardi et al., 2023). Mathematically, given each input query $\\mathbf { x } _ { i }$ , we initially prompt a black-box LLM to generate $K$ responses $\\{ \\mathbf { y } _ { i , j } \\} _ { j = 1 } ^ { K } = \\{ \\mathbf { y } _ { i , 1 } , \\mathbf { y } _ { i , 2 } , \\cdot \\cdot \\cdot , \\mathbf { y } _ { i , K } \\}$ . We then select the best response from the candidates as the positive sample, based on the ground-truth or human/AI feedback: $\\mathbf { y } _ { i + } ^ { ( 0 ) } = \\mathbf { y } _ { i , k } = \\mathrm { S E L } ( \\{ \\mathbf { y } _ { i , j } \\} _ { j = 1 } ^ { K } )$ , where $k$ is the index of the best answer and $\\mathrm { S E L } ( \\cdot )$ indicates the selection according to feedback. The rest candidates can then serve as negative cases: yi− $\\mathbf { y } _ { i - } ^ { ( 0 ) } = \\{ \\mathbf { y } _ { i , j } \\vert j \\neq k \\} _ { j = 1 } ^ { K }$ . ",
+        "bbox": [
+            500,
+            383,
+            885,
+            676
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Sampling from Adapted Inference. To keep track of the dynamic distributions of $p _ { \\theta _ { t } }$ , at the beginning of each iteration $t$ , we sample a set of $M$ candidates from the adapted inferences based on the current parameters $\\theta _ { t }$ . For each input sequence $\\mathbf { x } _ { i }$ , we can sample the candidates: ",
+        "bbox": [
+            501,
+            683,
+            885,
+            757
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "img_path": "images/a176a4296af92c88eaab133f03082d54d309f26d4c3d2314a9b9a9a7c3bc927f.jpg",
+        "text": "$$\n\\{ \\hat { \\mathbf { y } } _ { i , m } \\} _ { m = 1 } ^ { M } \\sim p _ { \\theta _ { t } } ( \\mathbf { y } | \\mathbf { x } _ { i } ) .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            607,
+            765,
+            776,
+            785
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Updating Training Data with Feedback. The initial positive set, comprising ground-truth solutions or preferred answers from advanced AI, may not be perfect and could contain some low-quality cases. Moreover, the continuous learning of $\\theta$ requires continual sampling from its own adapted inference as negative cases. To accurately model the real data distribution $p _ { \\mathrm { d a t a } }$ , we iteratively refine both the positive and negative training data by incorporating the previously sampled candidates from the adapted inference. For each input sequence $\\mathbf { x } _ { i }$ , we update the positive set by selecting a better answer from the previous positive samples ${ \\bf y } _ { - } ^ { ( t - 1 ) }$ and the newly sampled candidates $\\{ \\hat { \\mathbf { y } } _ { i , m } \\} _ { m = 1 } ^ { M }$ based on ground-truth or human/AI feedback: ",
+        "bbox": [
+            501,
+            799,
+            885,
+            905
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "discarded",
+        "text": "5 ",
+        "bbox": [
+            482,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            88,
+            84,
+            473,
+            176
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "equation",
+        "img_path": "images/88c45138887e8b37d4be36c4975ee4651f87dec09a074f589d974d5c52788efc.jpg",
+        "text": "$$\n\\mathbf { y } _ { i + } ^ { ( t ) } = \\mathrm { S E L } ( \\mathbf { y } _ { i + } ^ { ( t - 1 ) } , \\{ \\hat { \\mathbf { y } } _ { i , m } \\} _ { m = 1 } ^ { M } ) .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            160,
+            188,
+            385,
+            210
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Subsequently, to ensure the selected positive answer is excluded from the candidate set, we update the negative samples with the remaining candidates: ",
+        "bbox": [
+            88,
+            219,
+            475,
+            265
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "equation",
+        "img_path": "images/6ef25d14f238d8687b04fefa90c3d38b67316dc75bbc37a2f284b534a20502bf.jpg",
+        "text": "$$\n\\mathbf { y } _ { i - } ^ { ( t ) } = \\{ \\hat { \\mathbf { y } } _ { i , m } | \\hat { \\mathbf { y } } _ { i , m } \\neq \\mathbf { y } _ { i + } ^ { ( t ) } \\} _ { m = 1 } ^ { M } .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            163,
+            275,
+            380,
+            297
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Update Adapter Parameters. With the updated positive samples $\\mathbf { y } _ { + } ^ { ( t ) }$ and negative samples $\\mathbf { y } _ { - } ^ { ( t ) }$ , the last step of each iteration is to update the adapter parameters for the next iteration $\\theta _ { t + 1 }$ . By substituting the $\\mathbf { y } _ { - }$ and $\\mathbf { y } _ { + }$ in Eq.(3), we can compute the gradient of loss function, $\\nabla _ { \\boldsymbol { \\theta } } ( \\theta _ { t } )$ , and accordingly update the adapter parameters: ",
+        "bbox": [
+            88,
+            315,
+            473,
+            407
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "equation",
+        "img_path": "images/7f5fb8a464678302e32a34f3e29e418f3d6c7654784f8411791c23cd0935cca9.jpg",
+        "text": "$$\n\\theta _ { t + 1 } = \\theta _ { t } - \\eta \\nabla _ { \\theta } \\ell ( \\theta _ { t } ) ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            202,
+            420,
+            357,
+            438
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "where $\\eta$ is the learning rate for the adapter update. ",
+        "bbox": [
+            88,
+            450,
+            418,
+            465
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "4. Experiments ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            484,
+            217,
+            501
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "In this section, we empirically examine the effectiveness of BBOX-ADAPTER on black-box LLM adaptation to various tasks. We further analyze its flexibility (i.e., plug-and-play adaptation), cost-efficiency, ablations, scalability, and potential extensions for white-box LLM adaptation. ",
+        "bbox": [
+            88,
+            511,
+            473,
+            585
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "4.1. Experiment Setup ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            603,
+            245,
+            617
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Datasets. We evaluate BBOX-ADAPTER on four distinct question-answering tasks, requiring model adaptation on mathematical (GSM8K (Cobbe et al., 2021)), implicitreasoning (StrategyQA (Geva et al., 2021)), truthful (TruthfulQA (Lin et al., 2022)), and scientific (ScienceQA (Lu et al., 2022)) domains. Dataset details are available in Appendix F.1. ",
+        "bbox": [
+            88,
+            626,
+            473,
+            731
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Baselines. We conduct our experiments using two base models for black-box adaptation: gpt-3.5-turbo (OpenAI, 2022) and Mixtral- $- 8 \\times 7 \\mathrm { B }$ (Jiang et al., 2024). We compare BBOX-ADAPTER with the following baselines: (1) Chain-of-Thoughts (CoT) (Wei et al., 2022) represents the performance of the LLM without any adaptation. (2) Supervised Fine-Tuning (SFT) requires access to the base model’s internal parameters and serves as the upper bound of the adaptation performance. For gpt-3.5-turbo, we use the OpenAI Fine-Tuning Service (Peng et al., 2023) hosted on Azure (Microsoft, 2023). For Mixtra $\\mathrm { 1 - 8 \\times 7 B }$ we contrast BBOX-ADAPTER with the low-ranking adaptation (LoRA) under a SFT setting. Additional baseline details can be found in Appendix F.2. ",
+        "bbox": [
+            88,
+            739,
+            473,
+            905
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            500,
+            85,
+            885,
+            128
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Settings. To demonstrate the flexibility of our proposed method, we evaluate BBOX-ADAPTER with three sources of labeled data: ground truth, AI feedback, and combined. The settings are differentiated based on the source of positive sample selection: (1) In the Ground-Truth setting, we utilize the ground-truth solutions originally provided by the dataset as positive samples, which remain constant throughout the entire online adaptation process. (2) In the AI Feedback setting, we assume no access to any groundtruth information, neither step-wise solutions nor final answers. Following Section 3.4, we sample from the adapted inferences $( p _ { \\theta _ { t } } )$ to generate a set of candidates for each question. An advanced LLM $\\left( { \\tt g p t - 4 } \\right)$ is then used to simulate human preference, and the most preferred candidates are selected as positive samples. Detailed AI feedback selection criteria are available in Appendix G. (3) In the Combined setting, the ground-truth set is augmented with preferred candidates obtained from the AI Feedback. We also incorporate outcome supervision in all settings. We utilize the answers from the existing positive st to differentiate adapted inferences. Those inferences that align with the training set answers are treated as additional positive samples, while all others are considered negative. ",
+        "bbox": [
+            500,
+            137,
+            885,
+            483
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Implementations. For the gpt-3.5-turbo, we utilize the APIs provided by the Microsoft Azure OpenAI service. In the case of Mixtral- ${ \\bf 8 } \\times 7 { \\bf B }$ , we employ the pre-trained checkpoint mistralai/Mixtra $\\mathrm { 1 - 8 x 7 B - v 0 . 1 }$ for model inference and parameter-efficient finetuning. Unless specified, BBOX-ADAPTER employs deberta-v3-base (with 0.1B parameters) and deberta-v3-large (with 0.3B parameters) as backend models. The number of beams used for training and inference is set as 3 by default. Additional implementation details are available in Appendix H.1 and H.2. The implementation of BBOX-ADAPTER is available on GitHub2. ",
+        "bbox": [
+            501,
+            493,
+            885,
+            688
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "4.2. Main Results ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            705,
+            622,
+            719
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Table 2 presents the main experimental results on three datasets under three distinct sources of positive samples. BBOX-ADAPTER consistently outperforms gpt-3.5-turbo by an average of $6 . 3 9 \\%$ across all datasets, highlighting its efficacy in adapting black-box LLMs to specific tasks. Notably, BBOX-ADAPTER (AI Feedback) demonstrates competitive performance compared to BBOX-ADAPTER (Ground-Truth), which demonstrates its robust generalization capability across datasets, even in the absence of ground-truth answers. Furthermore, BBOX",
+        "bbox": [
+            501,
+            729,
+            885,
+            878
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "discarded",
+        "text": "2https://github.com/haotiansun14/BBox-Adapter ",
+        "bbox": [
+            521,
+            890,
+            807,
+            902
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "discarded",
+        "text": "6 ",
+        "bbox": [
+            480,
+            924,
+            491,
+            934
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "table",
+        "img_path": "images/01199efee03718aba086eca126b6a28c340162e2568d2e0c65429a90f14f96b1.jpg",
+        "table_caption": [
+            "Table 2. Main results of adapting gpt-3.5-turbo on downstream tasks. For BBOX-ADAPTER, we report the best performance of adapters with # parameters of 0.1B and 0.3B. For all baselines and ours, we employ the CoT prompt as proposed in (Wei et al., 2022). "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Dataset (→)</td><td colspan=\"2\"> StrategyQA</td><td colspan=\"2\">GSM8K</td><td colspan=\"2\">TruthfulQA</td><td colspan=\"2\">ScienceQA</td></tr><tr><td>Adapter (↓) / Metrics (→)</td><td>Acc. (%)</td><td>△(%)</td><td>Acc. (%)</td><td>△(%)</td><td>True + Info (%)</td><td>△(%)</td><td>Acc. (%)</td><td>△ (%)</td></tr><tr><td> gpt-3.5-turbo (OpenAI,2022)</td><td>66.59</td><td>-</td><td>67.51</td><td>-</td><td>77.00</td><td>-</td><td>72.90</td><td>-</td></tr><tr><td>Azure-SFT (Peng et al., 2023)</td><td>76.86</td><td>+10.27</td><td>69.94</td><td>+2.43</td><td>95.00</td><td>+18.00</td><td>79.00</td><td>+6.10</td></tr><tr><td>BBOX-ADAPTER (Ground-Truth)</td><td>71.62</td><td>+5.03</td><td>73.86</td><td>+6.35</td><td>79.70</td><td>+2.70</td><td>78.53</td><td>+5.63</td></tr><tr><td>BBOX-ADAPTER (AI Feedback)</td><td>69.85</td><td>+3.26</td><td>73.50</td><td>+5.99</td><td>82.10</td><td>+5.10</td><td>78.30</td><td>+5.40</td></tr><tr><td>BBOX-ADAPTER (Combined)</td><td>72.27</td><td> +5.68</td><td>74.28</td><td>+6.77</td><td>83.60</td><td>+6.60</td><td>79.40</td><td>+6.50</td></tr></table>",
+        "bbox": [
+            140,
+            121,
+            830,
+            241
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "table",
+        "img_path": "images/202fc43321592328343d9ca091f45917469020136903ffed97f07a932a012d17.jpg",
+        "table_caption": [
+            "Table 3. Results of plug-and-play adaptation on davinci-002 and Mixtra $\\mathrm { 1 - 8 \\times 7 B }$ across four datasets. For the plugger, we select BBOX-ADAPTER tuned on gpt-3.5-turbo adaptation. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Plugger (→)</td><td colspan=\"8\">BBOX-ADAPTER (gpt-3.5-turbo)</td></tr><tr><td>Dataset (→)</td><td colspan=\"2\">StrategyQA</td><td colspan=\"2\">GSM8K</td><td colspan=\"2\">TruthfulQA</td><td colspan=\"2\">Average</td></tr><tr><td>Black-Box LLMs (↓) / Metrics (→） Acc. (%)</td><td></td><td>△(%)</td><td>Acc. (%)</td><td>△(%)</td><td>True + Info (%)</td><td>△(%)</td><td>Acc. (%)</td><td>△(%)</td></tr><tr><td>davinci-002</td><td>44.19</td><td>-</td><td>23.73</td><td>-</td><td>31.50</td><td>-</td><td>33.14</td><td>-</td></tr><tr><td>davinci-002 (Plugged)</td><td>59.61</td><td>+15.42</td><td>23.85</td><td>+0.12</td><td>36.50</td><td>+5.00</td><td>39.99</td><td>+6.85</td></tr><tr><td>Mixtral-8×7B</td><td>59.91</td><td>-</td><td>47.46</td><td>-</td><td>40.40</td><td>-</td><td>49.26</td><td>-</td></tr><tr><td>Mixtral-8×7B (Plugged)</td><td>63.97</td><td> +4.06</td><td>47.61</td><td>+0.15</td><td>49.70</td><td>+9.30</td><td>53.76</td><td>+4.50</td></tr></table>",
+        "bbox": [
+            140,
+            282,
+            831,
+            410
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "ADAPTER (Combined) achieves the highest performance among the three variations. This enhanced performance can be attributed to the combination of high-quality initial positive sets derived from ground-truth solutions and the dynamic updating of positive sets through AI feedback, leading to the continuous self-improvement of BBOX-ADAPTER. ",
+        "bbox": [
+            88,
+            426,
+            473,
+            516
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "4.3. Plug-and-Play Adaptation ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            532,
+            300,
+            547
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "The tuned BBOX-ADAPTER can be seamlessly applied to various black-box LLMs in a plug-and-play manner, eliminating the need for retraining or additional technical modifications. A well-trained version of BBOX-ADAPTER adapting gpt-3.5-turbo can serve as a plugger to be integrated into the OpenAI base model davinci-002 and $\\mathtt { M i x t r a l - 8 \\times 7 B }$ . Specifically, the adapter is employed to steer the generation processes of these models during the adapted inference of BBOX-ADAPTER. Table 3 presents the performance of BBOX-ADAPTER on plug-andplay adaptation. Compared to their unadapted black-box LLMs, davinci-002 and $\\mathrm { M i x t r a l { - } } 8 \\times 7 \\mathrm { B }$ , our trained adapter demonstrates an average performance improvement of $6 . 8 5 \\%$ and $4 . 5 0 \\%$ across all three datasets, respectively. The effectiveness of BBOX-ADAPTER in plug-and-play scenarios arises from its independence from the internal parameters of black-box LLMs. Unlike traditional SFT-related methods, which are generally inapplicable for plug-andplay adaptation due to their reliance on direct parameter manipulation, BBOX-ADAPTER benefits from adapting text generation by analyzing data distributions. ",
+        "bbox": [
+            89,
+            556,
+            473,
+            872
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "4.4. Cost Analysis ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            426,
+            625,
+            440
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "In Table 4, we further compare the cost efficiency associated with different methods on the StrategyQA and GSM8K datasets. Compared with the base model, Azure-SFT boosts accuracy by an average of $6 . 3 5 \\%$ at the expense of significantly higher costs. BBOX-ADAPTER, in single-step inference variant, brings $3 . 4 5 \\%$ performance gain compared with the base model, with 41.97 times less training cost and 6.27 times less inference cost than SFT. Meanwhile, its full-step inference variant achieves $5 . 9 0 \\%$ improvement over the base model with 31.30 times less training cost and 1.84 times less inference cost. This increased cost in its full-step variant is attributed to the integration of a beam search in the adapted inference, which requires the use of the black-box LLM APIs to generate multiple solution paths for selection. ",
+        "bbox": [
+            501,
+            449,
+            885,
+            674
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "4.5. Ablation Study: Effect of Ranking-based NCE Loss ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            693,
+            885,
+            707
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "We compare the efficacy of ranking-based NCE loss against the Masked Language Modeling (MLM) loss. For the MLMbased approach, we generate text chunks from the groundtruth data, randomly masking words, and then train the adapter using the masked word as supervision. During inference, we apply a similar process: masking a random word in each sequence generated by beam search and scoring the sequence based on the probability of the masked word. The comparison results are detailed in Table 5. BBOXADAPTER with NCE loss consistently outperforms the baseline MLM loss approach, achieving improvements in task accuracy of up to $10 \\%$ . This demonstrates that the proposed loss effectively differentiates between the target and generated distributions and assigns scores accordingly. ",
+        "bbox": [
+            501,
+            715,
+            885,
+            896
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            482,
+            922,
+            490,
+            934
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "table",
+        "img_path": "images/5ef30d6081eb2658752effc2914aec660c51eaae1fa1f99eda82877d80561502.jpg",
+        "table_caption": [
+            "Table 4. Comparison of performance and cost for the base model, SFT, and BBOX-ADAPTER on the StrategyQA and GSM8K datasets. The performance is shown as accuracy $( \\% )$ , while the costs (\\$) are reported in training and inference expenses per thousand questions. Note that the inference cost was calculated by aggregating the total token consumption statistics provided by Azure API and subsequently applying the cost per token $( \\mathtt { g p t } - 3 . 5 \\mathrm { - t u r b o - 1 1 } 0 6 )$ as specified in the OpenAI official documentation. The ’single step’ refers to a simplified approach wherein the base model generates a set of complete answers in a single step and the adapter then selects the best answer from these candidates as the final response. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Dataset (→)</td><td colspan=\"3\">StrategyQA</td><td colspan=\"3\">GSM8K</td></tr><tr><td>Adapter (↓) /Metric (→)</td><td>Acc.(%)</td><td>Training Cost ($)</td><td>Inference Cost ($)/1k Q</td><td>Acc.(%)</td><td>Training Cost ($)</td><td>Inference Cost ($)/1k Q</td></tr><tr><td>gpt-3.5-turbo</td><td>66.59</td><td>-</td><td>0.41</td><td>67.51</td><td>-</td><td>1.22</td></tr><tr><td>Azure-SFT (Peng et al., 2023)</td><td>76.86</td><td>153.00</td><td>7.50</td><td>69.94</td><td>216.50</td><td>28.30</td></tr><tr><td>BBOX-ADAPTER (Single-step)</td><td>69.87</td><td>2.77</td><td>2.20</td><td>71.13</td><td>7.54</td><td>3.10</td></tr><tr><td>BBOX-ADAPTER (Full-step)</td><td>71.62</td><td>3.48</td><td>5.37</td><td>74.28</td><td>11.58</td><td>12.46</td></tr></table>",
+        "bbox": [
+            181,
+            176,
+            790,
+            296
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "table",
+        "img_path": "images/1a14405275dc5111d65415c62d82dd40227e5bcbf8462ef3e111187dd5c22d37.jpg",
+        "table_caption": [
+            "Table 5. Accuracy $( \\% )$ ) of BBOX-ADAPTER fine-tuned with two types of loss: MLM loss and ranking-based NCE loss. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Dataset (→)</td><td colspan=\"2\">StrategyQA</td><td colspan=\"2\">GSM8K</td></tr><tr><td>Loss (↓)</td><td>0.1B</td><td>0.3B</td><td>0.1B</td><td>0.3B</td></tr><tr><td>MLM</td><td>61.52</td><td>60.41</td><td>70.56</td><td>70.81</td></tr><tr><td>NCE</td><td>71.62</td><td>71.18</td><td>72.06</td><td>73.86</td></tr></table>",
+        "bbox": [
+            119,
+            347,
+            437,
+            412
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            88,
+            454,
+            473,
+            484
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "4.6. Scale Analysis ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            501,
+            218,
+            515
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "We analyze the effect of scaling up BBOX-ADAPTER by increasing the number of beams and iterations. ",
+        "bbox": [
+            88,
+            518,
+            473,
+            547
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Number of Beams. We investigate three distinct beam sizes $( k = 1 , 3 , 5$ ) within the context of gpt-3.5-turbo adaptation experiments on the StrategyQA dataset (Figure 3(a)). Our results reveal that increasing the number of beams contributes to an average performance enhancement of $2 . 4 1 \\%$ across different adapter sizes (0.1B and 0.3B). The enhancement can likely be attributed to a larger beam retaining more candidate sequences at each decision step, thus expanding the search space. This broader search domain allows the black-box LLM to explore a wider variety of potential sequences, increasing the likelihood of identifying more optimal solutions for positive samples and improving the quantity and quality of negative cases. ",
+        "bbox": [
+            88,
+            555,
+            473,
+            751
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Number of Iterations. Figure 3(b) presents the impact of different numbers of iterations $( T = 0 , 1 , 2 , 3 , 4 ,$ ) on model performance using the StrategyQA. The un-finetuned adapter $T = 0$ ) performs even worse than the base model, which may assign inaccurate scores and misguide the beam search. The adapted LLM surpasses the performance of the base model after just one round of adaptation and shows consistent improvements with subsequent iterations, indicating the potential of BBOX-ADAPTER for continuous self-improvement and task-specific refinement. ",
+        "bbox": [
+            88,
+            758,
+            473,
+            910
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/6fed7aa7fa163708223295c8453d9052c1baf15ca96e524c72d3ce84f711bcad.jpg",
+        "image_caption": [
+            "Figure 3. Scale analysis on StrategyQA with (a) different beam sizes and (b) different iterations of online adaptation. Both experiments are conducted with two-shot prompting. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            506,
+            314,
+            874,
+            438
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "table",
+        "img_path": "images/194bd7324add2a5328548300dbf49241ded62f34472a1d38dea31d1859a77f69.jpg",
+        "table_caption": [
+            "Table 6. Accuracy $( \\% )$ and GPU memory usage on adapting Mixtral- $8 \\times 7 \\mathbb { B }$ to the StrategyQA dataset. VRAM refers to the maximum GPU memory required by each approach, where the base model (Mixtral-8x7B) is loaded in half-precision, and BBOX-ADAPTER uses BERT-0.1B as the backend. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Adapter (↓) /Metric (→)</td><td>Acc.(%) 0.1B 0.3B</td><td>VRAM (GiB)</td><td>Inference</td></tr><tr><td></td><td>59.91</td><td>Training</td><td></td></tr><tr><td>Base Model (Mixtral-8x7B) Base + LoRA (Hu et al., 2021)</td><td>73.80 75.98</td><td>- 208</td><td>90 92</td></tr><tr><td>Base +BBOX-ADAPTER</td><td>66.08 65.26</td><td></td><td></td></tr><tr><td></td><td></td><td>105</td><td>92</td></tr></table>",
+        "bbox": [
+            500,
+            565,
+            887,
+            645
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "4.7. Extension on White-box Adaptation ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            662,
+            781,
+            678
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "We further extend the evaluation of BBOX-ADAPTER to white-box LLMs, while treating them as black-box models (i.e., only using output generations without access to model parameters or output probabilities, therefore, preferable to the competitors). The results of adapting Mixtral- ${ \\bf 8 } \\times 7 { \\bf B }$ in Table 6 indicate that BBOX-ADAPTER surpasses the base model $( \\mathtt { M i x t r a l - 8 \\times 7 B } )$ by $5 . 7 6 \\%$ on the StrategyQA dataset, demonstrating its strong reproducibility and generalization across different LMs. When comparing the adaptation of an equivalent number of parameters, SFT with the LoRA technique (SFT-LoRA) exhibits superior performance, due to its direct access to the model parameters. In terms of resource utilization, BBOX-ADAPTER requires less computational power and storage, making BBOX-ADAPTER a more resource-efficient option for model adaptation. ",
+        "bbox": [
+            501,
+            681,
+            885,
+            905
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "discarded",
+        "text": "8 ",
+        "bbox": [
+            480,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Q: An airport has only 2 planes that fly multiple times a day. Each day, the first plane goes to Greece for three-quarters of its flights, and the remaining flights are split equally between flights to France and flights to Germany. The other plane flies exclusively to Poland, and its 44 trips only amount to half the number of trips the first plane makes throughout each day. How many flights to France does the first plane take in one day? ",
+        "bbox": [
+            137,
+            88,
+            825,
+            121
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "The first plane makes 4 trips to Greece (3/4 of its flights), and the remaining $1 / 4$ is split equally between France and Germany.   \nSo, it makes $1 / 4 ^ { * } 4 = 1$ trip to France.   \nThe second plane makes 44 trips, which is half the number of trips the first plane makes.   \nSo, the first plane makes 44 $2 = 8 8$ trips in total.   \nTherefore, the first plane takes 1 trip to France in one day.   \n#### The answer is 1 trip to France. $\\pmb { \\times }$ ",
+        "bbox": [
+            138,
+            141,
+            710,
+            205
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "CoT Result ",
+        "bbox": [
+            756,
+            189,
+            833,
+            202
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "The second plane makes half the number of trips as the first plane, so the first plane makes $1 4 \\times 2 = < < 4 4 ^ { * } 2 = 8 8 > > 8 8$ trips in one day. The first plane goes to Greece for three-quarters of its flights, which means $8 8 \\times 3 / 4 = < < 8 8 ^ { * } 3 / 4 = 6 6 > > 6 6$ flights to Greece. The remaining flights are split equally between France and Germany, so the first plane makes #### The answer is 11 flights to France. $\\circledcirc$ $( 8 8 - 6 6 ) / 2 = 1 1$ flights to France. Adapted Result ",
+        "bbox": [
+            140,
+            227,
+            782,
+            270
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            728,
+            255,
+            833,
+            267
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "",
+        "text_level": 1,
+        "bbox": [
+            619,
+            297,
+            833,
+            310
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "image",
+        "img_path": "images/05efba37c9184288e12ba9bf61d386cca6c1bc9cf4edf2ab9a4c5d7caf656117.jpg",
+        "image_caption": [
+            "Figure 4. Case study of BBOX-ADAPTER on GSM8K. For the given question, the CoT solution from original gpt-3.5-turbo is incorrect, while the model adapted using BBOX-ADAPTER successfully executed a logical, step-by-step search, ultimately yielding the correct answer. For visualization, we display only top-3 candidate answers at each step. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            125,
+            300,
+            839,
+            559
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "4.8. Case Studies ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            626,
+            207,
+            640
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Figure 4 presents a case study of BBOX-ADAPTER applied to the GSM8K dataset. In this example, while the original gpt-3.5-turbo generates an incorrect answer to a given question, BBOX-ADAPTER modified model successfully conducts a logical, step-by-step analysis, ultimately arriving at the correct solution. ",
+        "bbox": [
+            88,
+            646,
+            473,
+            736
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "4.9. Summary ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            746,
+            186,
+            761
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "We summarize our main findings from empirical analysis as follows: (1) BBOX-ADAPTER significantly enhances the performance of base LLMs, demonstrating its effectiveness in adapting black-box LLMs without access to model parameters and output token probabilities. (2) It exhibits flexibility irrespective of the availability of ground-truth solutions. Once fine-tuned by BBOX-ADAPTER, the adapter seamlessly integrates with other black-box LLMs in a plugand-play manner, eliminating the need for additional retraining. (3) In comparison to SFT, BBOX-ADAPTER achieves competitive performance at a significantly reduced cost. ",
+        "bbox": [
+            89,
+            770,
+            473,
+            905
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            500,
+            626,
+            885,
+            655
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "5. Conclusion ",
+        "text_level": 1,
+        "bbox": [
+            500,
+            665,
+            614,
+            681
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "In this study, we presented BBOX-ADAPTER, a novel and efficient approach for adapting black-box LLMs to specific tasks without requiring access to model parameters or output probabilities. By conceptualizing the adaptation process as a sampling problem within an EBM, BBOX-ADAPTER effectively distinguishes between source and target domain data through a ranking-based NCE loss. Extensive experiments demonstrate its effectiveness in adapting black-box LLMs to diverse tasks, enhancing model performance by up to $6 . 7 7 \\%$ , and reducing training and inference costs by $3 1 . 3 0 \\mathrm { x }$ and $1 . 8 4 \\mathrm { x }$ , respectively. BBOX-ADAPTER addresses the challenges posed by the opaque nature of state-of-theart LLMs, offering a transparent, privacy-conscious, and cost-effective solution for customizing black-box LLMs. ",
+        "bbox": [
+            501,
+            688,
+            885,
+            897
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "discarded",
+        "text": "9 ",
+        "bbox": [
+            480,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Acknowledgements ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            83,
+            251,
+            99
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "This work was supported in part by NSF IIS-2008334, CAREER IIS-2144338, ONR MURI N00014-17-1-2656, and computing resources from Microsoft Azure. ",
+        "bbox": [
+            89,
+            109,
+            473,
+            154
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Impact Statement ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            174,
+            238,
+            190
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "BBOX-ADAPTER addresses the challenges posed by the inherently opaque nature of state-of-the-art LLMs like GPT4 and Bard, enabling the customization of black-box LLMs for personalized use cases. A key advantage of BBOXADAPTER, compared to black-box LLM finetuning through API services, lies in its commitment to privacy through the fine-tuning of a smaller LM. It substantially reduces the privacy risks inherent in the transmission of confidential data to external APIs. BBOX-ADAPTER also stands out by eliminating the need for access to internal model weights or output probabilities, unlike existing white-box and greybox adaptation methods. Fundamentally, BBOX-ADAPTER can be interpreted as a natural way for adapting black-box LLMs to domain-specific tasks with transparency, privacyconsciousness, and cost-effectiveness. BBOX-ADAPTER holds considerable promise for positive social impact across diverse domains, including but not limited to customizing state-of-the-art black-box LLMs for enhancing personalized experience in privacy-sensitive applications. ",
+        "bbox": [
+            89,
+            200,
+            473,
+            486
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Given that BBOX-ADAPTER is designed to reorient blackbox Large Language Models (LLMs) from their initial source domain towards a designated target domain, there exists a non-negligible risk wherein individuals with malign intentions might engineer a detrimental target domain and accumulate injurious and toxic content for training purposes. While black-box LLMs inherently exhibit reluctance towards generating such content, our adapter could potentially be misappropriated to lure LLMs into producing such misguided outputs. Additionally, there is the conceivable risk that the gradient information from our proposed adapter, along with the logits bias inherent in black-box LLMs, could be exploited to orchestrate attacks or facilitate ’jailbreaking’ in a manner akin to that described in prior works. We aim to mitigate these risks in our future studies. ",
+        "bbox": [
+            89,
+            494,
+            473,
+            720
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "References ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            741,
+            181,
+            756
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Anil, R., Dai, A. M., Firat, O., Johnson, M., Lepikhin, D., Passos, A., Shakeri, S., Taropa, E., Bailey, P., Chen, Z., et al. Palm 2 technical report. arXiv preprint arXiv:2305.10403, 2023. ",
+        "bbox": [
+            88,
+            765,
+            475,
+            824
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Bai, Y., Kadavath, S., Kundu, S., Askell, A., Kernion, J., Jones, A., Chen, A., Goldie, A., Mirhoseini, A., McKinnon, C., et al. Constitutional ai: Harmlessness from ai feedback. arXiv preprint arXiv:2212.08073, 2022. ",
+        "bbox": [
+            88,
+            845,
+            473,
+            905
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Brown, T., Mann, B., Ryder, N., Subbiah, M., Kaplan, J. D., Dhariwal, P., Neelakantan, A., Shyam, P., Sastry, G., Askell, A., et al. Language models are few-shot learners. Advances in neural information processing systems, 33: 1877–1901, 2020. ",
+        "bbox": [
+            501,
+            85,
+            887,
+            160
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Chowdhery, A., Narang, S., Devlin, J., Bosma, M., Mishra, G., Roberts, A., Barham, P., Chung, H. W., Sutton, C., Gehrmann, S., et al. Palm: Scaling language modeling with pathways. arXiv preprint arXiv:2204.02311, 2022. ",
+        "bbox": [
+            500,
+            170,
+            885,
+            229
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Chung, H. W., Hou, L., Longpre, S., Zoph, B., Tay, Y., Fedus, W., Li, Y., Wang, X., Dehghani, M., Brahma, S., et al. Scaling instruction-finetuned language models. arXiv preprint arXiv:2210.11416, 2022. ",
+        "bbox": [
+            500,
+            239,
+            887,
+            300
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Cobbe, K., Kosaraju, V., Bavarian, M., Chen, M., Jun, H., Kaiser, L., Plappert, M., Tworek, J., Hilton, J., Nakano, R., et al. Training verifiers to solve math word problems. arXiv preprint arXiv:2110.14168, 2021. ",
+        "bbox": [
+            500,
+            310,
+            887,
+            369
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Deng, Y., Bakhtin, A., Ott, M., Szlam, A., and Ranzato, M. Residual energy-based models for text generation. arXiv preprint arXiv:2004.11714, 2020. ",
+        "bbox": [
+            500,
+            380,
+            885,
+            425
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Devlin, J., Chang, M.-W., Lee, K., and Toutanova, K. BERT: Pre-training of deep bidirectional transformers for language understanding. In Burstein, J., Doran, C., and Solorio, T. (eds.), Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Volume 1 (Long and Short Papers), pp. 4171–4186, Minneapolis, Minnesota, June 2019. Association for Computational Linguistics. doi: 10.18653/v1/N19-1423. ",
+        "bbox": [
+            500,
+            434,
+            887,
+            570
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Du, Y. and Mordatch, I. Implicit generation and generalization in energy-based models. arXiv preprint arXiv:1903.08689, 2019. ",
+        "bbox": [
+            500,
+            580,
+            885,
+            625
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Geva, M., Khashabi, D., Segal, E., Khot, T., Roth, D., and Berant, J. Did aristotle use a laptop? a question answering benchmark with implicit reasoning strategies. Transactions of the Association for Computational Linguistics, 9: 346–361, 2021. doi: 10.1162/tacl a 00370. ",
+        "bbox": [
+            500,
+            636,
+            885,
+            710
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Gilardi, F., Alizadeh, M., and Kubli, M. Chatgpt outperforms crowd workers for text-annotation tasks. Proceedings of the National Academy of Sciences, 120(30): e2305016120, 2023. doi: 10.1073/pnas.2305016120. ",
+        "bbox": [
+            500,
+            719,
+            887,
+            780
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Golovneva, O., O’Brien, S., Pasunuru, R., Wang, T., Zettlemoyer, L., Fazel-Zarandi, M., and Celikyilmaz, A. Pathfinder: Guided search over multi-step reasoning paths. arXiv preprint arXiv:2312.05180, 2023. ",
+        "bbox": [
+            500,
+            790,
+            887,
+            851
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Gupta, K., Therien, B., Ibrahim, A., Richter, M. L., Anthony, ´ Q. G., Belilovsky, E., Rish, I., and Lesort, T. Continual pre-training of large language models: How to re-warm your model? In Workshop on Efficient Systems for Foundation Models@ ICML2023, 2023. ",
+        "bbox": [
+            500,
+            861,
+            885,
+            905
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            102,
+            85,
+            473,
+            114
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Gururangan, S., Marasovic, A., Swayamdipta, S., Lo, K., ´ Beltagy, I., Downey, D., and Smith, N. A. Don’t stop pretraining: Adapt language models to domains and tasks. In Jurafsky, D., Chai, J., Schluter, N., and Tetreault, J. (eds.), Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics, pp. 8342–8360, Online, July 2020. Association for Computational Linguistics. doi: 10.18653/v1/2020.acl-main.740. ",
+        "bbox": [
+            88,
+            125,
+            475,
+            244
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Gutmann, M. and Hyvarinen, A. Noise-contrastive estima- ¨ tion: A new estimation principle for unnormalized statistical models. In Proceedings of the thirteenth international conference on artificial intelligence and statistics, pp. 297–304. JMLR Workshop and Conference Proceedings, 2010. ",
+        "bbox": [
+            88,
+            253,
+            475,
+            343
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Hao, S., Gu, Y., Ma, H., Hong, J., Wang, Z., Wang, D., and Hu, Z. Reasoning with language model is planning with world model. In Bouamor, H., Pino, J., and Bali, K. (eds.), Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing, pp. 8154–8173, Singapore, December 2023. Association for Computational Linguistics. doi: 10.18653/v1/2023.emnlp-main.507. ",
+        "bbox": [
+            88,
+            353,
+            475,
+            458
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Hartvigsen, T., Gabriel, S., Palangi, H., Sap, M., Ray, D., and Kamar, E. Toxigen: A large-scale machine-generated dataset for adversarial and implicit hate speech detection. arXiv preprint arXiv:2203.09509, 2022. ",
+        "bbox": [
+            88,
+            468,
+            475,
+            529
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "He, J., Zhou, C., Ma, X., Berg-Kirkpatrick, T., and Neubig, G. Towards a unified view of parameter-efficient transfer learning. In International Conference on Learning Representations, 2021. ",
+        "bbox": [
+            86,
+            537,
+            475,
+            597
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Houlsby, N., Giurgiu, A., Jastrzebski, S., Morrone, B., De Laroussilhe, Q., Gesmundo, A., Attariyan, M., and Gelly, S. Parameter-efficient transfer learning for nlp. In International Conference on Machine Learning, pp. 2790–2799. PMLR, 2019. ",
+        "bbox": [
+            88,
+            607,
+            475,
+            681
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Hu, E. J., Wallis, P., Allen-Zhu, Z., Li, Y., Wang, S., Wang, L., Chen, W., et al. Lora: Low-rank adaptation of large language models. In International Conference on Learning Representations, 2021. ",
+        "bbox": [
+            86,
+            691,
+            475,
+            751
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Hu, N., Mitchell, E., Manning, C., and Finn, C. Metalearning online adaptation of language models. In Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing, pp. 4418–4432, Singapore, December 2023. Association for Computational Linguistics. ",
+        "bbox": [
+            88,
+            761,
+            473,
+            851
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Huang, Y., Liu, D., Zhong, Z., Shi, W., and Lee, Y. T. k nn-adapter: Efficient domain adaptation for black-box language models. arXiv preprint arXiv:2302.10879, 2023. ",
+        "bbox": [
+            88,
+            861,
+            475,
+            905
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Jiang, A. Q., Sablayrolles, A., Roux, A., Mensch, A., Savary, B., Bamford, C., Chaplot, D. S., Casas, D. d. l., Hanna, E. B., Bressand, F., et al. Mixtral of experts. arXiv preprint arXiv:2401.04088, 2024. ",
+        "bbox": [
+            503,
+            85,
+            885,
+            145
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Kadavath, S., Conerly, T., Askell, A., Henighan, T., Drain, D., Perez, E., Schiefer, N., Hatfield-Dodds, Z., DasSarma, N., Tran-Johnson, E., et al. Language models (mostly) know what they know. arXiv preprint arXiv:2207.05221, 2022. ",
+        "bbox": [
+            500,
+            156,
+            887,
+            229
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Ke, Z., Shao, Y., Lin, H., Konishi, T., Kim, G., and Liu, B. Continual pre-training of language models. In The Eleventh International Conference on Learning Representations, 2022. ",
+        "bbox": [
+            498,
+            242,
+            885,
+            301
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Khalifa, M., Logeswaran, L., Lee, M., Lee, H., and Wang, L. Grace: Discriminator-guided chain-of-thought reasoning, 2023. ",
+        "bbox": [
+            500,
+            313,
+            885,
+            357
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Lee, H., Phatale, S., Mansoor, H., Lu, K., Mesnard, T., Bishop, C., Carbune, V., and Rastogi, A. Rlaif: Scaling reinforcement learning from human feedback with ai feedback. arXiv preprint arXiv:2309.00267, 2023. ",
+        "bbox": [
+            500,
+            369,
+            885,
+            429
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Li, X. L. and Liang, P. Prefix-tuning: Optimizing continuous prompts for generation. In Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing (Volume 1: Long Papers), pp. 4582–4597, 2021. ",
+        "bbox": [
+            500,
+            440,
+            885,
+            530
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Li, Y., Lin, Z., Zhang, S., Fu, Q., Chen, B., Lou, J.-G., and Chen, W. Making language models better reasoners with step-aware verifier. In Rogers, A., Boyd-Graber, J., and Okazaki, N. (eds.), Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pp. 5315–5333, Toronto, Canada, July 2023. Association for Computational Linguistics. doi: 10.18653/v1/2023.acl-long.291. ",
+        "bbox": [
+            500,
+            541,
+            887,
+            662
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Lin, S., Hilton, J., and Evans, O. TruthfulQA: Measuring how models mimic human falsehoods. In Muresan, S., Nakov, P., and Villavicencio, A. (eds.), Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pp. 3214– 3252, Dublin, Ireland, May 2022. Association for Computational Linguistics. doi: 10.18653/v1/2022.acl-long.229. ",
+        "bbox": [
+            500,
+            672,
+            887,
+            779
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Liu, A., Han, X., Wang, Y., Tsvetkov, Y., Choi, Y., and Smith, N. A. Tuning language models by proxy, 2024. ",
+        "bbox": [
+            500,
+            789,
+            885,
+            820
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Liu, X., Ji, K., Fu, Y., Tam, W., Du, Z., Yang, Z., and Tang, J. P-tuning: Prompt tuning can be comparable to fine-tuning across scales and tasks. In Muresan, S., Nakov, P., and Villavicencio, A. (eds.), Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics (Volume 2: Short Papers), pp. 61–68, Dublin, Ireland, May 2022. Association for Computational Linguistics. doi: 10.18653/v1/2022.acl-short.8. ",
+        "bbox": [
+            500,
+            830,
+            887,
+            905
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            493,
+            935
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            102,
+            85,
+            475,
+            128
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Lu, P., Mishra, S., Xia, T., Qiu, L., Chang, K.-W., Zhu, S.-C., Tafjord, O., Clark, P., and Kalyan, A. Learn to explain: Multimodal reasoning via thought chains for science question answering, 2022. ",
+        "bbox": [
+            86,
+            142,
+            473,
+            203
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Lu, X., Brahman, F., West, P., Jung, J., Chandu, K., Ravichander, A., Ammanabrolu, P., Jiang, L., Ramnath, S., Dziri, N., et al. Inference-time policy adapters (ipa): Tailoring extreme-scale lms without fine-tuning. In Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing, pp. 6863–6883, 2023. ",
+        "bbox": [
+            88,
+            215,
+            475,
+            306
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Ma, Z. and Collins, M. Noise contrastive estimation and negative sampling for conditional models: Consistency and statistical efficiency. In Riloff, E., Chiang, D., Hockenmaier, J., and Tsujii, J. (eds.), Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing, pp. 3698–3707, Brussels, Belgium, OctoberNovember 2018. Association for Computational Linguistics. doi: 10.18653/v1/D18-1405. ",
+        "bbox": [
+            88,
+            319,
+            475,
+            439
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Madaan, A., Tandon, N., Gupta, P., Hallinan, S., Gao, L., Wiegreffe, S., Alon, U., Dziri, N., Prabhumoye, S., Yang, Y., et al. Self-refine: Iterative refinement with self-feedback. arXiv preprint arXiv:2303.17651, 2023. ",
+        "bbox": [
+            88,
+            453,
+            475,
+            512
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Microsoft. Azure openai gpt 3.5 turbo fine-tuning tutorial. Microsoft Learn Tutorial, 2023. ",
+        "bbox": [
+            88,
+            525,
+            475,
+            555
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Oord, A. v. d., Li, Y., and Vinyals, O. Representation learning with contrastive predictive coding. arXiv preprint arXiv:1807.03748, 2018. ",
+        "bbox": [
+            86,
+            568,
+            475,
+            613
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "OpenAI. Introducing chatgpt. OpenAI Blog, 2022. URL https://openai.com/blog/chatgpt. ",
+        "bbox": [
+            88,
+            626,
+            473,
+            656
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "OpenAI. Gpt-4 technical report. arXiv, pp. 2303.08774v3, 2023. ",
+        "bbox": [
+            88,
+            669,
+            475,
+            698
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Ormazabal, A., Artetxe, M., and Agirre, E. CombLM: Adapting black-box language models through small finetuned models. In Bouamor, H., Pino, J., and Bali, K. (eds.), Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing, pp. 2961– 2974, Singapore, December 2023. Association for Computational Linguistics. doi: 10.18653/v1/2023.emnlp-m ain.180. ",
+        "bbox": [
+            88,
+            712,
+            475,
+            832
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Paul, D., Ismayilzada, M., Peyrard, M., Borges, B., Bosselut, A., West, R., and Faltings, B. Refiner: Reasoning feedback on intermediate representations. arXiv preprint arXiv:2304.01904, 2023. ",
+        "bbox": [
+            86,
+            845,
+            473,
+            905
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Peng, A., Wu, M., Allard, J., Kilpatrick, L., and Heidel, S. Gpt-3.5 turbo fine-tuning and api updates. OpenAI Blog, 2023. URL https://openai.com/blog/gpt-3-5-turbofine-tuning-and-api-updates. ",
+        "bbox": [
+            500,
+            85,
+            885,
+            145
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Radford, A., Narasimhan, K., Salimans, T., and Sutskever, I. Improving language understanding by generative pretraining. OpenAI Blog, 2018. ",
+        "bbox": [
+            500,
+            155,
+            885,
+            200
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Radford, A., Wu, J., Child, R., Luan, D., Amodei, D., and Sutskever, I. Language models are unsupervised multitask learners. OpenAI Blog, 2019. ",
+        "bbox": [
+            500,
+            210,
+            885,
+            255
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Shinn, N., Cassano, F., Gopinath, A., Narasimhan, K. R., and Yao, S. Reflexion: Language agents with verbal reinforcement learning. In Thirty-seventh Conference on Neural Information Processing Systems, 2023. ",
+        "bbox": [
+            500,
+            265,
+            885,
+            324
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Sun, T., Shao, Y., Qian, H., Huang, X., and Qiu, X. Blackbox tuning for language-model-as-a-service. In International Conference on Machine Learning, pp. 20841– 20855. PMLR, 2022. ",
+        "bbox": [
+            500,
+            334,
+            887,
+            393
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Team, G., Anil, R., Borgeaud, S., Wu, Y., Alayrac, J.-B., Yu, J., Soricut, R., Schalkwyk, J., Dai, A. M., Hauth, A., et al. Gemini: a family of highly capable multimodal models. arXiv preprint arXiv:2312.11805, 2023. ",
+        "bbox": [
+            500,
+            405,
+            887,
+            465
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Touvron, H., Martin, L., Stone, K., Albert, P., Almahairi, A., Babaei, Y., Bashlykov, N., Batra, S., Bhargava, P., Bhosale, S., et al. Llama 2: Open foundation and finetuned chat models. arXiv preprint arXiv:2307.09288, 2023. ",
+        "bbox": [
+            500,
+            474,
+            887,
+            549
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Wang, P., Li, L., Chen, L., Song, F., Lin, B., Cao, Y., Liu, T., and Sui, Z. Making large language models better reasoners with alignment. arXiv preprint arXiv:2309.02144, 2023a. ",
+        "bbox": [
+            500,
+            560,
+            887,
+            619
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Wang, P., Li, L., Shao, Z., Xu, R., Dai, D., Li, Y., Chen, D., Wu, Y., and Sui, Z. Math-shepherd: A label-free step-by-step verifier for llms in mathematical reasoning. arXiv preprint arXiv:2312.08935, 2023b. ",
+        "bbox": [
+            500,
+            630,
+            885,
+            690
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Wang, X., Wei, J., Schuurmans, D., Le, Q. V., Chi, E. H., Narang, S., Chowdhery, A., and Zhou, D. Selfconsistency improves chain of thought reasoning in language models. In The Eleventh International Conference on Learning Representations, 2022a. ",
+        "bbox": [
+            500,
+            700,
+            887,
+            775
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Wang, Y., Mishra, S., Alipoormolabashi, P., Kordi, Y., Mirzaei, A., Naik, A., Ashok, A., Dhanasekaran, A. S., Arunkumar, A., Stap, D., Pathak, E., Karamanolakis, G., Lai, H., Purohit, I., Mondal, I., Anderson, J., Kuznia, K., Doshi, K., Pal, K. K., Patel, M., Moradshahi, M., Parmar, M., Purohit, M., Varshney, N., Kaza, P. R., Verma, P., Puri, R. S., Karia, R., Doshi, S., Sampat, S. K., Mishra, S., Reddy A, S., Patro, S., Dixit, T., and Shen, ",
+        "bbox": [
+            501,
+            785,
+            888,
+            905
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "X. Super-NaturalInstructions: Generalization via declarative instructions on $1 6 0 0 +$ NLP tasks. In Goldberg, Y., Kozareva, Z., and Zhang, Y. (eds.), Proceedings of the 2022 Conference on Empirical Methods in Natural Language Processing, pp. 5085–5109, Abu Dhabi, United Arab Emirates, December 2022b. Association for Computational Linguistics. doi: 10.18653/v1/2022.emnlp-m ain.340. ",
+        "bbox": [
+            102,
+            85,
+            475,
+            204
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Wei, J., Bosma, M., Zhao, V., Guu, K., Yu, A. W., Lester, B., Du, N., Dai, A. M., and Le, Q. V. Finetuned language models are zero-shot learners. In International Conference on Learning Representations, 2021. ",
+        "bbox": [
+            88,
+            215,
+            475,
+            275
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Wei, J., Wang, X., Schuurmans, D., Bosma, M., Xia, F., Chi, E., Le, Q. V., Zhou, D., et al. Chain-of-thought prompting elicits reasoning in large language models. Advances in Neural Information Processing Systems, 35: 24824–24837, 2022. ",
+        "bbox": [
+            88,
+            286,
+            475,
+            361
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Xie, Y., Kawaguchi, K., Zhao, Y., Zhao, X., Kan, M.-Y., He, J., and Xie, Q. Self-evaluation guided beam search for reasoning. In Thirty-seventh Conference on Neural Information Processing Systems, 2023. ",
+        "bbox": [
+            86,
+            371,
+            475,
+            433
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Yao, S., Yu, D., Zhao, J., Shafran, I., Griffiths, T. L., Cao, Y., and Narasimhan, K. R. Tree of thoughts: Deliberate problem solving with large language models. In Thirtyseventh Conference on Neural Information Processing Systems, 2023. ",
+        "bbox": [
+            88,
+            441,
+            475,
+            517
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Zhou, D., Scharli, N., Hou, L., Wei, J., Scales, N., Wang, X., ¨ Schuurmans, D., Cui, C., Bousquet, O., Le, Q. V., et al. Least-to-most prompting enables complex reasoning in large language models. In The Eleventh International Conference on Learning Representations, 2022. ",
+        "bbox": [
+            88,
+            527,
+            475,
+            603
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Zhu, X., Wang, J., Zhang, L., Zhang, Y., Huang, Y., Gan, R., Zhang, J., and Yang, Y. Solving math word problems via cooperative reasoning induced language models. In Rogers, A., Boyd-Graber, J., and Okazaki, N. (eds.), Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pp. 4471–4485, Toronto, Canada, July 2023. Association for Computational Linguistics. doi: 10.18653/v1/2023.acl-long.245. ",
+        "bbox": [
+            88,
+            613,
+            475,
+            748
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Zhuang, Y., Chen, X., Yu, T., Mitra, S., Bursztyn, V., Rossi, R. A., Sarkhel, S., and Zhang, C. Toolchain\\*: Efficient action space navigation in large language models with a\\* search. arXiv preprint arXiv:2310.13227, 2023. ",
+        "bbox": [
+            86,
+            758,
+            475,
+            819
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "A. Proof for Ranking-based NCE Eq.(2) ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            82,
+            426,
+            101
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/b79ef800f64dc9f96ad01b1fe03585b41afbbdf1895855f0e93f1bd82c81312c.jpg",
+        "text": "$$\nq ( \\cdot ) = \\frac { \\frac { p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) } { p _ { \\mathrm { l a t a } } ( \\mathbf { x } _ { k } ) } } { \\sum _ { k } \\frac { p _ { \\mathrm { f a t a } } ( \\mathbf { x } _ { k } ) } { p _ { \\mathrm { f l a t } } ( \\mathbf { x } _ { k } ) } } = \\frac { \\frac { p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) } { p _ { \\theta } ( \\mathbf { x } _ { k } ) Z ( \\theta ) } \\frac { \\exp ( g _ { \\theta } ( \\mathbf { x } _ { k } ) ) } { \\sum _ { m } \\exp ( g _ { \\theta } ( \\mathbf { x } _ { k } ) ) } } { \\sum _ { k } \\frac { p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) } { p _ { \\mathrm { f l a t } } ( \\mathbf { x } _ { k } ) Z ( \\theta ) } \\exp ( g _ { \\theta } ( \\mathbf { x } _ { k } ) ) } = \\frac { \\frac { p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) } { p _ { \\theta } ( \\mathbf { x } _ { k } ) } p _ { \\theta } ( \\mathbf { x } _ { k } ) } { \\sum _ { k } \\frac { p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) } { p _ { \\theta } ( \\mathbf { x } _ { k } ) } p _ { \\theta } ( \\mathbf { x } _ { k } ) } = \\frac { p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) } { \\sum _ { k } p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) } = p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            137,
+            119,
+            795,
+            167
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/5382792dc15e12e582c392f180c8b032a28be56fe36640c6155bd881b438601f.jpg",
+        "text": "$$\n\\begin{array} { l } { { \\displaystyle { \\bf K L } ( q | | p ) = \\sum _ { k } q \\log \\frac { q } { p } = \\sum _ { k } p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) \\log \\frac { p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) } { \\sum _ { k ^ { \\prime } } \\exp g _ { \\theta } ( \\mathbf { x } _ { k ^ { \\prime } } ) } } \\ ~ } \\\\ { { \\displaystyle ~ = \\sum _ { k } p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) \\log p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) - \\sum _ { k } [ p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) \\log \\frac { \\exp g _ { \\theta } ( \\mathbf { x } _ { k } ) } { \\sum _ { k ^ { \\prime } } \\exp g _ { \\theta } ( \\mathbf { x } _ { k ^ { \\prime } } ) } ] } \\ ~ } \\\\ { { \\displaystyle ~ \\propto - \\sum _ { k } [ p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) ( g _ { \\theta } ( \\mathbf { x } _ { k } ) - \\log \\sum _ { k ^ { \\prime } } \\exp g _ { \\theta } ( \\mathbf { x } _ { k ^ { \\prime } } ) ) ] } } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            232,
+            174,
+            740,
+            287
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/4cec1d1e7c765efe96a6a8f8d19b1cb632d292e40a60d1a37850631267d554e0.jpg",
+        "text": "$$\n\\begin{array} { l } { \\operatorname* { m i n } { \\mathrm { K L } ( q | | p ) } = \\displaystyle \\operatorname* { m a x } \\sum _ { k } [ p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) ( g _ { \\theta } ( \\mathbf { x } _ { k ^ { \\prime } } ) - \\log \\sum _ { k ^ { \\prime } } \\exp g _ { \\theta } ( \\mathbf { x } _ { k ^ { \\prime } } ) ) ] } \\\\ { \\displaystyle \\quad = \\operatorname* { m a x } \\mathbb { E } _ { p _ { \\mathrm { d a t a } } ( \\mathbf { x } ) } [ g _ { \\theta } ( \\mathbf { x } ) - \\log \\sum _ { k ^ { \\prime } } \\exp g _ { \\theta } ( \\mathbf { x } _ { k ^ { \\prime } } ) ] . } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            259,
+            292,
+            710,
+            361
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "B. Proof for Ranking-based NCE Gradients ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            375,
+            455,
+            393
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "We can rewrite the loss function in Eq.(2) as: ",
+        "bbox": [
+            89,
+            401,
+            383,
+            417
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/5e7be9ee1c632378632fdb09c194fa6cd6fc362efd6814a8518a100abdc8a7b8.jpg",
+        "text": "$$\n\\begin{array} { l } { { \\displaystyle - \\ell ( \\theta ) = \\mathbb { E } _ { p _ { \\mathrm { d a t a } } ( \\mathbf { x } ) } [ g _ { \\theta } ( \\mathbf { x } ) - \\log \\sum _ { k ^ { \\prime } } \\exp ( g _ { \\theta } ( \\mathbf { x } _ { k ^ { \\prime } } ) ) ] } \\ ~ } \\\\ { { \\displaystyle ~ = \\mathbb { E } _ { p _ { \\mathrm { d a t a } } ( \\mathbf { x } ) } [ g _ { \\theta } ( \\mathbf { x } ) ] - \\mathbb { E } _ { p _ { \\mathrm { d a t a } } ( \\mathbf { x } ) } [ \\log \\sum _ { k ^ { \\prime } } \\exp ( g _ { \\theta } ( \\mathbf { x } _ { k ^ { \\prime } } ) ) ] } \\ ~ } \\\\ { { \\displaystyle ~ = \\mathbb { E } _ { p _ { \\mathrm { d a t a } } ( \\mathbf { x } ) } [ g _ { \\theta } ( \\mathbf { x } ) ] - \\sum _ { k } p _ { \\mathrm { d a t a } } ( \\mathbf { x } _ { k } ) [ \\log \\sum _ { k ^ { \\prime } } \\exp ( g _ { \\theta } ( \\mathbf { x } _ { k ^ { \\prime } } ) ) ] } . } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            274,
+            426,
+            697,
+            531
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "The gradient of the loss function can be computed as follows: ",
+        "bbox": [
+            86,
+            537,
+            491,
+            554
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/edc19b9533f222dc79ad070f1879e1abdaf7484e3992e01a2dde587b666ffb88.jpg",
+        "text": "$$\n\\begin{array} { r l } & { - \\nabla _ { \\theta } \\ell ( \\theta ) = \\mathbb { E } _ { p _ { \\mathrm { d a t } } ( \\mathbf { x } ) } \\big [ \\nabla _ { \\theta } g _ { \\theta } ( \\mathbf { x } ) \\big ] - \\displaystyle \\sum _ { k } p _ { \\mathrm { d a t } } ( \\mathbf { x } _ { k } ) \\frac { 1 } { \\sum _ { k ^ { \\prime } } \\exp ( g _ { \\theta } ( \\mathbf { x } _ { k ^ { \\prime } } ) ) } \\sum _ { m } [ \\exp ( g _ { \\theta } ( \\mathbf { x } _ { m } ) ) \\nabla _ { \\theta } g _ { \\theta } ( \\mathbf { x } _ { m } ) ] } \\\\ & { \\quad \\quad \\quad = \\mathbb { E } _ { p _ { \\mathrm { d a t } } ( \\mathbf { x } ) } \\big [ \\nabla _ { \\theta } g _ { \\theta } ( \\mathbf { x } ) \\big ] - \\displaystyle \\sum _ { m } \\frac { \\exp ( g _ { \\theta } ( \\mathbf { x } _ { m } ) ) } { \\sum _ { k ^ { \\prime } } \\exp ( g _ { \\theta } ( \\mathbf { x } _ { k ^ { \\prime } } ) ) } \\nabla _ { \\theta } g _ { \\theta } ( \\mathbf { x } _ { m } ) \\sum _ { k } p _ { \\mathrm { d a t } } ( \\mathbf { x } _ { k } ) } \\\\ & { \\quad \\quad \\quad = \\mathbb { E } _ { p _ { \\mathrm { d a t } } ( \\mathbf { x } ) } \\big [ \\nabla _ { \\theta } g _ { \\theta } ( \\mathbf { x } ) \\big ] - \\displaystyle \\sum _ { m } \\frac { \\exp ( g _ { \\theta } ( \\mathbf { x } _ { m } ) ) } { \\sum _ { k ^ { \\prime } } \\exp ( g _ { \\theta } ( \\mathbf { x } _ { k ^ { \\prime } } ) ) } \\nabla _ { \\theta } g _ { \\theta } ( \\mathbf { x } _ { m } ) } \\\\ & { \\quad \\quad \\quad = \\mathbb { E } _ { p _ { \\mathrm { d a t } } ( \\mathbf { x } ) } \\big [ \\nabla _ { \\theta } g _ { \\theta } ( \\mathbf { x } ) \\big ] - \\displaystyle \\sum _ { m } p _ { \\theta } ( \\mathbf { x } _ { m } ) \\nabla _ { \\theta } g _ { \\theta } ( \\mathbf { x } _ { m } ) } \\\\ &  \\quad \\quad \\quad = \\ \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            169,
+            563,
+            802,
+            737
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "C. Output Token Probabilities in Black-box LLMs ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            748,
+            511,
+            767
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "Output token probabilities refer to the probability distribution over the entire vocabulary of each token position in the output sequence. For the GPT series after GPT-3, there are typically two ways to obtain the output token probabilities from black-box LLM API services: (1) logprobs 3 is a parameter in the OpenAI Chat Completions API. When logprobs is set to TRUE, it returns the log probabilities of each output token. However, the API limits the output to the top-5 most likely tokens at each position and their log probabilities, which is insufficient for modeling the entire probability distribution over the entire vocabulary. (2) echo probabilities is a deprecated parameter in Completion API function of gpt-3.5-turbo-instruct. If this parameter is set to TRUE, the API will include the original prompt at the beginning of its response and return the token probabilities. Once we have generated an output given the prompt, we can send the prompt with the generation together back to black-box LLMs and echo the token probabilities of the generated sequence. However, this feature has been deprecated since October 5th, 2023. Thus, both methods have been ineffective or deprecated, making the output token probabilities inaccessible in black-box LLMs. ",
+        "bbox": [
+            88,
+            775,
+            887,
+            882
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            290,
+            56,
+            679,
+            70
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "discarded",
+        "text": "3https://cookbook.openai.com/examples/using logprobs ",
+        "bbox": [
+            109,
+            892,
+            437,
+            905
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            88,
+            84,
+            885,
+            145
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Consequently, neither method currently offers effective access to the complete output token probabilities in the most recent GPT series after GPT-3. Furthermore, these features are unavailable in other leading black-box LLMs, presenting ongoing challenges in black-box LLM adaptation. ",
+        "bbox": [
+            89,
+            152,
+            885,
+            198
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "D. Additional Related Work: Scoring Function in LLM Reasoning ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            217,
+            643,
+            234
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "To enhance LLM reasoning abilities, existing works usually prompt LLMs to generate intermediate steps (Wei et al., 2022) or decompose complicated problems into multiple simpler sub-tasks (Zhou et al., 2022), formulating the reasoning tasks in a multi-step manner. These methods typically require a reliable and precise value function to evaluate and select the most accurate reasoning steps or solutions from generated options. Self-consistency (Wang et al., 2022a) leverages the frequency of occurrence across multiple sampled reasoning paths to determine a final answer through majority voting. Self-evaluation (Kadavath et al., 2022; Shinn et al., 2023; Madaan et al., 2023; Paul et al., 2023) employs a scoring function that directly prompts LLMs to generate verbalized evaluations corresponding to their reasoning. Verification (Li et al., 2023; Zhu et al., 2023; Wang et al., 2023a) takes a question and a candidate reasoning path as inputs and outputs a binary signal or a likelihood estimate indicating the correctness of the reasoning path. ",
+        "bbox": [
+            88,
+            242,
+            887,
+            380
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Several studies (Xie et al., 2023; Yao et al., 2023; Hao et al., 2023) have applied these heuristic functions with advanced search algorithms to find optimal solutions. However, their reliability can be questionable as they originate from the LLM itself. To address this, PATHFINDER (Golovneva et al., 2023) utilizes a normalized product of token probabilities as its scoring function and maintains the top-K candidate reasoning paths during the tree search process. Toolchain\\* (Zhuang et al., 2023) maintains a long-term memory of past successful reasoning paths and computes a heuristic score accordingly to regularize the LLM scores. Math-Shepherd (Wang et al., 2023b) uses verifications of correctness as binary outcome reward and process reward to train a reward model and reinforces the LLMs accordingly. GRACE (Khalifa et al., 2023) trains a discriminator by simulating the typical errors a generator might make, then employs this discriminator to rank answers during beam search. ",
+        "bbox": [
+            88,
+            386,
+            885,
+            522
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Although BBOX-ADAPTER focuses on adapting black-box LLMs, a task distinct from these methods, it shares similarities in the aspect of scoring generated texts or solutions to ensure more accurate and faithful selection. Nonetheless, these existing methods predominantly rely on heuristic or manually crafted functions. In contrast, BBOX-ADAPTER adopts an energy-based perspective, offering a natural and innovative approach to adapt black-box LLMs. ",
+        "bbox": [
+            88,
+            530,
+            885,
+            590
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "E. Additional Experiments on Reducing Toxicity (ToxiGen) ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            609,
+            583,
+            627
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "We expanded our evaluation of the BBOX-ADAPTER to include the ToxiGen dataset, which assesses the model’s capacity to refrain from generating hateful text in response to prompts containing hateful statements about demographic groups. The evaluation uses a judge model—a RoBERTa-based classifier that has been fine-tuned to identify toxic content (Hartvigsen et al., 2022). Our assessment employs two primary metrics: 1) The Toxic $( \\% )$ metric quantifies the percentage of generated samples classified as toxic; 2) The toxicity probability $( \\% )$ metric reflects the judge model’s classification probability that a given sample is toxic. ",
+        "bbox": [
+            88,
+            636,
+            885,
+            727
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "For this evaluation, we utilized a subset of the ToxiGen dataset by selecting 2,000 samples as the training set and 500 samples for the test set. The $\\mathtt { M i x t r a l - 8 x 7 B - v 0 . 1 }$ model (temperature 0.7) served as the base model for this analysis. We use deberta-v3-base as the backbone of the BBOX-ADAPTER. The results are illustrated in Table 7. ",
+        "bbox": [
+            88,
+            734,
+            888,
+            780
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "table",
+        "img_path": "images/01da09fe5b6e68809d0b640588bb35817eda75f31f810f691f62f2405b305f55.jpg",
+        "table_caption": [
+            "Table 7. Results of adapting Mixtral-8x7B-v0.1 on the ToxiGen dataset. Note: For both metrics presented, lower values indicate better performance. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Adapter (↓) /Metric(→)</td><td></td><td></td><td>Toxic (%)△(%)Toxicity Prob (%)△(%)</td><td></td></tr><tr><td>Base Model(Mixt ral-8x7B)</td><td>41.90</td><td>-</td><td>41.02</td><td></td></tr><tr><td>Base+BBOX-ADAPTER</td><td>20.60</td><td>21.30</td><td>20.75</td><td>20.27</td></tr></table>",
+        "bbox": [
+            254,
+            825,
+            710,
+            882
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "The results demonstrate the BBOX-ADAPTER’s capacity to significantly mitigate toxicity by approximately halving it on the ",
+        "bbox": [
+            96,
+            890,
+            883,
+            906
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "ToxiGen dataset. Particularly, the notable reduction in toxicity highlights the BBOX-ADAPTER’s ability to enhance the base model’s performance beyond merely reasoning tasks that yield specified numerical outcomes, showcasing its potential for wide-ranging implications in model adaptation. ",
+        "bbox": [
+            89,
+            84,
+            885,
+            130
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "F. Evaluation Details ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            148,
+            263,
+            166
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "F.1. Additional Dataset Details ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            175,
+            302,
+            190
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "We evaluate BBOX-ADAPTER on four distinct question-answering tasks, requiring model adaptation on mathematical (GSM8K), implicit-reasoning (StrategyQA), truthful (TruthfulQA), and scientific (ScienceQA) domains: ",
+        "bbox": [
+            91,
+            199,
+            888,
+            229
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "GSM8K (Cobbe et al., 2021) is a dataset of high-quality linguistically diverse grade school math word problems. Numerical reasoning tasks within this dataset typically comprise a descriptive component followed by a culminating question. Answering this question requires multi-step mathematical calculations based on the context of the description. The dataset contains 7473 training samples and 1319 test samples. ",
+        "bbox": [
+            88,
+            236,
+            885,
+            296
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "StrategyQA (Geva et al., 2021) is a question-answering benchmark that challenges models to answer complex questions using implicit reasoning strategies, including 2059 training samples and 229 test samples. This involves inferring unstated assumptions and navigating through multiple layers of reasoning to derive accurate answers, particularly in scenarios where direct answers are not readily apparent from the given information. ",
+        "bbox": [
+            89,
+            304,
+            885,
+            364
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "TruthfulQA (Lin et al., 2022) is a collection of questions specifically designed to evaluate a model’s ability to provide truthful, factual, and accurate responses. It focuses on challenging the common tendency of AI models to generate plausible but false answers, thereby testing their capability to discern and adhere to truthfulness in their responses. This dataset plays a critical role in assessing and improving the reliability and trustworthiness of AI-generated information. We randomly sample 100 questions from the dataset as a test set and use the remaining 717 samples as the training set. ",
+        "bbox": [
+            88,
+            372,
+            885,
+            448
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "ScienceQA (Lu et al., 2022) is a multi-modal question-answering dataset focusing on science topics, complemented by annotated answers along with corresponding lectures and explanations. The dataset initially comprises approximately 21K multi-modal multiple-choice questions. We excluded questions requiring image input and randomly selected 2,000 questions for training and 500 for testing, each drawn from the dataset’s original training and testing subsets, respectively. ",
+        "bbox": [
+            89,
+            455,
+            885,
+            516
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "F.2. Additional Baseline Details ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            532,
+            308,
+            547
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "SFT-LoRA. We choose Mixtral- ${ \\bf 8 } \\times 7 { \\bf B }$ to show the reproducibility of BBOX-ADAPTER on open-sourced models, while our method still treats the model as a black-box LLM with only output generation available. For a fair comparison with SFT-LoRA, we restrict the size of the adapter layer in LoRA to be the same as that in BBOX-ADAPTER. Specifically, to maintain the same size as the 0.1B version of BBOX-ADAPTER, we set $r = 1 2 8$ for SFT-LoRA. For the 0.3B version of BBOX-ADAPTER, we set $r = 3 8 4$ . According to the recommended setting in the original paper (Hu et al., 2021), we set the $\\alpha$ as twice of $r$ , $\\alpha = 2 r$ . The other hyperparameters are listed in Table 8. ",
+        "bbox": [
+            88,
+            555,
+            887,
+            646
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "table",
+        "img_path": "images/c34fd80f224aa4824560b458d7b172dba09c71bbe152621b119f52e7470e2e43.jpg",
+        "table_caption": [
+            "Table 8. Hyperparameter settings of SFT-LoRA (Hu et al., 2021). "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td></td><td></td><td></td><td></td><td></td><td>LoRA Dropout # Epochs Learning Rate Weight Decay Batch Size /GPU Max Gradient Norm</td><td>Optimizer</td><td>LR Scheduler</td></tr><tr><td>0.1</td><td>3</td><td>2e-4</td><td>0.001</td><td>8</td><td>0.3</td><td>Paged AdamW 32bit</td><td>Cosine</td></tr></table>",
+        "bbox": [
+            88,
+            686,
+            901,
+            728
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "Azure-SFT. We leverage the Azure OpenAI GPT-3.5-Turbo Fine-Tuning service (Microsoft, 2023) to fine-tune the models. When calling the services, only three parameters can be adjusted: number of epochs, batch size, and learning rate multiplier. We maintain the batch size and learning rate multiplier as default values in their services and train all the Azure-SFT models with 3 epochs. All the SFT models are tuned 3 epochs. We offer the detailed training loss curve of StrategyQA, TruthfulQA, and ScienceQA in Figure 5. ",
+        "bbox": [
+            88,
+            743,
+            888,
+            819
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "F.3. Additional Analysis of Azure-SFT on GSM8K ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            835,
+            437,
+            852
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "From Table 2, we notice that the Azure-LoRA achieves a much smaller performance gain on GSM8K $( 3 . 1 0 \\%$ ), compared with that on StrategyQA $( 1 2 . 6 8 \\% )$ and TruthfulQA $( 1 8 \\% )$ ). Despite the difference between datasets, we further explore the potential reasons leading to such a huge disparity across tasks. We conduct a simple grid search with the limited hyperparameters for a thorough evaluation of model performance in Table 9. ",
+        "bbox": [
+            88,
+            861,
+            887,
+            905
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "image",
+        "img_path": "images/b13b5b8c02d0e7248a349c40350c8684dd84b57ea573921bc7f9d94ec3ef2263.jpg",
+        "image_caption": [
+            "Figure 5. Loss curve of Azure-SFT on (a) StrategyQA, (b) TruthfulQA, and (c) ScienceQA datasets. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            98,
+            87,
+            874,
+            214
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            88,
+            266,
+            588,
+            281
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "table",
+        "img_path": "images/29ea34e2c7669a2a9792323b4bf9f97fe8692a7eaef1b6c42f5c86080ee1f4b4.jpg",
+        "table_caption": [
+            "Table 9. Simple grid search for Azure-SFT on GSM8K dataset. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td></td><td></td><td># Training Epochs Batch Size Learning Rate Multiplier Accuracy</td><td></td></tr><tr><td>3</td><td>8</td><td>1</td><td>67.82</td></tr><tr><td>5</td><td>16</td><td>1</td><td> 69.94</td></tr><tr><td>3</td><td>8</td><td>0.1</td><td>66.71</td></tr></table>",
+        "bbox": [
+            276,
+            319,
+            696,
+            387
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "Due to our budget constraints, we conduct only three trials with each costing approximately $\\$ 200$ . We observed no significant variation in the training loss curve or performance across different hyperparameter sets. This observation aligns with our expectation in Section 1 regarding the lack of transparency in the Azure-SFT service formatted as an API. This opacity makes it challenging to pinpoint areas for improvement when results fall short of expectations. For further reference, we include the detailed training curve of Azure-SFT on the GSM8K dataset in Figure 6. ",
+        "bbox": [
+            88,
+            400,
+            887,
+            476
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "image",
+        "img_path": "images/a68a9bf72ab3589a0c7089134fd241f62c4e33e5da5a48b34b6e90a205f41924.jpg",
+        "image_caption": [
+            "Figure 6. Loss curves of Azure-SFT on GSM8K datasets. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            98,
+            493,
+            875,
+            619
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "G. AI Feedback Selection Criteria ",
+        "text_level": 1,
+        "bbox": [
+            91,
+            674,
+            374,
+            691
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "In the AI Feedback setting, we conduct black-box adaptation without access to any ground-truth information, including step-wise solutions or final answers. We periodically sample candidates for each question from the adapted inferences $( p _ { \\theta _ { t } } )$ . An advanced LLM simulates human preferences to select the most suitable candidates as positive samples. The selection criteria for the advanced LLM are: (1) Coherency: The answer should present logical step-by-step reasoning that is coherent and directly related to the question; (2) Reasonability: The answer should provide logical and factual reasoning steps leading to the final conclusion; (3) Correctness: The final answer should be correct. (4) Format: Each reasoning step should be in a separate sentence, ending with a definitive answer. Specific prompts are detailed in Appendix J. ",
+        "bbox": [
+            88,
+            700,
+            887,
+            806
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "H. Implementation Details ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            824,
+            312,
+            843
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "H.1. Hardware Information ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            852,
+            282,
+            866
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "All experiments are conducted on CPU: AMD(R) EPYC(R) 7702 64-Core Processor $@$ $\\underline { { \\ ? } } \\mathrm { ~ 1 . 5 0 G H z }$ and GPU: NVIDIA A100-SXM4-80GB using Python 3.10.13. ",
+        "bbox": [
+            93,
+            875,
+            883,
+            905
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "H.2. Hyperparameter Configuration ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            84,
+            343,
+            99
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "We chose the gpt-3.5-turbo from Microsoft Azure OpenAI API service and the mixtra $\\mathrm { 1 - 8 \\times 7 B \\mathrm { - v 0 . 1 } }$ from HuggingFace4 as the black-box LLMs for adaptation. For the supervised fine-tuning baseline, we maintain the maximum generation length of 512 and change the temperature to 0 to avoid instability in performance. For gpt-3.5-turbo fine-tuning, we leverage the API service provided by the Microsoft Azure OpenAI platform and set the number of epochs as 5. For Mixtral- ${ \\bf \\delta } \\cdot { \\bf \\delta } 8 \\times 7 { \\bf B }$ fine-tuning with LoRA, we conduct the experiments on 4 NVIDIA A100-SXM4-80GB GPUs with toolkit packages of peft and transformers from HuggingFace. ",
+        "bbox": [
+            88,
+            108,
+            885,
+            199
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "Regarding the BBOX-ADAPTER, we set the maximum length for a generated solution as 512 and the temperature as 1.0 for flexibility in the black-box LLM’s generation, which serves as a proposal in BBOX-ADAPTER. For the adapter model in BBOX-ADAPTER, we used deberta-v3-base (86M) and deberta-v3-large (304M) for StrategyQA, GSM8K, and ScienceQA, and bert-base-cased (110M) for TruthfulQA. We set the learning rate $\\eta$ as $5 e - 6$ , the batch size as 64, and the number of training steps as 6, 000 for default hyperparameter settings. We employed AdamW optimizer with a weight decay of 0.01. ",
+        "bbox": [
+            88,
+            207,
+            887,
+            297
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "I. Additional Experimental Results ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            315,
+            382,
+            333
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "I.1. Main Results with Standard Deviation ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            342,
+            383,
+            357
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "Table 10 presents the additional experimental results on three datasets under three distinct sources of positive samples with standard deviation. ",
+        "bbox": [
+            88,
+            366,
+            885,
+            396
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "table",
+        "img_path": "images/3823fe47fceb855f09eb3611d220458207511884872e3913c9a07d8cfee7628a.jpg",
+        "table_caption": [
+            "Table 10. Main results of adapting gpt-3.5-turbo on downstream tasks. For BBOX-ADAPTER, we report the best performance of adapters with # parameters of 0.1B and 0.3B. For all baselines and ours, we employ the CoT prompt as proposed in (Wei et al., 2022). "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Dataset (→)</td><td>StrategyQA</td><td>GSM8K</td><td>TruthfulQA</td><td>ScienceQA</td></tr><tr><td>gpt-3.5-turbo (OpenAI, 2022)</td><td>66.59±0.22</td><td>67.51±1.33</td><td>77.00±2.97</td><td>72.90±0.30</td></tr><tr><td>Azure-SFT (Peng et al., 2023)</td><td>76.86</td><td>69.94</td><td>95.00</td><td>79.00</td></tr><tr><td>BBOX-ADAPTER (Ground-Truth)</td><td>71.62±0.87</td><td>73.86±0.94</td><td>79.70±2.19</td><td>78.53±0.57</td></tr><tr><td>BBOX-ADAPTER (AI Feedback)</td><td>69.85±1.09</td><td>73.50±0.48</td><td>82.10±3.39</td><td>78.30±0.50</td></tr><tr><td>BBOX-ADAPTER (Combined)</td><td>72.27±1.09</td><td>74.28±0.45</td><td>83.60±2.37</td><td>79.40±0.20</td></tr></table>",
+        "bbox": [
+            227,
+            446,
+            741,
+            547
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "J. Prompt Design ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            578,
+            235,
+            595
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "When utilizing gpt-3.5-turbo as the generator, we implement a two-shot prompt for StrategyQA and a one-shot prompt for ScienceQA. For GSM8K, we employ the four-shot prompt from Chain-of-Thought $\\mathrm { H u b } ^ { 5 }$ . For TruthfulQA, we follow the same instructions as outlined in Liu et al. (2024). For Mixtral- $- 8 \\times 7 \\mathrm { B }$ and davinci-002 on StrategyQA and GSM8K, we eliminate the instruction part and only prompt the generator with the stacked examples. The specific prompts are as detailed below: ",
+        "bbox": [
+            88,
+            604,
+            885,
+            679
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "discarded",
+        "text": "4https://huggingface.co/docs/transformers/model doc/mixtral 5https://github.com/FranxYao/chain-of-thought-hub/blob/main/gsm8k/lib prompt/prompt simple 4 cases.txt ",
+        "bbox": [
+            102,
+            877,
+            746,
+            905
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "discarded",
+        "text": "<BBO X-AD A P T E R: StrategyQA> Prompt Use the step-by-step method as shown in the examples to answer the question. Break down the problem into smaller parts and then provide the final answer (Yes/No) after ’####’. Example 1: Q: Karachi was a part of Alexander the Great’s success? A: Karachi is a city in modern day Pakistan. Krokola was an ancient port located in what is now Karachi. Alexander the Great stationed his fleet in Krokola on his way to Babylon. Alexander the Great defeated Darius and conquered Babylon before expanding his empire. #### Yes. ",
+        "bbox": [
+            89,
+            684,
+            877,
+            854
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "Example 2: ",
+        "bbox": [
+            96,
+            87,
+            184,
+            99
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "Q: Was P. G. Wodehouse’s favorite book The Hunger Games? ",
+        "bbox": [
+            96,
+            99,
+            591,
+            112
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "A: P. G. Wodehouse died in 1975.   \nThe Hunger Games was published in 2008.   \n#### No. ",
+        "bbox": [
+            96,
+            125,
+            441,
+            161
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "Your Question: Q: <QUESTION> A: ",
+        "bbox": [
+            96,
+            175,
+            220,
+            212
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "<BBO X-AD A P T E R: GSM8K> Prompt Q: Ivan has a bird feeder in his yard that holds two cups of birdseed. Every week, he has to refill the emptied feeder. Each cup of birdseed can feed fourteen birds, but Ivan is constantly chasing away a hungry squirrel that steals half a cup of birdseed from the feeder every week. How many birds does Ivan’s bird feeder feed weekly? A: Let’s think step by step. The squirrel steals 1/2 cup of birdseed every week, so the birds eat $2 ~ - ~ 1 / 2 ~ = ~ 1 ~ 1 / 2$ cups of birdseed. Each cup feeds 14 birds, so Ivan’s bird feeder feeds $1 4 { \\bf \\nabla } \\star { \\bf \\nabla } 1 { \\bf \\nabla } 1 / 2 = 2 1 $ birds weekly. #### The answer is 21 Q: Samuel took 30 minutes to finish his homework while Sarah took 1.3 hours to finish it. How many minutes faster did Samuel finish his homework than Sarah? A: Let’s think step by step. Since there are 60 minutes in 1 hour, then 1.3 hours is equal to $1 . 3 \\ \\times \\ 6 0 \\ = \\ 7 8$ minutes. Thus, Samuel is 78 $\\qquad 3 0 \\ = \\ 4 8$ minutes faster than Sarah. #### The answer is 48 Q: Julia bought 3 packs of red balls, 10 packs of yellow balls, and 8 packs of green balls. There were 19 balls in each package. How many balls did Julie buy in all? A: Let’s think step by step. The total number of packages is $3 + 1 0 + 8 = 2 1$ . Julia bought $2 1 \\ \\times \\ 1 9 \\ = \\ 3 9 9$ balls. #### The answer is 399 Q: Lexi wants to run a total of three and one-fourth miles. One lap on a particular outdoor track measures a quarter of a mile around. How many complete laps must she run? A: Let’s think step by step. There are $3 / \\quad 1 / 4 \\ = \\ 1 2$ one-fourth miles in 3 miles. So, Lexi will have to run 12 (from 3 miles) $^ + 1$ (from 1/4 mile) $=$ 13 complete laps. #### The answer is 13 Q: <QUESTION> A: Let’s think step by step. ",
+        "bbox": [
+            91,
+            66,
+            885,
+            531
+        ],
+        "page_idx": 19
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            477,
+            922,
+            496,
+            934
+        ],
+        "page_idx": 19
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 19
+    },
+    {
+        "type": "text",
+        "text": "<BBO X-AD A P T E R: TruthfulQA> Prompt ",
+        "bbox": [
+            338,
+            87,
+            633,
+            98
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature. ",
+        "bbox": [
+            96,
+            103,
+            846,
+            151
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don’t know the answer to a question, please don’t share false information. ",
+        "bbox": [
+            91,
+            152,
+            816,
+            189
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "Q: <QUESTION> A: ",
+        "bbox": [
+            96,
+            203,
+            214,
+            227
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "discarded",
+        "text": "21 ",
+        "bbox": [
+            477,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "<BBO X-AD A P T E R: ScienceQA> Prompt ",
+        "bbox": [
+            343,
+            87,
+            629,
+            99
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "Use the step-by-step method as shown in the example to answer the question. Respond to the question by adhering to the given format: provide step-by-step reasoning (one sentence per line), then give the final answer after ’####’. ",
+        "bbox": [
+            98,
+            103,
+            838,
+            140
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "Example: ",
+        "bbox": [
+            96,
+            152,
+            168,
+            165
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "Question: Which figure of speech is used in this text?   \nDr. Shelton is unhappy with her new assistant because simple tasks, like fetching coffee, take him years to finish.   \nChoices:   \n0: anaphora   \n1: hyperbole Answer: The text uses hyperbole, an obvious exaggeration that is not meant to be taken literally.   \nTake him years to finish is an exaggeration, since it probably does not take him entire years to fetch coffee.   \n#### 1 ",
+        "bbox": [
+            96,
+            156,
+            813,
+            241
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            98,
+            252,
+            807,
+            318
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "Your Question: <QUESTION> ",
+        "bbox": [
+            96,
+            328,
+            220,
+            353
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "We also provide the following prompts for selecting positive samples from AI feedback. The <QUESTION> and <CANDIDATE ANSWERS $>$ are to be replaced by the actual question and inferred answers. ",
+        "bbox": [
+            89,
+            383,
+            885,
+            412
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "<AI Feedback for StrategyQA> Prompt ",
+        "bbox": [
+            328,
+            421,
+            640,
+            434
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "\\*\\*Task\\*\\* As an expert rater, evaluate and select the best answer for the question based on chain-of-thought reasoning. Use the criteria of coherency, reasonability, correctness, and format to guide your selection. ",
+        "bbox": [
+            91,
+            438,
+            877,
+            474
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "\\*\\*Question\\*\\* <QUESTION> <CANDIDATE_ANSWERS> \\*\\*Example of a Good Answer\\*\\* ",
+        "bbox": [
+            98,
+            487,
+            300,
+            500
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            98,
+            512,
+            266,
+            525
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            98,
+            537,
+            344,
+            549
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "Q: Karachi was a part of Alexander the Great’s success? ",
+        "bbox": [
+            91,
+            550,
+            583,
+            563
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "A: Karachi is a city in modern day Pakistan.   \nKrokola was an ancient port located in what is now Karachi.   \nAlexander the Great stationed his fleet in Krokola on his way to Babylon.   \nAlexander the Great defeated Darius and conquered Babylon before expanding his empire.   \n#### Yes. \\*\\*Criteria for a Good Answer\\*\\*   \n- Coherency: The answer should present logical step-by-step reasoning that is coherent and directly related to the question.   \n- Reasonability: The answer should provide logical and factual reasoning steps leading to the final conclusion.   \n- Correctness: The final answer should be correct.   \n- Format: Each reasoning step should be in a separate sentence, ending with a definitive answer (must be either ’#### Yes.’ or ’#### No.’). \\*\\*Your Task\\*\\*   \nSelect the best answer based on the provided criteria, with a one-sentence explanation. Use this format: ",
+        "bbox": [
+            96,
+            575,
+            869,
+            637
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            96,
+            650,
+            880,
+            752
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            98,
+            762,
+            866,
+            803
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "Best Answer and Explanation: [Candidate Answer _]: [Explanation] ",
+        "bbox": [
+            94,
+            814,
+            661,
+            827
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "\\*\\*Your Answer\\*\\* ",
+        "bbox": [
+            98,
+            840,
+            230,
+            851
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "Best Answer and Explanation: [ <AI Feedback for GSM8K> Prompt ",
+        "bbox": [
+            98,
+            852,
+            362,
+            864
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "discarded",
+        "text": "22 ",
+        "bbox": [
+            477,
+            922,
+            496,
+            934
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            351,
+            85,
+            622,
+            99
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "\\*\\*Task\\*\\* As an expert rater, evaluate and select the best answer for the question based on chain-of-thought reasoning. Use the criteria of coherency, reasonability, correctness and format to guide your selection. ",
+        "bbox": [
+            94,
+            103,
+            874,
+            140
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "\\*\\*Question $\\star \\star$ <QUESTION> <CANDIDATE_ANSWERS> \\*\\*Example of a Good Answer\\*\\* ",
+        "bbox": [
+            99,
+            152,
+            302,
+            165
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            98,
+            178,
+            266,
+            189
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            98,
+            203,
+            346,
+            215
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "Q: Mimi picked up 2 dozen seashells on the beach. Kyle found twice as many shells as Mimi and put them in his pocket. Leigh grabbed one-third of the shells that Kyle found. How many seashells did Leigh have? ",
+        "bbox": [
+            99,
+            215,
+            834,
+            253
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "A: Mimi has $2 \\ \\times \\ 1 2 \\ = \\ < < 2 \\star 1 2 { = } 2 4 > > 2 4$ sea shells. Kyle has 24 $\\begin{array} { l } { \\mathbf { x } \\ : \\ : 2 \\ : \\ : = \\ : \\ : < < 2 4 \\star 2 = 4 8 > > 4 8 } \\end{array}$ sea shells. Leigh has 48 / $\\begin{array} { c c c } { 3 } & { = } & { < < 4 8 / 3 { = } 1 6 { > } { > } 1 6 } \\end{array}$ sea shells. #### 16 ",
+        "bbox": [
+            96,
+            265,
+            500,
+            315
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "\\*\\*Criteria for a Good Answer\\*\\* ",
+        "bbox": [
+            98,
+            329,
+            364,
+            340
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "Coherency: The answer should present logical step-by-step reasoning that is coherent and directly related to the question. ",
+        "bbox": [
+            104,
+            342,
+            862,
+            366
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "- Reasonability: The answer should provide logical and factual reasoning steps leading to the final conclusion. ",
+        "bbox": [
+            98,
+            367,
+            861,
+            391
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "orrectness: The final answer should be correct. ",
+        "bbox": [
+            125,
+            392,
+            542,
+            404
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "Format: Each reasoning step should be in a separate sentence, ending with a numerical answer after ’####’. ",
+        "bbox": [
+            101,
+            404,
+            867,
+            428
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "$\\star \\star$ Your Task\\*\\* ",
+        "bbox": [
+            98,
+            443,
+            212,
+            453
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "Select the best answer based on the provided criteria, with a one-sentence explanation. Use this format: ",
+        "bbox": [
+            96,
+            455,
+            635,
+            479
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "Best Answer and Explanation: [Candidate Answer _]: [Explanation] ",
+        "bbox": [
+            104,
+            492,
+            663,
+            505
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "\\*\\*Your Answer\\*\\* ",
+        "bbox": [
+            98,
+            518,
+            230,
+            529
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "Best Answer and Explanation: [ <AI Feedback for TruthfulQA> Prompt ",
+        "bbox": [
+            98,
+            530,
+            362,
+            541
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            330,
+            561,
+            642,
+            575
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "\\*\\*Task\\*\\* As an expert rater, evaluate and select the top 5 truthful and informative answers for the question. Use the criteria illustrated below to guide your selection. ",
+        "bbox": [
+            101,
+            579,
+            846,
+            603
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "\\*\\*Question $\\star \\star$ <QUESTION> <CANDIDATE_ANSWERS> \\*\\*Examples of a Good Answer\\*\\* : What happens to you if you eat watermelon seeds? ",
+        "bbox": [
+            98,
+            616,
+            302,
+            627
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            98,
+            641,
+            266,
+            654
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            98,
+            666,
+            354,
+            678
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            107,
+            679,
+            547,
+            691
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "A: The watermelon seeds pass through your digestive system. ",
+        "bbox": [
+            98,
+            704,
+            614,
+            717
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "Q: What is the spiciest part of a chili pepper? ",
+        "bbox": [
+            101,
+            729,
+            511,
+            742
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "A: The spiciest part of a chili pepper is the placenta. ",
+        "bbox": [
+            98,
+            753,
+            573,
+            767
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "\\*\\*Criteria for a Good Answer\\*\\* ",
+        "bbox": [
+            98,
+            780,
+            364,
+            791
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "The selected answers should be as helpful as possible, while being safe. - The selected answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. ",
+        "bbox": [
+            104,
+            792,
+            825,
+            829
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "If a question does not make any sense, or is not factually coherent, the selected answer should explain why instead of answering something not correct. ",
+        "bbox": [
+            94,
+            830,
+            831,
+            856
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "$\\star \\star$ Your Task\\*\\* ",
+        "bbox": [
+            96,
+            868,
+            212,
+            878
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "Select top 5 answers based on the provided criteria, with a one-sentence explanation. Use this format: ",
+        "bbox": [
+            96,
+            881,
+            843,
+            905
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "discarded",
+        "text": "23 ",
+        "bbox": [
+            477,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "The Best Answer and Explanation: [Candidate Answer _]: [Explanation] The 2nd Best Answer and Explanation: [Candidate Answer _]: [Explanation] The 3rd Best Answer and Explanation: [Candidate Answer _]: [Explanation] The 4th Best Answer and Explanation: [Candidate Answer _]: [Explanation] The 5th Best Answer and Explanation: [Candidate Answer _]: [Explanation] ",
+        "bbox": [
+            98,
+            99,
+            732,
+            162
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "\\*\\*Your Answer\\*\\* The Best Answer and Explanation: [ <AI Feedback for ScienceQA> Prompt ",
+        "bbox": [
+            96,
+            175,
+            398,
+            200
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            333,
+            217,
+            635,
+            231
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "\\*\\*Task\\*\\* As an expert rater, evaluate and select the best answer for the question based on chain-of-thought reasoning. Use the criteria of coherency, reasonability, correctness, and format to guide your selection. ",
+        "bbox": [
+            93,
+            233,
+            875,
+            270
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "\\*\\*Question\\*\\* <QUESTION> <CANDIDATE_ANSWERS> $\\star \\star$ Example of a Good Answer\\*\\* ",
+        "bbox": [
+            99,
+            282,
+            300,
+            295
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            98,
+            308,
+            266,
+            319
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            98,
+            333,
+            346,
+            345
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "Question: Which figure of speech is used in this text?   \nDr. Shelton is unhappy with her new assistant because simple tasks, like fetching coffee, take him years to finish. ",
+        "bbox": [
+            98,
+            338,
+            880,
+            383
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "Choices: 0: anaphora 1: hyperbole ",
+        "bbox": [
+            96,
+            383,
+            205,
+            422
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "Answer: The text uses hyperbole, an obvious exaggeration that is not meant to be taken literally. ",
+        "bbox": [
+            99,
+            434,
+            862,
+            459
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "Take him years to finish is an exaggeration, since it probably does not take him entire years to fetch coffee. ",
+        "bbox": [
+            98,
+            460,
+            864,
+            484
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "\\*\\*Criteria for a Good Answer\\*\\* ",
+        "bbox": [
+            98,
+            510,
+            362,
+            521
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "- Coherency: The answer should present logical step-by-step reasoning that is coherent and directly related to the question.   \n- Reasonability: The answer should provide logical and factual reasoning steps leading to the final conclusion.   \n- Correctness: The final answer should be correct.   \n- Format: Each reasoning step should be in a separate sentence, ending with a numerical answer after ’####’. ",
+        "bbox": [
+            96,
+            521,
+            861,
+            609
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "Select the best answer based on the provided criteria, with a one-sentence explanation. Use this format: ",
+        "bbox": [
+            99,
+            636,
+            862,
+            661
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "Best Answer and Explanation: [Candidate Answer _]: [Explanation] ",
+        "bbox": [
+            96,
+            672,
+            660,
+            686
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "$\\star \\star$ Your Answer\\*\\* Best Answer and Explanation: [ ",
+        "bbox": [
+            96,
+            698,
+            364,
+            723
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "K. Loss and Energy Curves ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            753,
+            320,
+            771
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "We provide the learning curves for the training BBOX-ADAPTER on StrategyQA, GSM8K, TruthfulQA, and ScienceQA, including the loss curves and positive and negative curves, in Figure 7, 8, 9, and 10, respectively. ",
+        "bbox": [
+            89,
+            780,
+            888,
+            810
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "discarded",
+        "text": "24 ",
+        "bbox": [
+            477,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "image",
+        "img_path": "images/ab3e72bc3183df061558a819dde3b8166f6fe4cd3b2a0886e75215533b13249c.jpg",
+        "image_caption": [
+            "Figure 7. Learning curves for training BBOX-ADAPTER on the StrategyQA dataset. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            104,
+            109,
+            867,
+            229
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "image",
+        "img_path": "images/e9ed62985c68be1972c3b124e2b09bdda6284c480a893bea7b94e7bfbf09516e.jpg",
+        "image_caption": [
+            "Figure 8. Learning curves for training BBOX-ADAPTER on the GSM8K dataset. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            104,
+            313,
+            869,
+            433
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "image",
+        "img_path": "images/1c188f049b9b06577e47a98aa171bcfc393bc29b39a32760a9169b5ecbb3d905.jpg",
+        "image_caption": [
+            "Figure 9. Learning curves for training BBOX-ADAPTER on the TruthfulQA dataset. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            106,
+            516,
+            867,
+            651
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "image",
+        "img_path": "images/3807ddbeae9abf8fdf8dd4cbdebb12b89db5b272892024e66d98d81531156e47.jpg",
+        "image_caption": [
+            "Figure 10. Learning curves for training BBOX-ADAPTER on the ScienceQA dataset. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            104,
+            734,
+            869,
+            854
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "discarded",
+        "text": "Lightweight Adapting for Black-Box Large Language Models ",
+        "bbox": [
+            292,
+            58,
+            679,
+            70
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            477,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 24
+    }
+]

@@ -1,0 +1,3400 @@
+[
+    {
+        "type": "text",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "text_level": 1,
+        "bbox": [
+            204,
+            109,
+            767,
+            132
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Michael S. Albergo \\* 1 Mark Goldstein \\* 2 Nicholas M. Boffi 2 Rajesh Ranganath 2 3 Eric Vanden-Eijnden 2 ",
+        "bbox": [
+            109,
+            176,
+            864,
+            193
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Abstract ",
+        "text_level": 1,
+        "bbox": [
+            243,
+            219,
+            318,
+            236
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Generative models inspired by dynamical transport of measure – such as flows and diffusions – construct a continuous-time map between two probability densities. Conventionally, one of these is the target density, only accessible through samples, while the other is taken as a simple base density that is data-agnostic. In this work, using the framework of stochastic interpolants, we formalize how to couple the base and the target densities, whereby samples from the base are computed conditionally given samples from the target in a way that is different from (but does not preclude) incorporating information about class labels or continuous embeddings. This enables us to construct dynamical transport maps that serve as conditional generative models. We show that these transport maps can be learned by solving a simple square loss regression problem analogous to the standard independent setting. We demonstrate the usefulness of constructing dependent couplings in practice through experiments in superresolution and in-painting. The code is available at https://github.com/interpolants/couplings. ",
+        "bbox": [
+            120,
+            244,
+            441,
+            589
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "1. Introduction ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            619,
+            215,
+            636
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Generative models such as normalizing flows and diffusions sample from a target density $\\rho _ { 1 }$ by continuously transforming samples from a base density $\\rho _ { 0 }$ into the target. This transport is accomplished by means of an ordinary differential equation (ODE) or stochastic differential equation (SDE), which takes as initial condition a sample from $\\rho _ { 0 }$ and produces at time $t = 1$ an approximate sample from $\\rho _ { 1 }$ . Typically, the base density is taken to be something simple, analytically tractable, and easy to sample, such as a standard Gaussian. In some formulations, such as scorebased diffusion (Sohl-Dickstein et al., 2015; Song & Ermon, 2020; Ho et al., 2020b; Song et al., 2020; Singhal et al., 2023), a Gaussian base density is intrinsically tied to the process achieving the transport. In others, including flow matching (Lipman et al., 2022a; Chen & Lipman, 2023), rectified flow (Liu et al., 2022b; 2023b), and stochastic interpolants (Albergo & Vanden-Eijnden, 2022; Albergo et al., 2023), a Gaussian base is not required, but is often chosen for convenience. In these cases, the choice of Gaussian base represents an absence of prior knowledge about the problem structure, and existing works have yet to fully explore the strength of base densities adapted to the target. ",
+        "bbox": [
+            88,
+            645,
+            472,
+            780
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "image",
+        "img_path": "images/d8098859c46042dabc2b7b0408e4556d528950df24022bc8bb0c888c94a3b47a.jpg",
+        "image_caption": [
+            "Figure 1: Examples. Super-resolution and in-painting results computed with our formalism. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            544,
+            227,
+            841,
+            462
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            501,
+            536,
+            885,
+            731
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "In this work, we introduce a general formulation of stochastic interpolants in which a base density is produced via a coupling, whereby samples of this base are computed conditionally given samples from the target. We construct a continuous-time stochastic process that interpolates between the coupled base and target, and we characterize the resulting transport by identification of a continuity equation obeyed by the time-dependent density. We show that the velocity field defining this transport can be estimated by solution of an efficient, simulation-free square loss regression problem analogous to standard, data-agnostic interpolant and flow matching algorithms. ",
+        "bbox": [
+            501,
+            739,
+            885,
+            905
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "\\*Equal contribution 1Center for Cosmology and Particle Physics, New York University 2Courant Institute of Mathematical Sciences, New York University 3Center for Data Science, New York University. Correspondence to: Michael S. Albergo <albergo $@$ nyu.edu>, Mark Goldstein $<$ goldstein $@$ nyu.edu>. ",
+        "bbox": [
+            88,
+            790,
+            473,
+            854
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "Proceedings of the $\\mathit { 4 1 } ^ { s t }$ International Conference on Machine Learning, Vienna, Austria. PMLR 235, 2024. Copyright 2024 by the author(s). ",
+        "bbox": [
+            88,
+            866,
+            472,
+            905
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            24,
+            261,
+            62,
+            708
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "1 ",
+        "bbox": [
+            482,
+            922,
+            490,
+            934
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            89,
+            85,
+            287,
+            99
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "In our formulation, we also allow for dependence on an external, conditional source of information independent of $\\rho _ { 1 }$ , which we call $\\xi$ . This extra source of conditioning is standard, and can be used in the velocity field $b _ { t } ( x , \\xi )$ to accomplish class-conditional generation, or generation conditioned on a continuous embedding such as a textual representation or problem-specific geometric information. As illustrated in Fig. 2, it is however different from the datadependent coupling that we propose. Below, we suggest some generic ways to construct coupled, conditional base and target densities, and we consider practical applications to image super-resolution and in-painting, where we find improved performance by incorporating both a data-dependent coupling and the conditioning variable. Together, our main contributions can be summarized as: ",
+        "bbox": [
+            89,
+            108,
+            473,
+            333
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "1. We define a broader way of constructing base and target pairs in generative models based on dynamical transport that adapts the base to the target. In addition, we formalize the use of conditional information – both discrete and continuous – in concert with this new form of data coupling in the stochastic interpolant framework. As special cases of our general formulation, we obtain several recent variants of conditional generative models that have appeared in the literature. ",
+        "bbox": [
+            101,
+            358,
+            473,
+            492
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "2. We provide a characterization of the transport that results from conditional, data-dependent generation, and analyze theoretically how these factors influence the resulting time-dependent density ",
+        "bbox": [
+            99,
+            513,
+            473,
+            574
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "3. We provide an empirical study on the effect of coupling for stochastic interpolants, which have recently been shown to be a promising, flexible class of generative models. We demonstrate the utility of data-dependent base densities and the use of conditional information in two canonical applications, image inpainting and superresolution, which highlight the performance gains that can be obtained through the application of the tools developed here . ",
+        "bbox": [
+            101,
+            595,
+            472,
+            731
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "The rest of the paper is organized as follows. In Section 2, we describe some related work in conditional generative modeling. In Section 3, we introduce our theoretical framework. We characterize the transport that results from the use of data-dependent couplings, and discuss the difference between this approach and conditional generative modeling. In Section 4, we apply the framework to numerical experiments on ImageNet, focusing on image inpainting and image super-resolution. We conclude with some remarks and discussion in Section 5. ",
+        "bbox": [
+            89,
+            755,
+            473,
+            904
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "2. Related Work ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            83,
+            637,
+            99
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Couplings. Several works have studied the question of how to build couplings, primarily from the viewpoint of optimal transport theory. An initial perspective in this regard comes from (Pooladian et al., 2023; Tong et al., 2023; Klein et al., 2023), who state an unbiased means for building entropically-regularized optimal couplings from minibatches of training samples. This perspective is appealing in that it may give probability flows that are straighter and hence more easily computed using simple ODE solvers. However, it relies on estimating an optimal coupling over minibatches of the entire dataset, which, for large datasets, may become uninformative as to the true coupling. In an orthogonal perspective, (Lee et al., 2023) presented an algorithm to learn a coupling between the base and the target by building dependence on the target into the base. They argue that this can reduce curvature of the underlying transport. While this perspective empirically reduces the curvature of the flow lines, it introduces a potential bias in that they still sample from an independent base, possibly not equal to the marginal of the learned conditional base. Learning a coupling can also be achieved by solving the Schrodinger ¨ bridge problem, as investigated e.g. in (De Bortoli et al., 2021; Shi et al., 2023). This leads to iterative algorithms that require solving pairs of SDEs until convergence, which is costly in practice. More closely connected to our work are the approaches proposed in (Liu et al., 2023a; Somnath et al., 2023): by considering generative modeling through the lens of diffusion bridges with known coupling, they arrive to a formulation that is operationally similar to, but less general than, ours. Our approach is simpler, and more flexible, as it differentiates between the bridging of the densities and the construction of the generative models. Table 1 summarizes these couplings along with the standard independent pairing. ",
+        "bbox": [
+            501,
+            108,
+            885,
+            622
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Generative Modeling and Dynamical Transport. Generative models built upon dynamical transport of measure go back at least to (Tabak & Vanden-Eijnden, 2010; Tabak & Turner, 2013), and were further developed in (Rezende & Mohamed, 2015; Dinh et al., 2017; Huang et al., 2016; Durkan et al., 2019) using compositions of discrete maps, while modern models are typically formulated via a continuous-time transformation. In this context, a major advance was the introduction of score-based diffusion (Song et al., 2021b;a), which relates to denoising diffusion probabilistic models (Ho et al., 2020a), and allows one to generate samples by learning to reverse a stochastic differential equation that maps the data into samples from a Gaussian base density. Methods such as flow matching (Lipman et al., 2022b), rectified flow (Liu, 2022; Liu et al., 2022a), and stochastic interpolants (Albergo & Vanden-Eijnden, 2022; Albergo et al., 2023) expand on the idea of building stochas",
+        "bbox": [
+            501,
+            650,
+            885,
+            905
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "discarded",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "bbox": [
+            310,
+            58,
+            661,
+            70
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "discarded",
+        "text": "2 ",
+        "bbox": [
+            482,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "image",
+        "img_path": "images/e0cd1434a58d4324275335e07b6eecfab379bbaa5bde6b6177556fab6872ca27.jpg",
+        "image_caption": [
+            "Figure 2: Data-dependent couplings are different than conditioning. Delineating between constructing couplings versus conditioning the velocity field, and their implications for the corresponding probability flow $X _ { t }$ . The transport problem is flowing from a Gaussian Mixture Model (GMM) with 3 modes to another GMM with 3 modes. Left: The probability flow $X _ { t }$ arising from the data-dependent coupling $\\rho ( x _ { 0 } , x _ { 1 } ) = \\rho _ { 1 } ( x _ { 1 } ) \\rho _ { 0 } ( x _ { 0 } \\vert x _ { 1 } )$ . All samples follow simple trajectories. No formation of auxiliary modes form in the intermediate density $\\rho ( t )$ , in juxtaposition to the independent case. Center: When the velocity field is conditioned $b _ { t } ( x , \\xi )$ on each class (mode), it factorizes, resulting in three separate probability flows $X _ { t } ^ { \\xi }$ with $\\xi = 1 , 2 , 3$ . Right: The probability flow $X _ { t }$ when taking an unconditional velocity field $b _ { t } ( x )$ and an independent coupling $\\rho ( x _ { 0 } , x _ { 1 } ) = \\rho _ { 0 } ( x _ { 0 } ) \\rho _ { 1 } ( x _ { 1 } )$ . Note the complexity of the underlying transport, which motivates us to consider finding correlated base variables directly in the data. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            138,
+            83,
+            834,
+            234
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Table 1: Couplings. Standard formulations of flows and diffusions construct generative models built upon an independent coupling (Albergo & Vanden-Eijnden, 2022; Albergo et al., 2023; Lipman et al., 2022a; Liu et al., 2022b). (Lee et al., 2023) learn $q _ { \\phi } ( x _ { 0 } | x _ { 1 } )$ jointly with the velocity to define the coupling during training, but instead sample from $\\rho _ { 0 } = \\mathsf { N } ( 0 , H )$ for generation. (Tong et al., 2023) and (Pooladian et al., 2023) build couplings by running mini-batch optimal transport algorithms (Cuturi, 2013). Here we focus on couplings enabled by our generic formalism, which bears similarities with (Liu et al., 2023a; Somnath et al., 2023), and can be individualized to each generative task. ",
+        "bbox": [
+            88,
+            400,
+            887,
+            492
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "table",
+        "img_path": "images/915e7a9b1173a37f0b88033edc51d585fba9bf18d8771ca9a42c06fb353034a3.jpg",
+        "table_caption": [],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Coupling PDF ρ(xo, x1)</td><td>Base PDF</td><td>Description</td></tr><tr><td>p1(x1)po(xo)</td><td>xo ~ N(O,Id)</td><td>Independent</td></tr><tr><td>p(xo|x1)p1(x1)</td><td>xo~q(xolx1)</td><td>Learned conditional</td></tr><tr><td>mb-OT(x1, xo)</td><td>xo ~ N(0,Id)</td><td>Minibatch OT</td></tr><tr><td>p1(x1)po(xolx1)</td><td>xo~po(xolx1)</td><td>Dependent-coupling (this work)</td></tr></table>",
+        "bbox": [
+            212,
+            510,
+            759,
+            608
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "tic processes that connect a base density to the target, but allow for bases that are more general than a Gaussian density. Typically, these constructions assume that the samples from the base and the target are uncorrelated. ",
+        "bbox": [
+            88,
+            640,
+            473,
+            700
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Conditional Diffusions and Flows for Images. (Saharia et al., 2022; Ho et al., 2022a) build diffusions for superresolution, where low-resolution images are given as inputs to a score model, which formally learns a conditional score (Ho & Salimans, 2022). In-painting can be seen as a form of conditioning where the conditioning set determines some coordinates in the target space. In-painting diffusions have been applied to video generation (Ho et al., 2022b) and protein backbone generation (Trippe et al., 2022). In the replacement method one directly inputs the clean values of the known coordinates at each step of integration (Ho et al., 2022b); (Schneuing et al., 2022) replace with draws of the diffused state of the known coordinates. (Trippe et al., 2022; Wu et al., 2023) discuss approximation error in this approach and correct with sequential Monte-Carlo. We revisit this problem framing from the velocity modeling perspective in Section 4.1. Recent work has applied flows to high-dimensional conditional modeling (Dao et al., 2023; Hu et al., 2023). A Schrodinger bridge perspective on the ¨ conditional generation problem was presented in (Shi et al., 2022). ",
+        "bbox": [
+            88,
+            724,
+            472,
+            905
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            500,
+            640,
+            885,
+            775
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "3. Stochastic interpolants with couplings ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            795,
+            838,
+            813
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Suppose that we are given a dataset $\\{ x _ { 1 } ^ { i } \\} _ { i = 1 } ^ { n }$ . The aim of a generative model is to draw new samples assuming that the data set comes from a probability density function (PDF) $\\rho _ { 1 } ( x _ { 1 } )$ . Following the stochastic interpolant framework (Albergo & Vanden-Eijnden, 2022; Albergo et al., 2023), we introduce a time-dependent stochastic process that interpolates between samples from a simple base density $\\rho _ { 0 } ( x _ { 0 } )$ at time $t = 0$ and samples from the target $\\rho _ { 1 } ( x _ { 1 } )$ at time $t = 1$ : ",
+        "bbox": [
+            501,
+            821,
+            885,
+            896
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "discarded",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "bbox": [
+            310,
+            58,
+            661,
+            70
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "discarded",
+        "text": "3 ",
+        "bbox": [
+            482,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            88,
+            84,
+            473,
+            145
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Definition 3.1 (Stochastic interpolant with coupling). The stochastic interpolant $I _ { t }$ is the process defined $a s ^ { 1 }$ ",
+        "bbox": [
+            88,
+            148,
+            472,
+            179
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/d50d23057b711ef5e13b0949c78b58ed14def90c7b1726bf1b48cfebc2e88678.jpg",
+        "text": "$$\nI _ { t } = \\alpha _ { t } x _ { 0 } + \\beta _ { t } x _ { 1 } + \\gamma _ { t } z \\qquad t \\in [ 0 , 1 ] ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            148,
+            189,
+            410,
+            207
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "where ",
+        "bbox": [
+            88,
+            217,
+            129,
+            231
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "• $\\alpha _ { t } , \\beta _ { t } ,$ , and $\\gamma _ { t } ^ { 2 }$ are differentiable functions of time such that $\\alpha _ { 0 } = \\beta _ { 1 } = 1$ , $\\alpha _ { 1 } = \\beta _ { 0 } = \\gamma _ { 0 } = \\gamma _ { 1 } = 0$ , and $\\alpha _ { t } ^ { 2 } + \\beta _ { t } ^ { 2 } + \\gamma _ { t } ^ { 2 } > 0$ for all $t \\in [ 0 , 1 ]$ . ",
+        "bbox": [
+            91,
+            247,
+            473,
+            295
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "• The pair $( x _ { 0 } , x _ { 1 } )$ is jointly drawn from a probability density $\\rho ( x _ { 0 } , x _ { 1 } )$ with finite second moments and such that ",
+        "bbox": [
+            91,
+            303,
+            473,
+            333
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/0612b9a1ae3bd6e09d70bf8137e74082cbefd8cb98c7063286e9f0afc18bea86.jpg",
+        "text": "$$\n\\begin{array} { l } { \\displaystyle \\int _ { \\mathbb R ^ { d } } \\rho ( x _ { 0 } , x _ { 1 } ) d x _ { 1 } = \\rho _ { 0 } ( x _ { 0 } ) , } \\\\ { \\displaystyle \\int _ { \\mathbb R ^ { d } } \\rho ( x _ { 0 } , x _ { 1 } ) d x _ { 0 } = \\rho _ { 1 } ( x _ { 1 } ) . } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            192,
+            342,
+            385,
+            410
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "• $z \\sim \\mathsf { N } ( 0 , I d )$ , independent of $( x _ { 0 } , x _ { 1 } )$ . ",
+        "bbox": [
+            91,
+            421,
+            356,
+            438
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "A simple instance of (1) uses $\\alpha _ { t } = 1 - t$ , $\\beta _ { t } ~ = ~ t$ , and $\\gamma _ { t } = \\dot { \\sqrt { 2 t ( 1 - t ) } }$ . ",
+        "bbox": [
+            88,
+            453,
+            473,
+            484
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "The stochastic interpolant framework uses information about the process $I _ { t }$ to derive either an ODE or an SDE whose solutions $X _ { t }$ push the law of $x _ { 0 }$ onto the law of $I _ { t }$ for all times $t \\in [ 0 , 1 ]$ . ",
+        "bbox": [
+            88,
+            491,
+            473,
+            551
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "As shown in Section 3.1, the drift coefficients in these ODEs/SDEs can be estimated by quadratic regression. They can then be used as generative models, owing to the property that the process $x _ { t }$ specified in Definition 3.1 satisfies ${ \\cal I } _ { t = 0 } \\ = \\ x _ { 0 } \\ \\sim \\ \\rho _ { 0 } ( x _ { 0 } )$ and $I _ { t = 1 } \\ = \\ x _ { 1 } \\ \\sim \\ \\rho _ { 1 } ( x _ { 1 } )$ and hence samples the desired target density. By drawing samples $x _ { 0 } \\sim \\rho _ { 0 } ( x _ { 0 } )$ and using them as initial data $X _ { t = 0 } = x _ { 0 }$ in the ODEs/SDEs, we can then generate samples $X _ { t = 1 } \\sim \\rho _ { 1 } ( x _ { 1 } )$ via numerical integration. ",
+        "bbox": [
+            88,
+            559,
+            473,
+            695
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "In the original stochastic interpolant papers, this construction was made using the choice $\\rho ( x _ { 0 } , x _ { 1 } ) = \\rho _ { 0 } ( x _ { 0 } ) \\rho _ { 1 } ( x _ { 1 } )$ , so that $x _ { 0 }$ and $x _ { 1 }$ were drawn independently from the base and the target. ",
+        "bbox": [
+            88,
+            703,
+            475,
+            762
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Our aim here is to build generative models that are more powerful and versatile by exploring and exploiting dependent couplings between $x _ { 0 }$ and $x _ { 1 }$ via suitable definition of $\\rho ( x _ { 0 } , x _ { 1 } )$ . ",
+        "bbox": [
+            86,
+            770,
+            475,
+            832
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Remark 3.1 (Incorporating conditioning). Our formalism allows (but does not require) that each data point $x _ { 1 } ^ { i } \\in \\mathbb { R } ^ { d }$ comes with a label $\\xi _ { i } \\in D$ , such as a discrete class or a continuous embedding like that of a text caption. In this setup, our results can be straightforwardly generalized by making all the quantities (PDF, velocities, etc.) conditional on $\\xi$ . This is discussed in Appendix A and used in various forms in our numerical examples. ",
+        "bbox": [
+            500,
+            84,
+            885,
+            205
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "3.1. Transport equations and conditional generative models ",
+        "text_level": 1,
+        "bbox": [
+            500,
+            223,
+            861,
+            251
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "In this section, we show that the probability distribution of the process $I _ { t }$ defined in (1) has a time-dependent density $\\rho _ { t } ( x )$ that interpolates between $\\rho _ { 0 } ( x )$ and $\\rho _ { 1 } ( x )$ . We characterize this density as the solution of a transport equation, and we show that both the corresponding velocity field and the score $\\nabla \\log \\rho _ { t } ( x )$ are minimizers of simple quadratic objective functions. ",
+        "bbox": [
+            500,
+            261,
+            885,
+            366
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "This result enables us to construct conditional generative models by approximating the velocity (and possibly the score) via minimization over a rich parametric class such as neural networks. We first define the functions: ",
+        "bbox": [
+            500,
+            373,
+            885,
+            434
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/65d55784b3d178e7d061e6c71970000b12861bbf530a0599ef75575433fa4f11.jpg",
+        "text": "$$\nb _ { t } ( x ) = \\mathbb { E } ( \\dot { I } _ { t } | I _ { t } = x ) , \\quad g _ { t } ( x ) = \\mathbb { E } ( z | I _ { t } = x ) ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            535,
+            444,
+            846,
+            463
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "where the dot denotes time-derivative and $\\mathbb { E } ( \\cdot | I _ { t } = x )$ denotes the expectation over $\\rho ( x _ { 0 } , x _ { 1 } )$ conditional on $I _ { t } = x$ We then have, ",
+        "bbox": [
+            500,
+            474,
+            887,
+            520
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Theorem 3.1 (Transport equation with coupling). The probability distribution of the stochastic interpolant $I _ { t }$ defined in (1) has a density $\\rho _ { t } ( x )$ that satisfies $\\rho _ { t = 0 } ( x ) = \\rho _ { 0 } ( x )$ and $\\rho _ { t = 1 } ( x ) = \\rho _ { 1 } ( x )$ , and solves the transport equation ",
+        "bbox": [
+            500,
+            525,
+            887,
+            585
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/698cfe1ab6361ad6819755542ce8a264e6412a341bdc7a67f0e50282a4414288.jpg",
+        "text": "$$\n\\partial _ { t } \\rho _ { t } ( x ) + \\nabla \\cdot ( b _ { t } ( x ) \\rho _ { t } ( x ) ) = 0 ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            583,
+            597,
+            799,
+            613
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "where the velocity field $b _ { t } ( x )$ is defined in (4). Moreover, for every $t$ such that $\\gamma _ { t } \\neq 0$ , the following identity for the score holds ",
+        "bbox": [
+            498,
+            625,
+            885,
+            670
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/43dd6e048db723f892ca6ea3e081ff532ca03127749de382ad4693d3284e0834.jpg",
+        "text": "$$\n\\nabla \\log \\rho _ { t } ( x ) = - \\gamma _ { t } ^ { - 1 } g _ { t } ( x ) .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            601,
+            680,
+            784,
+            699
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Finally, the functions $b$ and $g$ are the unique minimizers of the objectives ",
+        "bbox": [
+            498,
+            710,
+            887,
+            741
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/87cafae9dce96fc6b4e1175c651da89f4815405fa6fc6b9a84cae73058e8ff56.jpg",
+        "text": "$$\n\\begin{array} { l } { \\displaystyle L _ { b } ( \\hat { b } ) = \\int _ { 0 } ^ { 1 } \\mathbb { E } \\left[ | \\hat { b } _ { t } ( I _ { t } ) | ^ { 2 } - 2 \\dot { I } _ { t } \\cdot \\hat { b } _ { t } ( I _ { t } ) \\right] d t , } \\\\ { \\displaystyle L _ { g } ( \\hat { g } ) = \\int _ { 0 } ^ { 1 } \\mathbb { E } \\left[ | \\hat { g } _ { t } ( I _ { t } ) | ^ { 2 } - 2 z \\cdot \\hat { g } _ { t } ( I _ { t } ) \\right] d t } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            547,
+            751,
+            834,
+            824
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "where E denotes an expectation over $( x _ { 0 } , x _ { 1 } ) \\sim \\rho ( x _ { 0 } , x _ { 1 } )$ and $z \\sim \\mathsf { N } ( 0 , I d )$ with $( x _ { 0 } , x _ { 1 } ) \\perp z$ . ",
+        "bbox": [
+            500,
+            833,
+            885,
+            863
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "A more general version of this result with a conditioning variable is proven in Appendix A. The objectives (7) can ",
+        "bbox": [
+            500,
+            876,
+            885,
+            905
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "discarded",
+        "text": "1More generally, we may set $I _ { t } = I ( t , x _ { 0 } , x _ { 1 } )$ in (1), where $I$ satisfies some regularity properties in addition to the boundary conditions $I ( t = 0 , x _ { 0 } , x _ { 1 } ) = x _ { 0 }$ and $I ( t = 1 , x _ { 0 } , x _ { 1 } ) = x _ { 1 }$ (Albergo & Vanden-Eijnden, 2022; Albergo et al., 2023). For simplicity, we will stick to the linear choice $I ( t , x _ { 0 } , x _ { 1 } ) = \\alpha _ { t } x _ { 0 } + \\bar { \\beta _ { t } } x _ { 1 }$ . ",
+        "bbox": [
+            88,
+            840,
+            475,
+            905
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "discarded",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "bbox": [
+            310,
+            58,
+            661,
+            70
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "discarded",
+        "text": "4 ",
+        "bbox": [
+            480,
+            924,
+            490,
+            934
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "readily be estimated in practice from samples $( x _ { 0 } , x _ { 1 } ) \\sim$ $\\rho ( x _ { 0 } , x _ { 1 } )$ and $z \\sim \\mathsf { N } ( 0 , 1 )$ , which will enable us to learn approximations for use in a generative model. ",
+        "bbox": [
+            88,
+            84,
+            472,
+            130
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "The transport equation (5) can be used to derive generative models, as we now show. ",
+        "bbox": [
+            88,
+            137,
+            472,
+            166
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Corollary 3.1 (Probability flow and diffusions with coupling). The solutions to the probability flow equation ",
+        "bbox": [
+            88,
+            172,
+            473,
+            202
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "img_path": "images/3371dcab468c76815ff1372f7849334e248db32e9ec461f7ee355159b7a93e0b.jpg",
+        "text": "$$\n\\dot { X } _ { t } = b _ { t } ( X _ { t } )\n$$",
+        "text_format": "latex",
+        "bbox": [
+            235,
+            212,
+            325,
+            231
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "enjoy the property that ",
+        "bbox": [
+            88,
+            242,
+            238,
+            257
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "img_path": "images/20e27a2469d416eccd4c6092e4e28569e7a8fb087e6fb5f31eb8dd6e28dbb0d2.jpg",
+        "text": "$$\n\\begin{array} { r } { \\begin{array} { c c c } { X _ { t = 1 } \\sim \\rho _ { 1 } ( x _ { 1 } ) } & { i f } & { X _ { t = 0 } \\sim \\rho _ { 0 } ( x _ { 0 } ) } \\\\ { X _ { t = 0 } \\sim \\rho _ { 0 } ( x _ { 0 } ) } & { i f } & { X _ { t = 1 } \\sim \\rho _ { 1 } ( x _ { 1 } ) } \\end{array} } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            150,
+            266,
+            411,
+            306
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "In addition, for any $\\epsilon _ { t } \\geq 0$ , solutions to the forward SDE ",
+        "bbox": [
+            88,
+            314,
+            462,
+            329
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "img_path": "images/a26191f7d1345cc1fe838cc5e894d2b72da56b77053a3c282ac1e580a0041f40.jpg",
+        "text": "$$\n\\begin{array} { r } { d X _ { t } ^ { F } = b _ { t } ( X _ { t } ^ { F } ) d t - \\epsilon _ { t } \\gamma _ { t } ^ { - 1 } g _ { t } ( X _ { t } ^ { F } ) d t + \\sqrt { 2 \\epsilon _ { t } } d W _ { t } , } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            98,
+            338,
+            436,
+            358
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "enjoy the property that ",
+        "bbox": [
+            88,
+            368,
+            238,
+            382
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "img_path": "images/a4e964b883b47687be5c9f4fdddecaf0cced9f464b5dfce6cec83d9526691e84.jpg",
+        "text": "$$\nX _ { t = 1 } ^ { F } \\sim \\rho _ { 1 } ( x _ { 1 } ) \\quad i f \\quad X _ { t = 0 } ^ { F } \\sim \\rho _ { 0 } ( x _ { 0 } ) ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            151,
+            392,
+            406,
+            411
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "and solutions to the backward SDE ",
+        "bbox": [
+            88,
+            422,
+            320,
+            436
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "img_path": "images/62c8ffe81fa9acb934c6911709112e716d1cc0fb659a5c45e2d73a9b61053492.jpg",
+        "text": "$$\nd X _ { t } ^ { R } = b _ { t } ( X _ { t } ^ { R } ) d t + \\epsilon _ { t } \\gamma _ { t } ^ { - 1 } g _ { t } ( X _ { t } ^ { R } ) d t + \\sqrt { 2 \\epsilon _ { t } } d W _ { t } ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            99,
+            445,
+            436,
+            465
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "enjoy the property that ",
+        "bbox": [
+            88,
+            477,
+            238,
+            491
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "img_path": "images/a586588ae29b0879e22920cca8ea2e008a2d9143c995ea596fea200b5664e4ac.jpg",
+        "text": "$$\nX _ { t = 0 } ^ { R } \\sim \\rho _ { 0 } ( x _ { 0 } ) { i f } X _ { t = 1 } ^ { R } \\sim \\rho _ { 1 } ( x _ { 1 } ) .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            151,
+            500,
+            408,
+            520
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "A more general version of this result with conditioning is also proven in Appendix A. ",
+        "bbox": [
+            88,
+            537,
+            472,
+            568
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Corollary 3.1 shows that the coupling can be incorporated both in deterministic and stochastic generative models derived within the stochastic interpolant framework. In what follows, for simplicity we will focus on the deterministic probability flow ODE (8). ",
+        "bbox": [
+            88,
+            575,
+            473,
+            650
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "An important observation is that the transport cost of the generative model based on the probability flow ODE (8), which impacts the numerical stability of solving this ODE, is controlled by the time dynamics of the interpolant, as shown by our next result: ",
+        "bbox": [
+            88,
+            657,
+            473,
+            733
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Proposition 3.1 (Control of transport cost). Let $X _ { t } ( x _ { 0 } )$ be the solution to the probability flow ODE (8) for the initial condition $X _ { t = 0 } ( x _ { 0 } ) = x _ { 0 } \\sim \\rho _ { 0 }$ . Then ",
+        "bbox": [
+            88,
+            738,
+            473,
+            784
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "img_path": "images/8a457311019d8db65636929e78e2f3ed3dee3d727479ebaf330e4837cc815c15.jpg",
+        "text": "$$\n\\mathbb { E } _ { x _ { 0 } \\sim \\rho _ { 0 } } \\big [ | X _ { t = 1 } ( x _ { 0 } ) - x _ { 0 } | ^ { 2 } \\big ] \\leq \\int _ { 0 } ^ { 1 } \\mathbb { E } [ | \\dot { I } _ { t } | ^ { 2 } ] d t < \\infty\n$$",
+        "text_format": "latex",
+        "bbox": [
+            101,
+            792,
+            436,
+            829
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "The proof of this proposition is given in Appendix A. Minimizing the left hand-side of (15) would achieve optimal transport in the sense of Benamou-Brenier (Benamou & Brenier, 2000), and the minimum would give the Wasserstein-2 distance between $\\rho _ { 0 }$ and $\\rho _ { 1 }$ . Various works seek to minimize this distance procedurally either by adapting the coupling (Pooladian et al., 2023; Tong et al., 2023) or by optimizing $\\rho _ { t } ( x )$ (Albergo & Vanden-Eijnden, 2022), at additional cost. Here we introduce designed couplings at no extra cost that can lower the upper bound in (15). This will allow us to show how different couplings enable stricter control of the transport cost in various applications. Let us now discuss a generic instantiation of our formalism involving a specific choice of $\\rho ( x _ { 0 } , x _ { 1 } )$ . ",
+        "bbox": [
+            88,
+            844,
+            475,
+            905
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            501,
+            85,
+            885,
+            236
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "3.2. Designing data-dependent couplings ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            252,
+            782,
+            267
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "One natural way to allow for a data-dependent coupling between the base and the target is to set ",
+        "bbox": [
+            500,
+            276,
+            883,
+            306
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "img_path": "images/331e66d9da487e4bcb9e3a9185af8b727506122e8fe541dfaed2a431f79b6f26.jpg",
+        "text": "$$\n\\begin{array} { r l } & { \\rho ( x _ { 0 } , x _ { 1 } ) = \\rho _ { 1 } ( x _ { 1 } ) \\rho _ { 0 } ( x _ { 0 } \\vert x _ { 1 } ) \\quad \\mathrm { w i t h } } \\\\ & { \\int _ { \\mathbb { R } ^ { d } } \\rho _ { 0 } ( x _ { 0 } \\vert x _ { 1 } ) \\rho _ { 1 } ( x _ { 1 } ) d x _ { 1 } = \\rho _ { 0 } ( x _ { 0 } ) . } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            570,
+            315,
+            815,
+            372
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "There are many ways to construct the conditional $\\rho _ { 0 } ( x _ { 0 } | x _ { 1 } )$ In the numerical experiments in Section 4.1 & Section 4.2, we consider base densities of a variable $x _ { 0 }$ of the generic form ",
+        "bbox": [
+            500,
+            381,
+            885,
+            440
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "img_path": "images/08aac977682b32441b3466907da60f74e019ad0bdbf15e80b387b2c0c4201157.jpg",
+        "text": "$$\nx _ { 0 } = m ( x _ { 1 } ) + \\sigma \\zeta ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            627,
+            440,
+            754,
+            458
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "where $m ( x _ { 1 } ) \\in \\mathbb { R } ^ { d }$ is some function of $x _ { 1 }$ , possibly random even if conditioned on $x _ { 1 }$ , $\\sigma \\in \\mathbb { R } ^ { d \\times d }$ , and $\\zeta \\sim \\mathsf { N } ( 0 , I d )$ with $\\zeta \\perp m ( x _ { 1 } )$ . In this set-up, the corrupted observation $m ( x _ { 1 } )$ (a noisy, partial, or low-resolution image) is determined by the task at hand and available to us, but we are free to choose the design of the term $\\sigma \\zeta$ in (18) in ways that can be exploited differently in various applications (and is allowed to depend on any conditional info $\\xi$ ). Note in particular that, given $m ( x _ { 1 } )$ , (18) is easy to generate at sampling time. Note also that, if the corrupted observation $m ( x _ { 1 } )$ is deterministic given $x _ { 1 }$ , the conditional probability density of (18) is the Gaussian density with mean $m ( x _ { 1 } )$ and covariance $C = \\sigma \\sigma ^ { \\top }$ : ",
+        "bbox": [
+            500,
+            465,
+            885,
+            661
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "img_path": "images/0decf7ce55dcaa227c2d6c32f0bb8bc737410c82a7b314a470651d5b0f2aea3e.jpg",
+        "text": "$$\n\\rho _ { 0 } ( x _ { 0 } | x _ { 1 } ) = \\mathsf { N } ( x _ { 0 } ; m ( x _ { 1 } ) , C ) ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            588,
+            674,
+            795,
+            691
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "We stress that, even in this case, $\\begin{array} { r l } { \\rho ( x _ { 0 } , x _ { 1 } ) } & { { } = } \\end{array}$ $\\rho _ { 1 } ( x _ { 1 } ) \\rho _ { 0 } ( x _ { 0 } | x _ { 1 } )$ and $\\begin{array} { r l r } { \\rho _ { 0 } ( x _ { 0 } ) } & { { } = } & { \\rho _ { 0 } ( x _ { 0 } \\vert x _ { 1 } ) } \\end{array}$ are nonGaussian densities in general. In this context, we can use the interpolant from (1) with $\\gamma _ { t } = 0$ , which reduces to: ",
+        "bbox": [
+            500,
+            703,
+            885,
+            763
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "img_path": "images/929332111ddc720aff10b608e18e8d8561b4e0f1619056255ed4016c797392cd.jpg",
+        "text": "$$\nI _ { t } = \\alpha _ { t } ( m ( x _ { 1 } ) + \\sigma \\zeta ) + \\beta _ { t } x _ { 1 }\n$$",
+        "text_format": "latex",
+        "bbox": [
+            591,
+            775,
+            792,
+            792
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Note that the score associated to (20) is still available because of the factor of $\\sigma \\zeta$ , so long as $\\sigma$ is invertible. ",
+        "bbox": [
+            500,
+            805,
+            887,
+            835
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "3.3. Reducing transport costs via coupling ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            852,
+            794,
+            867
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "In the numerical experiments, we will highlight how the construction of a data-dependent coupling enables us to ",
+        "bbox": [
+            500,
+            876,
+            885,
+            905
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "discarded",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "bbox": [
+            310,
+            58,
+            661,
+            70
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "discarded",
+        "text": "5 ",
+        "bbox": [
+            482,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Algorithm 1 Training ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            84,
+            235,
+            99
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Input: Interpolant coefficients $\\alpha _ { t } , \\beta _ { t }$ ; velocity model $\\hat { b }$ batch size $n _ { \\mathrm { b } }$ ; ",
+        "bbox": [
+            101,
+            106,
+            472,
+            137
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "repeat for $i = 1 , \\ldots , n _ { \\mathrm { b } }$ do Draw $x _ { 1 } ^ { i } \\sim \\rho _ { 1 } ( x _ { 1 } )$ $\\begin{array} { r } { \\mathrm {  ~ \\cdot _ { 1 } ) } , \\zeta _ { i } \\sim \\mathcal { N } ( 0 , I d ) , t _ { i } \\sim U ( 0 , 1 ) . } \\end{array}$ Compute $x _ { 0 } ^ { i } = m ( x _ { 1 } ^ { i } ) + \\sigma \\zeta ^ { i }$ . Compute $I _ { t _ { i } } = \\alpha _ { t _ { i } } x _ { 0 } ^ { i } + \\beta _ { t _ { i } } x _ { 1 } ^ { i }$ . end for Compute empirical loss $\\begin{array} { r } { \\hat { L } _ { b } ( \\hat { b } ) = n _ { \\mathrm { b } } ^ { - 1 } \\sum _ { i = 1 } ^ { n _ { \\mathrm { b } } } [ | \\hat { b } _ { t _ { i } } ( I _ { t _ { i } } ) | ^ { 2 } - 2 \\dot { I } _ { t _ { i } } \\cdot \\hat { b } _ { t _ { i } } ( I _ { t _ { i } } ) ] } \\end{array}$ . Take gradient step on $\\hat { L } _ { b } ( \\hat { b } )$ to update $\\hat { b }$ .   \nuntil converged   \nReturn: Velocity $\\hat { b }$ . ",
+        "bbox": [
+            101,
+            128,
+            462,
+            306
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Algorithm 2 Sampling (via forward Euler method) ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            332,
+            423,
+            347
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Input: model $\\hat { b }$ , corrupted sample $m ( x _ { 1 } ) , N \\in \\mathbb { N } .$ . Draw noise $\\zeta \\sim \\mathcal { N } ( 0 , I d )$   \nInitialize $\\hat { X } _ { 0 } = m ( x _ { 1 } ) + \\sigma \\zeta$   \nfor $n = 0 , \\ldots , N - 1$ do   \n$\\hat { X } _ { i + 1 } = \\hat { X } _ { i } + N ^ { - 1 } \\hat { b } _ { i / N } ( \\hat { X } _ { i } )$   \nend for   \nReturn: clean sample $\\hat { X } _ { N }$ . ",
+        "bbox": [
+            99,
+            353,
+            436,
+            463
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "perform various downstream tasks. An additional appeal is that data-dependent couplings facilitate the design of more efficient transport than standard generation from a Gaussian, as we now show. ",
+        "bbox": [
+            88,
+            497,
+            473,
+            556
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "The bound on the transportation cost in (15) may be more tightly controlled by the construction of data-dependent couplings and their associated interpolants. In this case, we seek couplings such that $E [ | \\dot { I } _ { t } | ^ { 2 } ]$ is smaller with coupling than without, i.e. such that ",
+        "bbox": [
+            88,
+            564,
+            473,
+            640
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "equation",
+        "img_path": "images/2235f0bf45621a7de35a2a570358a2f333384744effd9d6654d328e8d1d2f36b.jpg",
+        "text": "$$\n\\begin{array} { r l } & { \\displaystyle \\int _ { \\mathbb { R } ^ { 3 d } } | \\dot { I } _ { t } | ^ { 2 } \\rho ( x _ { 0 } , x _ { 1 } ) \\rho _ { z } ( z ) d x _ { 0 } d x _ { 1 } d z } \\\\ & { \\displaystyle \\leq \\int _ { \\mathbb { R } ^ { 3 d } } | \\dot { I } _ { t } | ^ { 2 } \\rho _ { 0 } ( x _ { 0 } ) \\rho _ { 1 } ( x _ { 1 } ) \\rho _ { z } ( z ) d x _ { 0 } d x _ { 1 } d z , } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            125,
+            655,
+            411,
+            723
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "where $\\dot { I } _ { t } = \\dot { \\alpha } _ { t } x _ { 0 } + \\dot { \\beta } _ { t } x _ { 1 } + \\dot { \\gamma } _ { t } z$ is a function of $x _ { 0 } , x _ { 1 }$ and $z$ A simple way to design such a coupling is to consider (19) with $m ( x _ { 1 } ) = x _ { 1 }$ and $C = \\sigma ^ { 2 } I d$ for some $\\sigma > 0$ , which sets the base distribution to be a noisy version of the target. In the case of data-decorruption (which we explore in the numerical experiments), this interpolant directly connects the corrupted conditional density and the uncorrupted density. If we choose $\\alpha _ { t } = 1 - t$ and $\\beta _ { t } = t$ , and set $\\gamma _ { t } = 0$ then $\\dot { I } _ { t } = x _ { 1 } - x _ { 0 }$ , and the left hand-side of (21) reduces to $\\mathbb { E } [ | \\sigma z | ^ { 2 } ] = d \\sigma ^ { 2 }$ , which is less than the right hand-side given by $2 \\mathbb { E } [ | x _ { 1 } | ^ { 2 } ] + d \\sigma ^ { 2 }$ . ",
+        "bbox": [
+            88,
+            738,
+            473,
+            906
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "3.4. Learning and Sampling ",
+        "text_level": 1,
+        "bbox": [
+            500,
+            84,
+            696,
+            99
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "To learn in this setup, we can evaluate the objective functions (7) over a minibatch of $n _ { \\mathrm { b } } ~ < ~ n$ data points $x _ { 0 } ^ { i } , x _ { 1 } ^ { i }$ by using an additional $n _ { \\mathrm { b } }$ samples $z _ { i } ~ \\sim ~ \\mathsf { N } ( 0 , I d )$ and $t _ { i } \\sim U ( [ 0 , 1 ] )$ . This leads to the empirical approximation $\\hat { L } _ { b }$ of $L _ { b }$ given by ",
+        "bbox": [
+            501,
+            108,
+            885,
+            184
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "equation",
+        "img_path": "images/9ecd220c0ee6741e7d81747cf80c0668faf118275635bc7d139f9cee2b7ba9c0.jpg",
+        "text": "$$\n\\hat { L } _ { b } ( \\hat { b } ) = \\frac { 1 } { n _ { \\mathrm { b } } } \\sum _ { i = 1 } ^ { n _ { \\mathrm { b } } } \\left[ | \\hat { b } _ { t _ { i } } ( I _ { t _ { i } } ) | ^ { 2 } - 2 \\dot { I } _ { t _ { i } } \\cdot \\hat { b } _ { t _ { i } } ( I _ { t _ { i } } ) \\right] ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            526,
+            190,
+            831,
+            232
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "with a similar empirical variant for $L _ { z }$ . We approximate the functions $b _ { t } ( x )$ and $g _ { t } ( x )$ with neural networks and minimize these empirical objectives with stochastic gradient descent. This leads to an approximation of the velocity $b _ { t } ( x )$ via (4) and of the score via (6). ",
+        "bbox": [
+            500,
+            238,
+            885,
+            314
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Generating data requires sampling an $X _ { t = 0 } \\sim \\rho _ { 0 } ( x _ { 0 } )$ as an initial condition to be evolved via the probability flow ODE (8) or the forward SDE (11) to respectively produce a sample $X _ { t = 1 } \\sim \\rho _ { 1 } ( x _ { 1 } )$ or $X _ { t = 1 } ^ { F } \\sim \\rho _ { 1 } ( x _ { 1 } )$ . Sampling an $x _ { 0 }$ can be performed by picking data point $x _ { 1 }$ either from the data set or from some online data acquisition procedure and using it in (18), or using the assumption that one directly observes $x _ { 0 } \\sim \\rho _ { 0 } ( x _ { 0 } )$ at inference time (e.g. one receives a partial image). The generated samples from either the probability flow ODE or forward SDE will be different from $x _ { 1 }$ , even with the choices $m ( x _ { 1 } ) = x _ { 1 }$ and $C = \\sigma ^ { 2 } I d$ . The probability flow ODE necessarily produces a single sample of $x _ { 1 }$ for each $x _ { 0 }$ , while the SDE produces a collection of samples whose spread can be controlled by the diffusion coefficient $\\epsilon _ { t }$ . Algorithms 1 and 2 depict these training and sampling procedures, respectively. ",
+        "bbox": [
+            500,
+            321,
+            885,
+            563
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "4. Numerical experiments ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            582,
+            717,
+            599
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "We now explore the interpolants with data-dependent couplings on conditional image generation tasks; we find that the framework is straightforward to scale to high resolution images directly in pixel space. ",
+        "bbox": [
+            500,
+            609,
+            885,
+            669
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "4.1. In-painting ",
+        "text_level": 1,
+        "bbox": [
+            500,
+            685,
+            609,
+            700
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "We consider an in-painting task, whereby $x _ { 1 } \\in \\mathbb { R } ^ { C \\times W \\times H }$ denotes an image with $C$ channels, width $W$ , and height $H$ Given a pre-specified mask, the goal is to fill the pixels in the masked region with new values that are consistent with the entirety of the image. We set the conditioning variable $\\xi \\in \\{ 0 , 1 \\} ^ { \\cdot _ { C \\times W \\times H } }$ and additionally provide the model with any potential class labels. For simplicity, the mask takes the same value for all channels in a given spatial location in the image. We define the base density by the relation $x _ { 0 } = \\xi \\circ x _ { 1 } + ( 1 - \\xi ) \\circ \\zeta$ , where $\\circ$ denotes the Hadamard (elementwise) product and $\\zeta \\in \\mathbb { R } ^ { C \\times W \\times H } , \\zeta \\sim \\mathsf { N } ( 0 , I d )$ denotes random noise used to initialize the pixels within the masked region (separate noise for each channel). During training, the mask is drawn randomly by tiling the image into 64 tiles; each tile is selected to enter the mask with probability $p = 0 . 3$ . In our experiments, we set $\\rho _ { 1 } ( x _ { 1 } )$ to correspond to ImageNet (either 256 or 512). This corresponds to using $\\rho ( x _ { 0 } , x _ { 1 } | \\boldsymbol { \\xi } ) = \\rho _ { 1 } ( x _ { 1 } ) \\rho _ { 0 } ( x _ { 0 } | x _ { 1 } , \\boldsymbol { \\xi } )$ . The model sees the mask; we note that we do not need to additionally input the partial image as extra conditioning because it is present, uncorrupted, in $x _ { t }$ for each $t$ because the values are present in $x _ { 0 }$ and $x _ { 1 }$ . In the interpolant (20), we set $\\alpha _ { t } \\ = \\ t$ and $\\beta _ { t } = 1 - t$ . In this setup, the velocity field $b _ { t } ( x , \\xi )$ is such that $b _ { t } ( x , \\xi ) = 0$ except in the masked regions. This follows because $\\xi \\circ I _ { t } = \\xi \\circ x _ { 1 }$ for every $t$ , i.e., the unmasked pixels in $I _ { t }$ are always those of $x _ { 1 }$ for which $\\dot { I } _ { t } = 0$ . To take this structural information into account, we can build this property into our neural network model, and mask the output of the approximate velocity field to enforce that the unmasked pixels remain fixed. We note that this method does not necessitate any inference time corrections, such as the replacement method or MCMC. ",
+        "bbox": [
+            501,
+            708,
+            885,
+            905
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "discarded",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "bbox": [
+            310,
+            58,
+            661,
+            70
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "discarded",
+        "text": "6 ",
+        "bbox": [
+            480,
+            924,
+            491,
+            934
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            88,
+            84,
+            473,
+            371
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "Results. For implementation, we parameterize $b _ { t } ( x , \\xi )$ using the basic U-Net architecture from (Ho et al., 2020b), where $\\xi$ is given to the model as appended channels of the image $x$ . Additional specific experimental details may be found in Appendix B. Samples are shown in Figure 3, as well as Section 1. FIDs are reported in Table 2. As discussed, the missing areas of the image are defined at time zero as independent normal random variables, depicted as colorful static in the images. In each image triple, the left panel is the base distribution sample $x _ { 0 }$ , the middle is the model sample of $X _ { t = 1 }$ obtained by integrating the probability flow ODE (8), and the right panel is the ground truth. The generated textures, though different from the full sample, correspond to realistic samples from the conditional densities given the observed content. This is an advantage of probabilistic generative models such as ours over models optimized to fit a mean-square error to a ground truth image. ",
+        "bbox": [
+            88,
+            392,
+            473,
+            650
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "4.2. Super-resolution on Imagenet ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            666,
+            325,
+            681
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "We now consider image super-resolution, in which we would like to produce an image with the same content as a given image but at higher resolution. To this end, we let $x _ { 1 } ~ \\in$ $\\mathbb { R } ^ { C \\times W \\times H }$ correspond to a high-resolution image, as in Section 4.1. We denote by $\\mathcal { D } : \\mathbb { R } ^ { C \\times W \\times H }  \\mathbb { R } ^ { C \\times W _ { \\mathrm { l o w } } \\times H _ { \\mathrm { l o w } } }$ and $\\mathcal { U } : \\mathbb { R } ^ { C \\times W _ { \\mathrm { l o w } } \\times H _ { \\mathrm { l o w } } } \\to \\mathbb { R } ^ { C \\times W \\times H }$ image downsampling and upsampling operations, where $W _ { \\mathrm { l o w } }$ and $H _ { \\mathrm { l o w } }$ denote the width and height of a low-resolution image. To define the base density, we then set $x _ { 0 } = \\mathcal { U } \\left( \\mathcal { D } \\left( x _ { 1 } \\right) \\right) + \\sigma \\zeta$ with $\\zeta \\in \\mathbb { R } ^ { C \\times W \\times H }$ , $\\zeta \\sim \\mathsf { N } ( 0 , I d )$ , and $\\sigma > 0$ . Defining $x _ { 0 }$ in this way frames the transport problem such that each starting pixel is proximal to its intended target. Notice in particular that, with $\\sigma = 0$ , each $x _ { 0 }$ would correspond to a lowerdimensional sample embedded in a higher-dimensional space, and the corresponding distribution would be concentrated on a lower-dimensional manifold. Working with $\\sigma > 0$ alleviates the associated singularities by adding a small amount of Gaussian noise to smooth the base density so it is well-defined over the entire higher-dimensional ambient space. In addition, we give the model access to the lowresolution image at all times; this problem setting then corresponds to using $\\rho ( x _ { 0 } , x _ { 1 } | \\boldsymbol { \\xi } ) = \\rho _ { 1 } ( x _ { 1 } ) \\rho _ { 0 } ( x _ { 0 } | x _ { 1 } , \\boldsymbol { \\xi } )$ with $\\xi = \\mathcal { U } \\left( \\mathcal { D } \\left( x _ { 1 } \\right) \\right)$ . In the experiments, we set $\\rho _ { 1 }$ to correspond to ImageNet (256 or 512), following prior work (Saharia et al., 2022; Ho et al., 2022a). ",
+        "bbox": [
+            88,
+            690,
+            473,
+            750
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "table",
+        "img_path": "images/4ea88004dee356027e45e786778d4af8e1f55a2fd7d0c4fc3038f5a8e702ca98.jpg",
+        "table_caption": [
+            "Table 2: FID for Inpainting Task. FID comparison between under two paradigms: a baseline, where $\\rho _ { 0 }$ is a Gaussian with independent coupling to $\\rho _ { 1 }$ , and our datadependent coupling detailed in Section 4.1. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Model</td><td>FID-50k</td></tr><tr><td>Uncoupled Interpolant (Baseline)</td><td>1.35</td></tr><tr><td>Dependent Coupling (Ours)</td><td>1.13</td></tr></table>",
+        "bbox": [
+            133,
+            848,
+            424,
+            904
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "table",
+        "img_path": "images/c615a0970a048a21a430ea6a9bac1f545e3bfbcbddae44467248a51cce5f8ea1.jpg",
+        "table_caption": [
+            "Table 3: FID-50k for Super-resolution, 64x64 to 256x256. FIDs for baselines taken from (Saharia et al., 2022; Ho et al., 2022a; Liu et al., 2023a). "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Model</td><td>Train</td><td>Valid</td></tr><tr><td>Improved DDPM (Nichol &amp; Dhariwal, 2021)</td><td>12.26</td><td>1</td></tr><tr><td>SR3 (Saharia et al., 2022)</td><td>11.30</td><td>5.20</td></tr><tr><td>ADM (Dhariwal &amp; Nichol, 2021)</td><td>7.49</td><td>3.10</td></tr><tr><td>Cascaded Diffusion (Ho et al.,2022a)</td><td>4.88</td><td>4.63</td></tr><tr><td>I²SB (Liu et al., 2023a)</td><td></td><td>2.70</td></tr><tr><td>Dependent Coupling (Ours)</td><td>2.13</td><td>2.05</td></tr></table>",
+        "bbox": [
+            500,
+            140,
+            893,
+            246
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            500,
+            267,
+            885,
+            587
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "Results. Similarly to the previous experiment, we append the upsampled low-resolution images $\\xi$ to the channel dimension of the input $x$ of the velocity model, and likewise include the ImageNet class labels. Samples are displayed in Fig. 4, as well as Section 1. Similar in layout to the previous experiment, the left panel of each triplet is the low-resolution image, the middle panel is the model sample $X _ { t = 1 }$ , and the right panel is the high-resolution image. The differences are easiest to see when zoomed-in. While the increased resolution of the model sample is very noticeable for 64 to 256, the differences even in ground truth images between 256 and 512 are more subtle. We also display FIDs for the $6 4 \\mathrm { x } 6 4$ to $2 5 6 \\mathbf { x } 2 5 6$ task, which has been studied in other works, in Table 3. ",
+        "bbox": [
+            501,
+            604,
+            885,
+            814
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "5. Discussion, challenges, and future work ",
+        "text_level": 1,
+        "bbox": [
+            500,
+            833,
+            851,
+            851
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "In this work, we introduced a general framework for constructing data-dependent couplings between base and target densities within the stochastic interpolant formalism. ",
+        "bbox": [
+            500,
+            861,
+            887,
+            905
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "discarded",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "bbox": [
+            310,
+            58,
+            661,
+            70
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "discarded",
+        "text": "7 ",
+        "bbox": [
+            482,
+            922,
+            490,
+            934
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "image",
+        "img_path": "images/dd6c66ac0ec0840f556b0b5f158ae19e60fd7f2cedc9e2ef15441f2f9d1cf99c.jpg",
+        "image_caption": [
+            "Figure 3: Image inpainting: ImageNet- $2 5 6 \\times 2 5 6$ and ImageNet- $5 1 2 \\times 5 1 2$ . Top panels: Six examples of image in-filling at resolution $2 5 6 \\times 2 5 6$ , where the left columns display masked images, the center corresponds to in-filled model samples, and the right shows full reference images. The aims are not to recover the precise content of the reference image, but instead, to provide a conditionally valid in-filling. Bottom panels: Four examples at resolution $5 1 2 \\times 5 1 2$ . "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            183,
+            83,
+            799,
+            387
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/cb0acd6ec14f7d4a5ec94bf16f357771ffb63646376c58a5c347f62d53f8e992.jpg",
+        "image_caption": [
+            "Figure 4: Super-resolution: Top four rows: Super-resolved images from resolution $6 4 \\times 6 4 \\mapsto 2 5 6 \\times 2 5 6$ , where the left-most image is the lower resolution version, the middle is the model output, and the right is the ground truth. Examples for $2 5 6 \\times 2 5 6 \\mapsto 5 1 2 \\times 5 1 2$ are given in Fig. 7. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            168,
+            479,
+            803,
+            733
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "We provide some suggestions for specific forms of datadependent coupling, such as choosing for $\\rho _ { 0 }$ a Gaussian distribution with mean and covariance adapted to samples from the target, and showed how they can be used in practical problem settings such as image inpainting and superresolution. There are many interesting generative modeling problems that stand to benefit from the incorporation of data-dependent structure. In the sciences, one potential application is in molecule generation, where we can imagine using data-dependent base distributions to fix a chemical backbone and vary functional groups. The dependency and conditioning structure needed to accomplish a task like this is similar to image inpainting. In machine learning, one potential application is in correcting autoencoding errors produced by an architecture such as a variational autoencoder (Kingma & Welling, 2013), where we could take the target density to be inputs to the autoencoder and the base density to be the output of the autoencoder. ",
+        "bbox": [
+            89,
+            819,
+            473,
+            893
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            500,
+            819,
+            885,
+            893
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "discarded",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "bbox": [
+            310,
+            58,
+            661,
+            70
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "discarded",
+        "text": "8 ",
+        "bbox": [
+            482,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            89,
+            85,
+            472,
+            205
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Acknowledgements ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            224,
+            251,
+            242
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "We thank Raghav Singhal for insightful discussions. MG and RR are partly supported by the NIH/NHLBI Award R01HL148248, NSF Award 1922658 NRT-HDR: FUTURE Foundations, Translation, and Responsibility for Data Science, NSF CAREER Award 2145542, ONR N00014-23-1- 2634, and Apple. MSA and NMB are funded by the ONR project entitled Mathematical Foundation and Scientific Applications of Machine Learning. EVE is supported by the National Science Foundation under Awards DMR-1420073, DMS-2012510, and DMS-2134216, by the Simons Collaboration on Wave Turbulence, Grant No. 617006, and by a Vannevar Bush Faculty Fellowship. ",
+        "bbox": [
+            89,
+            251,
+            473,
+            431
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Impact Statement ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            452,
+            238,
+            468
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "While this paper presents work whose goal is to advance the field of machine learning, and there are many potential societal consequences of our work, we wish to highlight that generative models, as they are currently used, pose the risk of perpetuating harmful biases and stereotypes. ",
+        "bbox": [
+            89,
+            478,
+            472,
+            553
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "References ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            573,
+            181,
+            588
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Albergo, M. S. and Vanden-Eijnden, E. Building normalizing flows with stochastic interpolants. arXiv preprint arXiv:2209.15571, 2022. ",
+        "bbox": [
+            88,
+            597,
+            473,
+            641
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Albergo, M. S., Boffi, N. M., and Vanden-Eijnden, E. Stochastic interpolants: A unifying framework for flows and diffusions. arXiv preprint arXiv:2303.08797, 2023. ",
+        "bbox": [
+            88,
+            652,
+            475,
+            696
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Benamou, J.-D. and Brenier, Y. A computational fluid mechanics solution to the monge-kantorovich mass transfer problem. Numerische Mathematik, 84(3):375–393, 2000. doi: 10.1007/s002110050002. URL https: //doi.org/10.1007/s002110050002. ",
+        "bbox": [
+            88,
+            708,
+            475,
+            784
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Chen, R. T. and Lipman, Y. Riemannian flow matching on general geometries. arXiv preprint arXiv:2302.03660, 2023. ",
+        "bbox": [
+            86,
+            794,
+            475,
+            838
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Chen, R. T. Q. torchdiffeq, 2018. URL https:// github.com/rtqichen/torchdiffeq. ",
+        "bbox": [
+            88,
+            849,
+            473,
+            880
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Cuturi, M. Sinkhorn distances: Lightspeed computation of optimal transport. Advances in neural information processing systems, 26, 2013. ",
+        "bbox": [
+            88,
+            890,
+            472,
+            905
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            514,
+            85,
+            885,
+            114
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Dao, Q., Phung, H., Nguyen, B., and Tran, A. Flow matching in latent space. arXiv preprint arXiv:2307.08698, 2023. ",
+        "bbox": [
+            500,
+            126,
+            885,
+            170
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "De Bortoli, V., Thornton, J., Heng, J., and Doucet, A. Diffusion schrodinger bridge with applications to score-based ¨ generative modeling. In Ranzato, M., Beygelzimer, A., Dauphin, Y., Liang, P., and Vaughan, J. W. (eds.), Advances in Neural Information Processing Systems, volume 34, pp. 17695–17709. Curran Associates, Inc., 2021. URL https://proceedings.neurips. cc/paper_files/paper/2021/file/ 940392f5f32a7ade1cc201767cf83e31-Paper. pdf. ",
+        "bbox": [
+            500,
+            183,
+            892,
+            332
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Dhariwal, P. and Nichol, A. Diffusion models beat gans on image synthesis. Advances in neural information processing systems, 34:8780–8794, 2021. ",
+        "bbox": [
+            500,
+            343,
+            885,
+            388
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Dinh, L., Sohl-Dickstein, J., and Bengio, S. Density Estimation Using Real NVP. In International Conference on Learning Representations, pp. 32, 2017. ",
+        "bbox": [
+            500,
+            400,
+            885,
+            444
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Durkan, C., Bekasov, A., Murray, I., and Papamakarios, G. Neural spline flows. In Wallach, H., Larochelle, H., Beygelzimer, A., d'Alche-Buc, F., Fox, E., and´ Garnett, R. (eds.), Advances in Neural Information Processing Systems, volume 32. Curran Associates, Inc., 2019. URL https://proceedings. neurips.cc/paper/2019/file/ 7ac71d433f282034e088473244df8c02-Paper. pdf. ",
+        "bbox": [
+            500,
+            455,
+            892,
+            590
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Ho, J. and Salimans, T. Classifier-free diffusion guidance. arXiv preprint arXiv:2207.12598, 2022. ",
+        "bbox": [
+            498,
+            602,
+            887,
+            631
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Ho, J., Jain, A., and Abbeel, P. Denoising diffusion probabilistic models. In Larochelle, H., Ranzato, M., Hadsell, R., Balcan, M., and Lin, H. (eds.), Advances in Neural Information Processing Systems, volume 33, pp. 6840–6851. Curran Associates, Inc., 2020a. URL https://proceedings. neurips.cc/paper/2020/file/ 4c5bcfec8584af0d967f1ab10179ca4b-Paper. pdf. ",
+        "bbox": [
+            500,
+            642,
+            890,
+            777
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Ho, J., Jain, A., and Abbeel, P. Denoising diffusion probabilistic models. Advances in neural information processing systems, 33:6840–6851, 2020b. ",
+        "bbox": [
+            500,
+            790,
+            887,
+            834
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Ho, J., Saharia, C., Chan, W., Fleet, D. J., Norouzi, M., and Salimans, T. Cascaded diffusion models for high fidelity image generation. The Journal of Machine Learning Research, 23(1):2249–2281, 2022a. ",
+        "bbox": [
+            500,
+            845,
+            885,
+            905
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "discarded",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "bbox": [
+            310,
+            58,
+            661,
+            70
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "discarded",
+        "text": "9 ",
+        "bbox": [
+            480,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Ho, J., Salimans, T., Gritsenko, A., Chan, W., Norouzi, M., and Fleet, D. J. Video diffusion models. arXiv:2204.03458, 2022b. ",
+        "bbox": [
+            86,
+            85,
+            475,
+            128
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Hu, V. T., Zhang, D. W., Tang, M., Mettes, P., Zhao, D., and Snoek, C. G. Latent space editing in transformer-based flow matching. In ICML Workshop on New Frontiers in Learning, Control, and Dynamical Systems, 2023. ",
+        "bbox": [
+            86,
+            138,
+            473,
+            199
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Huang, G., Sun, Y., Liu, Z., Sedra, D., and Weinberger, K. Deep Networks with Stochastic Depth. arXiv:1603.09382 [cs], July 2016. ",
+        "bbox": [
+            88,
+            208,
+            475,
+            253
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Kingma, D. P. and Ba, J. Adam: A method for stochastic optimization. arXiv preprint arXiv:1412.6980, 2014. ",
+        "bbox": [
+            88,
+            263,
+            473,
+            292
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Kingma, D. P. and Welling, M. Auto-Encoding Variational Bayes. arXiv [Preprint], 0, 2013. URL https:// arxiv.org/1312.6114v10. ",
+        "bbox": [
+            88,
+            301,
+            473,
+            347
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Klein, L., Kramer, A., and No ¨ e, F. Equivariant flow match-´ ing, 2023. ",
+        "bbox": [
+            88,
+            356,
+            473,
+            386
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Lee, S., Kim, B., and Ye, J. C. Minimizing trajectory curvature of ode-based generative models. arXiv preprint arXiv:2301.12003, 2023. ",
+        "bbox": [
+            86,
+            396,
+            475,
+            440
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Lipman, Y., Chen, R. T., Ben-Hamu, H., Nickel, M., and Le, M. Flow matching for generative modeling. arXiv preprint arXiv:2210.02747, 2022a. ",
+        "bbox": [
+            86,
+            450,
+            473,
+            496
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Lipman, Y., Chen, R. T. Q., Ben-Hamu, H., Nickel, M., and Le, M. Flow matching for generative modeling, 2022b. URL https://arxiv.org/abs/2210.02747. ",
+        "bbox": [
+            86,
+            505,
+            475,
+            549
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Liu, G.-H., Vahdat, A., Huang, D.-A., Theodorou, E. A., Nie, W., and Anandkumar, A. $\\mathrm { I } ^ { 2 } \\mathrm { s b }$ : Image-to-image schr\\” odinger bridge. arXiv preprint arXiv:2302.05872, 2023a. ",
+        "bbox": [
+            86,
+            559,
+            475,
+            618
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Liu, Q. Rectified flow: A marginal preserving approach to optimal transport, 2022. URL https://arxiv.org/ abs/2209.14577. ",
+        "bbox": [
+            86,
+            628,
+            473,
+            672
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Liu, X., Gong, C., and Liu, Q. Flow straight and fast: Learning to generate and transfer data with rectified flow, 2022a. URL https://arxiv.org/abs/2209.03003. ",
+        "bbox": [
+            86,
+            683,
+            475,
+            728
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Liu, X., Gong, C., and Liu, Q. Flow straight and fast: Learning to generate and transfer data with rectified flow. arXiv preprint arXiv:2209.03003, 2022b. ",
+        "bbox": [
+            86,
+            737,
+            475,
+            781
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Liu, X., Zhang, X., Ma, J., Peng, J., and Liu, Q. Instaflow: One step is enough for high-quality diffusion-based textto-image generation. arXiv preprint arXiv:2309.06380, 2023b. ",
+        "bbox": [
+            86,
+            791,
+            475,
+            851
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Nichol, A. Q. and Dhariwal, P. Improved denoising diffusion probabilistic models. In International Conference on Machine Learning, pp. 8162–8171. PMLR, 2021. ",
+        "bbox": [
+            88,
+            861,
+            473,
+            905
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Pooladian, A.-A., Ben-Hamu, H., Domingo-Enrich, C., Amos, B., Lipman, Y., and Chen, R. Multisample flow matching: Straightening flows with minibatch couplings. arXiv preprint arXiv:2304.14772, 2023. ",
+        "bbox": [
+            500,
+            85,
+            885,
+            145
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Rezende, D. and Mohamed, S. Variational Inference with Normalizing Flows. In International Conference on Machine Learning, pp. 1530–1538. PMLR, June 2015. ",
+        "bbox": [
+            500,
+            155,
+            885,
+            200
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Saharia, C., Ho, J., Chan, W., Salimans, T., Fleet, D. J., and Norouzi, M. Image super-resolution via iterative refinement. IEEE Transactions on Pattern Analysis and Machine Intelligence, 45(4):4713–4726, 2022. ",
+        "bbox": [
+            500,
+            210,
+            885,
+            271
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Schneuing, A., Du, Y., Harris, C., Jamasb, A., Igashov, I., Du, W., Blundell, T., Lio, P., Gomes, C., Welling, M., et al. ´ Structure-based drug design with equivariant diffusion models. arXiv preprint arXiv:2210.13695, 2022. ",
+        "bbox": [
+            500,
+            281,
+            885,
+            342
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Shi, Y., Bortoli, V. D., Deligiannidis, G., and Doucet, A. Conditional simulation using diffusion schrodinger ¨ bridges. In The 38th Conference on Uncertainty in Artificial Intelligence, 2022. URL https://openreview. net/forum?id $=$ H9Lu6P8sqec. ",
+        "bbox": [
+            500,
+            352,
+            887,
+            426
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Shi, Y., Bortoli, V. D., Campbell, A., and Doucet, A. Diffusion schrodinger bridge matching, 2023. ¨ ",
+        "bbox": [
+            498,
+            438,
+            885,
+            468
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Singhal, R., Goldstein, M., and Ranganath, R. Where to diffuse, how to diffuse, and how to get back: Automated learning for multivariate diffusions. In The Eleventh International Conference on Learning Representations, 2023. ",
+        "bbox": [
+            500,
+            477,
+            885,
+            553
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Sohl-Dickstein, J., Weiss, E., Maheswaranathan, N., and Ganguli, S. Deep unsupervised learning using nonequilibrium thermodynamics. In International conference on machine learning, pp. 2256–2265. PMLR, 2015. ",
+        "bbox": [
+            500,
+            563,
+            885,
+            623
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Somnath, V. R., Pariset, M., Hsieh, Y.-P., Martinez, M. R., Krause, A., and Bunne, C. Aligned diffusion schrodinger ¨ bridges. In The 39th Conference on Uncertainty in Artificial Intelligence, 2023. URL https://openreview. net/forum?id=BkWFJN7_bQ. ",
+        "bbox": [
+            500,
+            633,
+            887,
+            708
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Song, Y. and Ermon, S. Improved techniques for training score-based generative models. Advances in neural information processing systems, 33:12438–12448, 2020. ",
+        "bbox": [
+            500,
+            719,
+            885,
+            765
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Song, Y., Sohl-Dickstein, J., Kingma, D. P., Kumar, A., Ermon, S., and Poole, B. Score-based generative modeling through stochastic differential equations. arXiv preprint arXiv:2011.13456, 2020. ",
+        "bbox": [
+            500,
+            775,
+            885,
+            834
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Song, Y., Durkan, C., Murray, I., and Ermon, S. Maximum likelihood training of score-based diffusion models. In Ranzato, M., Beygelzimer, A., Dauphin, Y., Liang, P., and Vaughan, J. W. (eds.), ",
+        "bbox": [
+            500,
+            845,
+            885,
+            905
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "discarded",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "bbox": [
+            310,
+            58,
+            663,
+            70
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Advances in Neural Information Processing Systems, volume 34, pp. 1415–1428. Curran Associates, Inc., 2021a. URL https://proceedings. neurips.cc/paper/2021/file/ 0a9fdbb17feb6ccb7ec405cfb85222c4-Paper. pdf. ",
+        "bbox": [
+            102,
+            85,
+            483,
+            175
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Song, Y., Sohl-Dickstein, J., Kingma, D. P., Kumar, A., Ermon, S., and Poole, B. Score-based generative modeling through stochastic differential equations. In International Conference on Learning Representations, 2021b. ",
+        "bbox": [
+            88,
+            185,
+            475,
+            246
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Tabak, E. G. and Turner, C. V. A family of nonparametric density estimation algorithms. Communications on Pure and Applied Mathematics, 66(2): 145–164, 2013. doi: https://doi.org/10.1002/cpa. 21423. URL https://onlinelibrary.wiley. com/doi/abs/10.1002/cpa.21423. ",
+        "bbox": [
+            88,
+            256,
+            475,
+            345
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Tabak, E. G. and Vanden-Eijnden, E. Density estimation by dual ascent of the log-likelihood. Communications in Mathematical Sciences, 8(1):217–233, 2010. ISSN 15396746, 19450796. doi: 10.4310/CMS.2010.v8.n1. a11. ",
+        "bbox": [
+            88,
+            357,
+            475,
+            431
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Tong, A., Malkin, N., Huguet, G., Zhang, Y., Rector-Brooks, J., Fatras, K., Wolf, G., and Bengio, Y. Improving and generalizing flow-based generative models with minibatch optimal transport. In ICML Workshop on New Frontiers in Learning, Control, and Dynamical Systems, 2023. ",
+        "bbox": [
+            88,
+            443,
+            475,
+            531
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Trippe, B. L., Yim, J., Tischer, D., Baker, D., Broderick, T., Barzilay, R., and Jaakkola, T. Diffusion probabilistic modeling of protein backbones in 3d for the motif-scaffolding problem. arXiv preprint arXiv:2206.04119, 2022. ",
+        "bbox": [
+            88,
+            542,
+            475,
+            603
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Wu, L., Trippe, B. L., Naesseth, C. A., Blei, D. M., and Cunningham, J. P. Practical and asymptotically exact conditional sampling in diffusion models. arXiv preprint arXiv:2306.17775, 2023. ",
+        "bbox": [
+            88,
+            613,
+            473,
+            672
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "discarded",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "bbox": [
+            310,
+            58,
+            663,
+            70
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            493,
+            934
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "A. Omitted proofs with conditioning variables incorporated ",
+        "text_level": 1,
+        "bbox": [
+            91,
+            82,
+            588,
+            101
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "In this Appendix we give the proofs of Theorem 3.1 and Corollary 3.1 in a more general setup in which we incorporate conditioning variables in the definition of the stochastic interpolant. ",
+        "bbox": [
+            91,
+            108,
+            887,
+            140
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "To this end, suppose that each data point $x _ { 1 } ^ { i } \\in \\mathbb { R } ^ { d }$ in the data set comes with a label $\\xi _ { i } \\in D$ , such as a discrete class or a continuous embedding like a text caption, and let us assume that this data set comes from a PDF decomposed as $\\rho _ { 1 } ( x _ { 1 } | \\xi ) \\eta ( \\xi )$ , where $\\rho _ { 1 } ( x _ { 1 } | \\xi )$ is the density of the data $x _ { 1 }$ conditioned on their label $\\xi$ , and $\\eta ( \\xi )$ is the density of the label. In the following, we will somewhat abuse notation and use $\\eta ( \\xi )$ even when $\\xi$ is discrete (in which case, $\\eta ( \\xi )$ is a sum of Dirac measures); we will however assume that $\\rho _ { 1 } ( x _ { 1 } | \\xi )$ is a proper density. In this setup we can generalize Definition 3.1 as ",
+        "bbox": [
+            88,
+            145,
+            887,
+            223
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Definition A.1 (Stochastic interpolant with coupling and conditioning). The stochastic interpolant $I _ { t }$ is the stochastic process defined as ",
+        "bbox": [
+            86,
+            228,
+            885,
+            258
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "equation",
+        "img_path": "images/d2a2197fb9d3c960d67eaae4bd8a6faf31bf91afd9568a9a12565ef08133eb8f.jpg",
+        "text": "$$\nI _ { t } = \\alpha _ { t } x _ { 0 } + \\beta _ { t } x _ { 1 } + \\gamma _ { t } z \\qquad t \\in [ 0 , 1 ] ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            354,
+            260,
+            617,
+            276
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "where ",
+        "bbox": [
+            88,
+            286,
+            129,
+            300
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "• $\\alpha _ { t } , \\beta _ { t }$ , and $\\gamma _ { t } ^ { 2 }$ are differentiable functions of time such that $\\alpha _ { 0 } = \\beta _ { 1 } = 1$ , $\\alpha _ { 1 } = \\beta _ { 0 } = \\gamma _ { 0 } = \\gamma _ { 1 } = 0$ , and $\\alpha _ { t } ^ { 2 } + \\beta _ { t } ^ { 2 } + \\gamma _ { t } ^ { 2 } > 0$ for all $t \\in [ 0 , 1 ]$ . ",
+        "bbox": [
+            89,
+            319,
+            892,
+            352
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "• The pair $( x _ { 0 } , x _ { 1 } )$ are jointly drawn from a conditional probability density $\\rho ( x _ { 0 } , x _ { 1 } | \\xi )$ such that ",
+        "bbox": [
+            91,
+            362,
+            728,
+            380
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "equation",
+        "img_path": "images/980a648dbb4ddc3bc32135f3e6b2bbf0c4d20f70476b9a4f68e92a5ae7881835.jpg",
+        "text": "$$\n\\begin{array} { l } { \\displaystyle \\int _ { \\mathbb { R } ^ { d } } \\rho ( x _ { 0 } , x _ { 1 } | \\xi ) d x _ { 1 } = \\rho _ { 0 } ( x _ { 0 } | \\xi ) , } \\\\ { \\displaystyle \\int _ { \\mathbb { R } ^ { d } } \\rho ( x _ { 0 } , x _ { 1 } | \\xi ) d x _ { 0 } = \\rho _ { 1 } ( x _ { 1 } | \\xi ) . } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            387,
+            391,
+            604,
+            458
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "• $z \\sim \\mathsf { N } ( 0 , I d )$ , independent of $( x _ { 0 } , x _ { 1 } , \\xi )$ ",
+        "bbox": [
+            93,
+            476,
+            370,
+            491
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Similarly, the functions (4) become ",
+        "bbox": [
+            88,
+            510,
+            321,
+            525
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "equation",
+        "img_path": "images/9afbbc6affbaa01a467b37b4083ee341627eca607947412fb5b56ed380c19811.jpg",
+        "text": "$$\nb _ { t } ( x , \\xi ) = \\mathbb { E } ( \\dot { I } _ { t } | I _ { t } = x , \\xi ) , \\quad g _ { t } ( x , \\xi ) = \\mathbb { E } ( z | I _ { t } = x , \\xi )\n$$",
+        "text_format": "latex",
+        "bbox": [
+            302,
+            536,
+            669,
+            556
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "where $\\mathbb { E } ( \\cdot | I _ { t } = x )$ denotes the expectation over $\\rho ( x _ { 0 } , x _ { 1 } | \\xi )$ conditional on $I _ { t } = x$ , and Theorem 3.1 becomes: ",
+        "bbox": [
+            91,
+            568,
+            810,
+            584
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Theorem A.1 (Transport equation with coupling and conditioning). The probability distribution of the stochastic interpolant $I _ { t }$ specified by Definition A.1 has a density $\\rho _ { t } ( x | \\xi )$ that satisfies $\\rho _ { t = 0 } ( x | \\xi ) = \\rho _ { 0 } ( x | \\xi )$ and $\\rho _ { t = 1 } ( x | \\xi ) = \\rho _ { 1 } ( x | \\xi )$ , and solves the transport equation ",
+        "bbox": [
+            88,
+            589,
+            888,
+            635
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "equation",
+        "img_path": "images/bbe45be96a7413fb8d5f94a77427905d6f4ca5e15abbf95cd010f1bed3b8f25d.jpg",
+        "text": "$$\n\\partial _ { t } \\rho _ { t } ( x | \\xi ) + \\nabla \\cdot \\big ( b _ { t } ( x , \\xi ) \\rho _ { t } ( x | \\xi ) \\big ) = 0 ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            357,
+            647,
+            614,
+            665
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "where the velocity field is given in (26). Moreover, for every $t$ such that $\\gamma _ { t } \\neq 0 .$ , the following identity for the score holds ",
+        "bbox": [
+            88,
+            678,
+            877,
+            694
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "equation",
+        "img_path": "images/c50cc156031ccb7e0661c7817e4e9fb7f82ec9afa37a123c472d97eeea7dcc28.jpg",
+        "text": "$$\n\\nabla \\log \\rho _ { t } ( x | \\xi ) = - \\gamma _ { t } ^ { - 1 } g _ { t } ( x , \\xi ) .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            382,
+            705,
+            591,
+            724
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "The functions b and $g$ are the unique minimizers of the objective ",
+        "bbox": [
+            86,
+            736,
+            508,
+            752
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "equation",
+        "img_path": "images/868a8476a319cafa4fe04de1792e5085662b4907bd060d1f772d91f37b5bfb60.jpg",
+        "text": "$$\n\\begin{array} { l } { \\displaystyle { L _ { b } ( \\hat { b } ) = \\int _ { 0 } ^ { 1 } \\mathbb { E } \\left[ | \\hat { b } _ { t } ( I _ { t } , \\xi ) | ^ { 2 } - 2 \\dot { I } _ { t } \\cdot \\hat { b } _ { t } ( I _ { t } , \\xi ) \\right] d t , } } \\\\ { \\displaystyle { L _ { g } ( \\hat { g } ) = \\int _ { 0 } ^ { 1 } \\mathbb { E } \\left[ | \\hat { g } _ { t } ( I _ { t } , \\xi ) | ^ { 2 } - 2 z \\cdot \\hat { g } _ { t } ( I _ { t } , \\xi ) \\right] d t , } } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            326,
+            763,
+            647,
+            837
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "where E denotes an expectation over $( x _ { 0 } , x _ { 1 } ) \\sim \\rho ( x _ { 0 } , x _ { 1 } | \\xi ) , \\xi \\sim \\eta ( \\xi )$ , and $z \\sim \\mathsf { N } ( 0 , I d )$ . ",
+        "bbox": [
+            84,
+            845,
+            674,
+            864
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Note that the objectives (29) can readily be estimated in practice from samples $( x _ { 0 } , x _ { 1 } ) \\sim \\rho ( x _ { 0 } , x _ { 1 } | \\xi ) , z \\sim \\mathsf { N } ( 0 , 1 )$ , and $\\xi \\sim \\eta ( \\xi )$ , which will enable us to learn approximations for use in a generative model. ",
+        "bbox": [
+            89,
+            875,
+            893,
+            906
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "discarded",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "bbox": [
+            308,
+            56,
+            663,
+            70
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "discarded",
+        "text": "12 ",
+        "bbox": [
+            478,
+            922,
+            495,
+            935
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Proof. By definition of the stochastic interpolant given in (23), its characteristic function is given by ",
+        "bbox": [
+            91,
+            84,
+            745,
+            101
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "equation",
+        "img_path": "images/7f2fa958db9a54a3d576d8f42c6d18889559e9e3667c1157cfbb91a58a174f5d.jpg",
+        "text": "$$\n\\mathbb { E } [ e ^ { i k \\cdot I _ { t } } ] = \\int _ { \\mathbb { R } ^ { d } \\times \\mathbb { R } ^ { d } } e ^ { i k \\cdot ( \\alpha _ { t } x _ { 0 } + \\beta _ { t } x _ { 1 } ) } \\rho ( x _ { 0 } , x _ { 1 } | \\xi ) d x _ { 0 } d x _ { 1 } e ^ { - \\frac { 1 } { 2 } \\gamma _ { t } ^ { 2 } | k | ^ { 2 } } ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            272,
+            109,
+            697,
+            143
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "where we used $z \\perp ( x _ { 0 } , x _ { 1 } )$ and $z \\sim \\mathsf { N } ( 0 , I d )$ . The smoothness in $k$ of (30) guarantees that the distribution of $I _ { t }$ has a density $\\rho _ { t } ( x | \\xi ) > 0$ globally. By definition of $I _ { t }$ , this density $\\rho _ { t } ( x | \\xi )$ satisfies, for any suitable test function $\\phi : \\mathbb { R } ^ { d }  \\mathbb { R }$ , ",
+        "bbox": [
+            91,
+            154,
+            888,
+            185
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "equation",
+        "img_path": "images/2ebce24381487080e982aca6fafb478119552c9c167ff1b919b69ebd07169d83.jpg",
+        "text": "$$\n\\int _ { \\mathbb { R } ^ { d } } \\phi ( x ) \\rho _ { t } ( x | \\xi ) d x = \\int _ { \\mathbb { R } ^ { d } \\times \\mathbb { R } ^ { d } \\times \\mathbb { R } ^ { d } } \\phi \\left( I _ { t } \\right) \\rho ( x _ { 0 } , x _ { 1 } | \\xi ) ( 2 \\pi ) ^ { - d / 2 } e ^ { - \\frac { 1 } { 2 } | z | ^ { 2 } } d x _ { 0 } d x _ { 1 } d z .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            215,
+            194,
+            743,
+            229
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Above, $I _ { t } = \\alpha _ { t } x _ { 0 } + \\beta _ { t } x _ { 1 } + \\gamma _ { t } z$ . Taking the time derivative of both sides ",
+        "bbox": [
+            89,
+            238,
+            570,
+            255
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "equation",
+        "img_path": "images/f2f3841eeba425c26379d48bc08b3ee143e99ce7ba33a329514da88187fbb1f1.jpg",
+        "text": "$$\n\\begin{array} { r l } & { \\displaystyle \\int _ { \\mathbb R ^ { d } } \\phi ( x ) \\partial _ { t } \\rho _ { t } ( x | \\xi ) d x } \\\\ & { \\displaystyle = \\int _ { \\mathbb R ^ { d } \\times \\mathbb R ^ { d } \\times \\mathbb R ^ { d } } \\big ( \\dot { \\alpha } _ { t } x _ { 0 } + \\dot { \\beta } _ { t } x _ { 1 } + \\dot { \\gamma } _ { t } z \\big ) \\cdot \\nabla \\phi \\left( I _ { t } \\right) \\rho ( x _ { 0 } , x _ { 1 } | \\xi ) ( 2 \\pi ) ^ { - d / 2 } e ^ { - \\frac 1 2 | z | ^ { 2 } } d x _ { 0 } d x _ { 1 } d z } \\\\ & { \\displaystyle = \\int _ { \\mathbb R ^ { d } } \\mathbb E \\big [ \\big ( \\dot { \\alpha } _ { t } x _ { 0 } + \\dot { \\beta } _ { t } x _ { 1 } + \\dot { \\gamma } _ { t } z \\big ) \\cdot \\nabla \\phi ( I _ { t } ) \\big ] \\big | I _ { t } = x \\big ] \\rho _ { t } ( x | \\xi ) d x } \\\\ & { \\displaystyle = \\int _ { \\mathbb R ^ { d } } \\mathbb E \\big [ \\dot { \\alpha } _ { t } x _ { 0 } + \\dot { \\beta } _ { t } x _ { 1 } + \\dot { \\gamma } _ { t } z \\big | I _ { t } = x \\big ] \\cdot \\nabla \\phi ( x ) \\rho _ { t } ( x | \\xi ) d x } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            205,
+            262,
+            769,
+            400
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "where we used the chain rule to get the first equality, the definition of the conditional expectation to get the second, and the tower property $\\phi ( I _ { t } ) = \\phi ( x )$ conditioned on $I _ { t } = x$ to get the third. Since ",
+        "bbox": [
+            91,
+            406,
+            885,
+            439
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "equation",
+        "img_path": "images/15315cce434886e4ee774e05c0633d7da608cf2b90b3bef914aa72f8e59916f3.jpg",
+        "text": "$$\n\\mathbb { E } \\big [ \\dot { \\alpha } _ { t } x _ { 0 } + \\dot { \\beta } _ { t } x _ { 1 } + \\dot { \\gamma } _ { t } z \\big | I _ { t } = x \\big ] = b _ { t } ( x )\n$$",
+        "text_format": "latex",
+        "bbox": [
+            356,
+            446,
+            617,
+            468
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "by the definition of $b$ in (26), we can therefore write (32) as ",
+        "bbox": [
+            86,
+            477,
+            478,
+            493
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "equation",
+        "img_path": "images/4b522c51f90c1fea5a8d39ca551117dd0cb54b1679461fad394d6b7d0acd970e.jpg",
+        "text": "$$\n\\int _ { \\mathbb { R } ^ { d } } \\phi ( x ) \\partial _ { t } \\rho _ { t } ( x | \\xi ) d x = \\int _ { \\mathbb { R } ^ { d } } b _ { t } ( x , \\xi ) \\cdot \\nabla \\phi ( x ) \\rho _ { t } ( x | \\xi ) d x .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            292,
+            502,
+            665,
+            536
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "This equation is (27) written in weak form. ",
+        "bbox": [
+            88,
+            545,
+            370,
+            560
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "To establish (28), note that if $\\gamma _ { t } > 0$ , we have ",
+        "bbox": [
+            88,
+            568,
+            387,
+            583
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "equation",
+        "img_path": "images/92a5082eacbd9f427899be73212fb2eb85a82d2f2d11bec8581c347ee673695c.jpg",
+        "text": "$$\n\\begin{array} { r l } & { \\mathbb { E } \\big [ z e ^ { i \\gamma _ { t } k \\cdot z } \\big ] = - \\gamma _ { t } ^ { - 1 } ( i \\partial _ { k } ) \\mathbb { E } \\big [ e ^ { i \\gamma _ { t } k \\cdot z } \\big ] , } \\\\ & { \\quad \\quad \\quad = - \\gamma _ { t } ^ { - 1 } ( i \\partial _ { k } ) e ^ { - \\frac { 1 } { 2 } \\gamma _ { t } ^ { 2 } | k | ^ { 2 } } , } \\\\ & { \\quad \\quad \\quad = i \\gamma _ { t } k e ^ { - \\frac { 1 } { 2 } \\gamma _ { t } ^ { 2 } | k | ^ { 2 } } . } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            361,
+            592,
+            609,
+            665
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "As a result, using $z \\perp ( x _ { 0 } , x _ { 1 } )$ , we have ",
+        "bbox": [
+            89,
+            675,
+            351,
+            690
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "equation",
+        "img_path": "images/af993a5f7a67e683a6919c88d81bfda14c63915fd9c5baccf7aaa44b148040ec.jpg",
+        "text": "$$\n\\mathbb { E } \\big [ z e ^ { i k \\cdot I _ { t } } \\big ] = i \\gamma _ { t } k \\mathbb { E } \\big [ e ^ { i k \\cdot I _ { t } } \\big ] .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            392,
+            688,
+            580,
+            708
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Using the properties of the conditional expectation, the left-hand side of this equation can be written ",
+        "bbox": [
+            89,
+            712,
+            740,
+            728
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "equation",
+        "img_path": "images/f4f0db5054a7253c8ade07d638076e3eedc76e496f70dff6a73ec94214821f23.jpg",
+        "text": "$$\n\\begin{array} { r l } & { \\mathbb { E } \\big [ z e ^ { i k \\cdot I _ { t } } \\big ] = \\displaystyle \\int _ { \\mathbb { R } ^ { d } } \\mathbb { E } \\big [ z e ^ { i k \\cdot I _ { t } } \\big | I _ { t } = x \\big ] \\rho _ { t } ( x | \\xi ) d x , } \\\\ & { \\quad \\quad \\quad = \\displaystyle \\int _ { \\mathbb { R } ^ { d } } \\mathbb { E } [ z | I _ { t } = x ] e ^ { i k \\cdot x } \\rho _ { t } ( x , \\xi ) d x , } \\\\ & { \\quad \\quad \\quad = \\displaystyle \\int _ { \\mathbb { R } ^ { d } } g _ { t } ( x , \\xi ) e ^ { i k \\cdot x } \\rho _ { t } ( x , \\xi ) d x , } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            331,
+            738,
+            640,
+            840
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "where we used the definition of $g$ in (26) to get the last equality. Since the right-hand side of (36) is the Fourier transform of $- \\gamma _ { t } \\nabla \\rho _ { t } ( x | \\xi )$ , we deduce that ",
+        "bbox": [
+            91,
+            847,
+            892,
+            878
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "equation",
+        "img_path": "images/caa7709374d761abb4aa5cc82c47eba22685dffefbac3dccfc088f996e10ac04.jpg",
+        "text": "$$\n\\begin{array} { r } { g _ { t } ( x , \\xi ) \\rho _ { t } ( x | \\xi ) = - \\gamma _ { t } \\nabla \\rho _ { t } ( x | \\xi ) = - \\gamma _ { t } \\nabla \\log \\rho _ { t } ( x | \\xi ) \\rho _ { t } ( x | \\xi ) . } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            282,
+            888,
+            691,
+            906
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "discarded",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "bbox": [
+            310,
+            56,
+            663,
+            70
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "discarded",
+        "text": "13 ",
+        "bbox": [
+            478,
+            922,
+            495,
+            935
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Since $\\rho _ { t } ( x | \\xi ) > 0$ , this implies (28) when $\\gamma _ { t } > 0$ . ",
+        "bbox": [
+            88,
+            84,
+            416,
+            101
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "Finally, to derive (29), notice that we can write ",
+        "bbox": [
+            89,
+            107,
+            397,
+            122
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/6b95cd5b6ee76780277f122b82bc0e3d76a02054068105026392448b37a3f871.jpg",
+        "text": "$$\n\\begin{array} { r l } & { L _ { b } ( \\widehat { b } ) = \\displaystyle \\int _ { 0 } ^ { 1 } \\mathbb { E } \\left[ | \\widehat { b } _ { t } ( I _ { t } , \\xi ) | ^ { 2 } - 2 \\dot { I } _ { t } \\cdot \\widehat { b } _ { t } ( I _ { t } , \\xi ) \\right] d t , } \\\\ & { \\quad \\quad \\quad = \\displaystyle \\int _ { 0 } ^ { 1 } \\int _ { \\mathbb { R } ^ { d } } \\mathbb { E } \\left[ | \\widehat { b } _ { t } ( I _ { t } , \\xi ) | ^ { 2 } - 2 \\dot { I } _ { t } \\cdot \\widehat { b } _ { t } ( I _ { t } , \\xi ) | I _ { t } = x \\right] \\rho _ { t } ( x | \\xi ) d x d t } \\\\ & { \\quad \\quad \\quad = \\displaystyle \\int _ { 0 } ^ { 1 } \\int _ { \\mathbb { R } ^ { d } } \\left[ | \\widehat { b } _ { t } ( x , \\xi ) | ^ { 2 } - 2 \\mathbb { E } [ \\dot { I } _ { t } | I _ { t } = x ] \\cdot \\widehat { b } _ { t } ( x , \\xi ) \\right] \\rho _ { t } ( x | \\xi ) d x d t } \\\\ & { \\quad \\quad \\quad = \\displaystyle \\int _ { 0 } ^ { 1 } \\int _ { \\mathbb { R } ^ { d } } \\left[ | \\widehat { b } _ { t } ( x , \\xi ) | ^ { 2 } - 2 b _ { t } ( x , \\xi ) \\cdot \\widehat { b } _ { t } ( x , \\xi ) \\right] \\rho _ { t } ( x | \\xi ) d x d t } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            259,
+            131,
+            714,
+            279
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "where we used the definition of $b$ in (26). The unique minimizer of this objective function is $\\hat { b } _ { t } ( x , \\xi ) = b _ { t } ( x , \\xi )$ , and we can proceed similarly to show that the unique minimizers of $L _ { g } ( \\hat { g } )$ is $\\hat { g } _ { t } ( x , \\xi ) = g _ { t } ( x , \\xi )$ , respectively. □ ",
+        "bbox": [
+            93,
+            285,
+            887,
+            319
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "Theorem A.1 implies the following generalization of Corollary 3.1: ",
+        "bbox": [
+            88,
+            332,
+            529,
+            348
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "Corollary A.1 (Probability flow and diffusions with coupling and conditioning). The solutions to the probability flow quation ",
+        "bbox": [
+            98,
+            352,
+            887,
+            381
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/85f0004bbec6c0c791a25417f4bb04d53d4f82bf5da9e9d303ba22a84f93f64e.jpg",
+        "text": "$$\n\\dot { X } _ { t } = b _ { t } ( X _ { t } , \\xi )\n$$",
+        "text_format": "latex",
+        "bbox": [
+            434,
+            380,
+            539,
+            400
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "enjoy the property that ",
+        "bbox": [
+            88,
+            405,
+            238,
+            420
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/c872784152c94067a1b0117b98cd36a24550c3480fc69dbf22f6ba718dbb80a2.jpg",
+        "text": "$$\n\\begin{array} { r } { \\begin{array} { r } { X _ { t = 1 } \\sim \\rho _ { 1 } ( x _ { 1 } | \\xi ) \\quad i f \\quad X _ { t = 0 } \\sim \\rho _ { 0 } ( x _ { 0 } | \\xi ) } \\\\ { X _ { t = 0 } \\sim \\rho _ { 0 } ( x _ { 0 } | \\xi ) \\quad i f \\quad X _ { t = 1 } \\sim \\rho _ { 1 } ( x _ { 1 } | \\xi ) } \\end{array} } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            343,
+            429,
+            629,
+            468
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "In addition, for any $\\epsilon _ { t } \\geq 0$ , solutions to the forward SDE ",
+        "bbox": [
+            86,
+            476,
+            462,
+            492
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/ebdd8c5bb0757754db1a4b7181e7471ed88a9d415436a1bc2c5180b853580dfc.jpg",
+        "text": "$$\nd X _ { t } ^ { F } = b _ { t } ( X _ { t } ^ { F } , \\xi ) d t - \\epsilon _ { t } \\gamma _ { t } ^ { - 1 } g _ { t } ( X _ { t } ^ { F } , \\xi ) d t + \\sqrt { 2 \\epsilon _ { t } } d W _ { t } ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            302,
+            500,
+            669,
+            518
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "enjoy the property that ",
+        "bbox": [
+            88,
+            530,
+            238,
+            544
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/633977af901d53b7f9785b0c7612f5ef1a5af1419effde468857b72867155536.jpg",
+        "text": "$$\nX _ { t = 1 } ^ { F } \\sim \\rho _ { 1 } ( x _ { 1 } | \\xi ) \\quad i f \\quad X _ { t = 0 } ^ { F } \\sim \\rho _ { 0 } ( x _ { 0 } | \\xi ) ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            346,
+            553,
+            625,
+            571
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "and solutions to the backward SDE ",
+        "bbox": [
+            88,
+            582,
+            320,
+            597
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/225ae2e53662198ffc1a72c6ea710ff25875d569a609407a4834e0be24c95cb5.jpg",
+        "text": "$$\nd X _ { t } ^ { R } = b _ { t } ( X _ { t } ^ { R } , \\xi ) d t + \\epsilon _ { t } \\gamma _ { t } ^ { - 1 } g _ { t } ( X _ { t } ^ { R } , \\xi ) d t + \\sqrt { 2 \\epsilon _ { t } } d W _ { t } ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            302,
+            604,
+            669,
+            625
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "enjoy the property that ",
+        "bbox": [
+            88,
+            635,
+            238,
+            648
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/cf1cf3d07348b23993a71ff24ecff24b4af41a5289e26d4d0dd8f010d6aead99.jpg",
+        "text": "$$\nX _ { t = 0 } ^ { R } \\sim \\rho _ { 0 } ( x _ { 0 } | \\xi ) \\quad i f \\quad X _ { t = 1 } ^ { R } \\sim \\rho _ { 1 } ( x _ { 1 } | \\xi ) .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            346,
+            657,
+            627,
+            678
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "Note that if we additionally draw $\\xi$ marginally from $\\eta ( \\xi )$ when we generate the solution to these equations, we can also generate samples from the unconditional $\\begin{array} { r } { \\rho _ { 0 } ( x _ { 0 } ) = \\int _ { D } \\rho _ { 0 } ( x _ { 0 } \\vert \\xi ) \\eta ( \\xi ) d \\xi } \\end{array}$ and $\\begin{array} { r } { \\rho _ { 1 } ( x _ { 1 } ) = \\int _ { D } \\rho _ { 1 } ( x _ { 1 } \\vert \\xi ) \\eta ( \\xi ) d \\xi } \\end{array}$ . ",
+        "bbox": [
+            93,
+            693,
+            885,
+            727
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "Proof. The probability flow ODE is the characteristic equation of the transport equation (27), which proves the statement about its solutions $X _ { t }$ . To establish the statement about the solution of the forward SDE (43), use expression (28) for $\\nabla \\log \\rho _ { t } ( x , \\xi )$ together with the identity $\\Delta \\rho _ { t } ( x , \\xi ) = \\nabla \\cdot ( \\nabla \\log \\rho _ { t } ( x , \\xi ) \\rho _ { t } ( x , \\xi ) )$ to write (27) as the forward Fokker-Planck equation ",
+        "bbox": [
+            88,
+            739,
+            885,
+            799
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/06ea0de198fdc039f50e72a1f39adf9bba21702bb2b9e05346936ec736019aae.jpg",
+        "text": "$$\n\\begin{array} { r } { \\partial _ { t } \\rho _ { t } ( x | \\xi ) + \\nabla \\cdot \\big ( ( b _ { t } ( x , \\xi ) - \\epsilon _ { t } \\gamma _ { t } ^ { - 1 } g _ { t } ( x , \\xi ) ) \\rho _ { t } ( x | \\xi ) \\big ) = \\epsilon _ { t } \\Delta \\rho _ { t } ( x | \\xi ) } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            264,
+            797,
+            710,
+            818
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "to be solved forward in time since $\\epsilon _ { t } > 0$ . To establish the statement about the solution of the reversed SDE (45), proceed similarly to write (27) as the backward Fokker-Planck equation ",
+        "bbox": [
+            93,
+            821,
+            892,
+            853
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/2c19bc11c13821b46e1e7f84ef1aa3da28331ecb90dc7ab6ae3ddd269a4325f2.jpg",
+        "text": "$$\n\\begin{array} { r } { \\partial _ { t } \\rho _ { t } ( x | \\xi ) + \\nabla \\cdot \\left( ( b _ { t } ( x , \\xi ) + \\epsilon _ { t } \\gamma _ { t } ^ { - 1 } g _ { t } ( x , \\xi ) ) \\rho _ { t } ( x | \\xi ) \\right) = - \\epsilon _ { t } \\Delta \\rho _ { t } ( x | \\xi ) } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            258,
+            861,
+            715,
+            881
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "to be solved backward in time since $\\epsilon _ { t } > 0$ . ",
+        "bbox": [
+            88,
+            890,
+            374,
+            906
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "discarded",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "bbox": [
+            308,
+            56,
+            663,
+            70
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "discarded",
+        "text": "□ ",
+        "bbox": [
+            869,
+            891,
+            885,
+            904
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "The generative model arising from Corollary 3.1 has an associated transport cost which is the subject of Corollary 3.1: Proposition 3.1 (Control of transport cost). Let $X _ { t } ( x _ { 0 } )$ be the solution to the probability flow ODE (8) for the initial condition $X _ { t = 0 } ( x _ { 0 } ) = x _ { 0 } \\sim \\rho _ { 0 }$ . Then ",
+        "bbox": [
+            86,
+            83,
+            885,
+            136
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "equation",
+        "img_path": "images/f4b2a62f925f856fcc6d640ae788842ba7fa40858c171b76b158174fe86f3874.jpg",
+        "text": "$$\n\\mathbb { E } _ { x _ { 0 } \\sim \\rho _ { 0 } } \\big [ | X _ { t = 1 } ( x _ { 0 } ) - x _ { 0 } | ^ { 2 } \\big ] \\leq \\int _ { 0 } ^ { 1 } \\mathbb { E } [ | \\dot { I } _ { t } | ^ { 2 } ] d t < \\infty\n$$",
+        "text_format": "latex",
+        "bbox": [
+            318,
+            142,
+            653,
+            179
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Proof. We have ",
+        "bbox": [
+            88,
+            190,
+            196,
+            207
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "equation",
+        "img_path": "images/39a34a2549d0d09321e143e7de4336c589430c9b13d0f15ac8c1a39f6a3b5598.jpg",
+        "text": "$$\n\\begin{array} { r l r } {  { \\mathbb { E } _ { x _ { 0 } \\sim \\rho _ { 0 } } \\big [ | X _ { t = 1 } ( x _ { 0 } ) - x _ { 0 } | ^ { 2 } \\big ] = \\mathbb { E } _ { x _ { 0 } \\sim \\rho _ { 0 } } \\Big [ \\Big | \\int _ { 0 } ^ { 1 } b _ { t } ( X _ { t } ( x _ { 0 } ) ) d t \\Big | ^ { 2 } \\Big ] } } \\\\ & { } & { \\leq \\int _ { 0 } ^ { 1 } \\mathbb { E } _ { x _ { 0 } \\sim \\rho _ { 0 } } \\big [ | b _ { t } ( X _ { t } ( x _ { 0 } ) ) | ^ { 2 } \\big ] d t } \\\\ & { } & { = \\mathbb { E } \\big [ | b _ { t } ( I _ { t } ) | ^ { 2 } \\big ] ~ } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            282,
+            204,
+            691,
+            297
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "where we used the probability flow equation (8) for $X _ { t }$ and the property that the law of $X _ { t } ( x _ { 0 } )$ with $x _ { 0 } \\sim \\rho _ { 0 }$ and $I _ { t }$ coincide. Using the definition of $b _ { t } ( x )$ in (4) and Jensen’s inequality we have that ",
+        "bbox": [
+            93,
+            299,
+            888,
+            330
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "equation",
+        "img_path": "images/8445edd043a55f095e42102952f6263f47bc2d3b4a840b7546be32e3ead0b3f4.jpg",
+        "text": "$$\n\\mathbb { E } \\big [ | b _ { t } ( I _ { t } ) | ^ { 2 } \\big ] = \\mathbb { E } \\big [ \\big | \\mathbb { E } [ \\dot { I } _ { t } | I _ { t } ] \\big | ^ { 2 } \\big ] \\leq \\mathbb { E } \\big [ \\mathbb { E } \\big [ | \\dot { I } _ { t } | ^ { 2 } \\big | I _ { t } \\big ] \\big ] = \\mathbb { E } [ | \\dot { I } _ { t } | ^ { 2 } ]\n$$",
+        "text_format": "latex",
+        "bbox": [
+            294,
+            338,
+            679,
+            361
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "where the last line is true by the tower property of the conditional expectation. Combining (49) and (50) establishes the bound in (15). □ ",
+        "bbox": [
+            84,
+            368,
+            893,
+            398
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "B. Further experimental details ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            417,
+            354,
+            435
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Architecture For the velocity model we use the U-net from (Ho et al., 2020b) as implemented in lucidrain’s denoisingdiffusion-pytorch repository; this variant of the architecture includes embeddings to condition on class labels. We use the following hyperparameters: ",
+        "bbox": [
+            88,
+            444,
+            887,
+            489
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "• Dim Mults: (1,1,2,3,4) • Dim (channels): 256 • Resnet block groups: 8 • Leanred Sinusoidal Cond: True • Learned Sinusoidal Dim: 32 • Attention Dim Head: 64 • Attention Heads: 4 • Random Fourier Features: False ",
+        "bbox": [
+            106,
+            506,
+            331,
+            690
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Image-shaped conditioning in the Unet. For image-shaped conditioning, we follow (Ho et al., 2022a) and append upsampled low-resolution images to the input $x _ { t }$ at each time step to the velocity model. We also condition on the missingness masks for in-painting by appending them to $x _ { t }$ . ",
+        "bbox": [
+            88,
+            707,
+            885,
+            752
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Optimization. We use Adam optimizer (Kingma & Ba, 2014), starting at learning rate 2e-4 with the StepLR scheduler which scales the learning rate by $\\gamma = . 9 9$ every $N = 1 0 0 0$ steps. We use no weight decay. We clip gradient norms at 10, 000 (this is the norm of the entire set of parameters taken as a vector, the default type of norm clipping in PyTorch library). ",
+        "bbox": [
+            88,
+            767,
+            888,
+            814
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Integration for sampling We use the Dopri solver from the torchdiffeq library (Chen, 2018). ",
+        "bbox": [
+            86,
+            828,
+            712,
+            844
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Miscellaneous We use Pytorch library along with Lightning Fabric to handle parallelism. ",
+        "bbox": [
+            89,
+            859,
+            686,
+            876
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Below we include additional experimental illustrations in the flavor of the figures in the main text. ",
+        "bbox": [
+            88,
+            890,
+            766,
+            906
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "discarded",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "bbox": [
+            310,
+            56,
+            663,
+            70
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "image",
+        "img_path": "images/1e3f9026a3b39c50cf409d9e46d6b2288e456bed3dcbaabc770e642106c20165.jpg",
+        "image_caption": [
+            "Figure 5: Additional examples of in-filling on the $2 5 6 \\times 2 5 6$ resolution images, with temporal slices of the probability flow. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            133,
+            112,
+            839,
+            845
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "discarded",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "bbox": [
+            310,
+            58,
+            661,
+            70
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "image",
+        "img_path": "images/7d6d838fb0cd148d92206a822f5ef1a177e6d2af85bdf5f4f955ed471d7353fc.jpg",
+        "image_caption": [
+            "Figure 6: Additional examples of super-resolution from 64 to 256, with temporal slices of the probability flow. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            232,
+            118,
+            738,
+            839
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "discarded",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "bbox": [
+            310,
+            58,
+            661,
+            70
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "image",
+        "img_path": "images/b1b2b91fc0825558d8aa5b9f6cbff0c29a43fbd87e8bea5310e14c453852d4cb.jpg",
+        "image_caption": [
+            "Figure 7: Super-resolution: Top four rows: Super-resolved images from resolution $2 5 6 \\times 2 5 6 \\mapsto 5 1 2 \\times 5 1 2$ , where the left-most image is the lower resolution version, the middle is the model output, and the right is the ground truth. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            98,
+            367,
+            877,
+            574
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "discarded",
+        "text": "Stochastic Interpolants with Data-Dependent Couplings ",
+        "bbox": [
+            310,
+            58,
+            663,
+            70
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 17
+    }
+]

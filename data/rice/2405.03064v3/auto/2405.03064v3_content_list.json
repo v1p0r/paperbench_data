@@ -1,0 +1,4102 @@
+[
+    {
+        "type": "text",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "text_level": 1,
+        "bbox": [
+            91,
+            109,
+            882,
+            154
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Zelei Cheng \\* 1 Xian Wu \\* 1 Jiahao ${ \\bf { V } } { \\bf { u } } ^ { 1 }$ Sabrina Yang 2 Gang Wang 3 Xinyu Xing 1 ",
+        "bbox": [
+            184,
+            199,
+            781,
+            215
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Abstract ",
+        "text_level": 1,
+        "bbox": [
+            243,
+            242,
+            318,
+            258
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Deep reinforcement learning (DRL) is playing an increasingly important role in real-world applications. However, obtaining an optimally performing DRL agent for complex tasks, especially with sparse rewards, remains a significant challenge. The training of a DRL agent can be often trapped in a bottleneck without further progress. In this paper, we propose RICE, an innovative refining scheme for reinforcement learning that incorporates explanation methods to break through the training bottlenecks. The high-level idea of RICE is to construct a new initial state distribution that combines both the default initial states and critical states identified through explanation methods, thereby encouraging the agent to explore from the mixed initial states. Through careful design, we can theoretically guarantee that our refining scheme has a tighter sub-optimality bound. We evaluate RICE in various popular RL environments and real-world applications. The results demonstrate that RICE significantly outperforms existing refining schemes in enhancing agent performance. ",
+        "bbox": [
+            120,
+            265,
+            442,
+            608
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "However, training an optimal DRL agent for complex tasks, particularly in environments with sparse rewards, presents a significant challenge. Often cases, the training of a DRL agent can hit a bottleneck without making further process: its sub-optimal performance becomes evident when it makes common mistakes or falls short of achieving the final goals. ",
+        "bbox": [
+            501,
+            244,
+            885,
+            334
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "When the DRL agent hits its training bottleneck, a refinement strategy can be considered, especially if the agent is already locally optimal. To refine the locally optimal DRL agent, one method is to analyze its behavior and patch the errors it made. A recent work (Cheng et al., 2023) proposes StateMask to identify critical states of the agent using an explanation method. One utility of StateMask is patching the agent’s error, which fine-tunes the DRL agent starting from the identified critical states (denoted as “StateMask-R”). However, such an approach suffers from two drawbacks. On the one hand, initializing solely from critical states will hurt the diversity of initial states, which can cause overfitting (see Appendix D). On the other hand, fine-tuning alone cannot help the DRL agent jump out of the local optima. These observations drive us to rethink how to design a proper initial distribution and apply exploration-based techniques to patch previous errors. ",
+        "bbox": [
+            501,
+            342,
+            885,
+            598
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "1. Introduction ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            636,
+            215,
+            652
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Deep reinforcement learning (DRL) has shown promising performance in various applications ranging from playing simulated games (Todorov et al., 2012; Mnih et al., 2013; Oh et al., 2016; Cai et al., 2023) to completing real-world tasks such as navigating autonomous vehicles and performing cybersecurity attacks and defenses (Bar-Zur et al., 2023; Vyas et al., 2023; Anderson et al., 2018; Wang et al., 2023). ",
+        "bbox": [
+            88,
+            662,
+            472,
+            767
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Another reason behind the training bottleneck can be the poor choice of the training algorithm. Naturally, to improve performance, the developer needs to select another DRL training algorithm to re-train the DRL agent. However, for complex DRL tasks, re-training the agent from scratch is too costly. For instance, for AlphaStar (Vinyals et al., 2019) to attain grandmaster-level proficiency in StarCraft, its training period exceeds one month with TPUs. Retraining an agent of this level can incur a cost amounting to millions of dollars (Agarwal et al., 2022). Therefore, existing research has investigated the reuse of previous DRL training (as prior knowledge) to facilitate re-training (Ho & Ermon, 2016; Fu et al., 2018; Cai et al., 2022). The most recent example is Jump-Start Reinforcement Learning (JSRL) proposed by Uchendu et al. (2023) which leverages a pre-trained policy to design a curriculum to guide the training of a selfimproving exploration policy. However, their selection of exploration frontiers in the curriculum is random, which cannot guarantee that the exploration frontiers have positive returns. This motivates us to incorporate explanation methods to scrutinize the pre-trained policy and design more effective exploration frontiers. ",
+        "bbox": [
+            501,
+            606,
+            885,
+            892
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "\\*Equal contribution 1Department of Computer Science, Northwestern University, Evanston, Illinois, USA 2Presentation High School, San Jose, California, USA 3Department of Computer Science, University of Illinois at Urbana-Champaign, Urbana, Illinois, USA. Correspondence to: Xinyu Xing <xinyu.xing $@$ northwestern.edu>. ",
+        "bbox": [
+            88,
+            777,
+            473,
+            854
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "Proceedings of the $\\mathit { 4 1 } ^ { s t }$ International Conference on Machine Learning, Vienna, Austria. PMLR 235, 2024. Copyright 2024 by the author(s). ",
+        "bbox": [
+            88,
+            866,
+            472,
+            905
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            22,
+            272,
+            62,
+            703
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "1 ",
+        "bbox": [
+            482,
+            922,
+            490,
+            934
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            88,
+            85,
+            473,
+            128
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "In this work, we propose $\\mathsf { R I C E } ^ { 1 }$ , a Refining scheme for ReInforCement learning with Explanation. We first leverage a state-of-the-art explanation method to derive a steplevel explanation for the pre-trained DRL policy. The explanation method identifies the most critical states (i.e., steps that contribute the most to the final reward of a trajectory), which will be used to construct the exploration frontiers. Based on the explanation results, we construct a mixed initial state distribution that combines the default initial states and the identified critical states to prevent the overfitting problem. By forcing the agent to revisit these exploration frontiers, we further incentivize the agent to explore starting from the frontiers. Through exploration, the agent is able to expand state coverage, and therefore more effectively break through the bottlenecks of reinforcement learning training. Our theoretical analysis shows that this method achieves a tighter sub-optimality bound by utilizing this mixed initial distribution (see Section 3.4). ",
+        "bbox": [
+            89,
+            136,
+            473,
+            409
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "In addition, we introduce key improvements to the state-ofthe-art explanation method StateMask (Cheng et al., 2023) to better facilitate our refining scheme. We reformulate the objective function and add a new reward bonus for encouraging blinding when training—this significantly simplifies the implementation without sacrificing the theoretical guarantee. ",
+        "bbox": [
+            89,
+            417,
+            473,
+            522
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Evaluation and Findings. We evaluate the performance of RICE using four MuJoCo games and four DRLbased real-world applications, including cryptocurrency mining (Bar-Zur et al., 2023), autonomous cyber defense (Cage Challenge 2) (CAGE, 2022), autonomous driving (Li et al., 2022), and malware mutation (Raff et al., 2017). We show that the explanation derived from our new design demonstrates similar fidelity to the state-of-the-art technique StateMask (Cheng et al., 2023) with significantly improved training efficiency. With the explanation results, we show our refining method can produce higher performance improvements for the pre-trained DRL agent, in comparison with existing approaches including JSRL (Uchendu et al., 2023) and the original refining method from StateMask (Cheng et al., 2023). ",
+        "bbox": [
+            89,
+            531,
+            473,
+            757
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "In summary, our paper has the following contributions: ",
+        "bbox": [
+            89,
+            766,
+            446,
+            780
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "• We develop a refining strategy to break through the bottlenecks of reinforcement learning training with an explanation (which is backed up by a theoretical analysis). We show our refining method performs better than those informed by random explanation. ",
+        "bbox": [
+            106,
+            809,
+            473,
+            868
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            532,
+            85,
+            821,
+            99
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "• We propose an alternative design of StateMask to explain the agent’s policy in DRL-based applications. Experiments show that our explanation has comparable fidelity with StateMask while improving efficiency. ",
+        "bbox": [
+            517,
+            109,
+            885,
+            167
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "• With extensive evaluations and case studies, we illustrate the benefits of using RICE to improve a pretrained policy. ",
+        "bbox": [
+            517,
+            178,
+            885,
+            222
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "2. Related Work ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            242,
+            637,
+            258
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "2.1. Explanation-based Refining ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            268,
+            723,
+            282
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Recently, there has been some work that leverages the DRL explanation to improve the agent’s performance. These explanations can be derived from either human feedback or automated processes. Guan et al. (2021); Van Waveren et al. (2022) propose to utilize human feedback to correct the agent’s failures. More specifically, when the agent fails, humans (can be non-experts) are involved to point out how to avoid such a failure (i.e., what action should be done instead, and what action should be forbidden). Based on human feedback, the DRL agent gets refined by taking human-advised action in those important time steps and finally obtains the corrected policy. The downside is that it relies on humans to identify critical steps and craft rules for alternative actions. This can be challenging for a large action space, and the retraining process is ad-hoc and time-consuming. Cheng et al. (2023); Yu et al. (2023) propose to use step-level DRL explanation methods to automatically identify critical time steps and refine the agent accordingly. It initiates the refining process by resetting the environment to the critical states and subsequently resumes training the DRL agents from these critical states. Empirically, we observe that this refining strategy can easily lead to overfitting (see Appendix D). Instead, we propose a novel refining strategy with theoretical guarantees to improve the agent’s performance. ",
+        "bbox": [
+            501,
+            292,
+            885,
+            654
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "2.2. Leveraging Existing Policy ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            671,
+            715,
+            685
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "The utilization of existing policies to initialize RL and enhance exploration has been explored in previous literature. Some studies propose to “roll-in” with an existing policy for better exploration, as demonstrated in works (Agarwal et al., 2020; Li et al., 2023). Similar to our approach, JSRL (Uchendu et al., 2023) incorporates a guide policy for roll-in, followed by a self-improving exploration policy. Technically, JSRL relies on a curriculum for the gradual update of the exploration frontier. However, the curriculum may not be able to truly reflect the key reasons why the guide policy succeeds or fails. Therefore, we propose to leverage the explanation method to automatically identify crucial states, facilitating the rollout of the policy by integrating these identified states with the default initial states. In Section 4, we empirically demonstrate that JSRL performs poorly in our selected games. Chang et al. (2023) propose $\\mathrm { P P O + + }$ that reset the environment to a mixture of the default initial states and the visited states of a guide policy (i.e., a pre-trained policy). It can be viewed as a special case in our framework, i.e., constructing a mixed initial distribution with a random explanation. However, we claim that not all visited states of a pre-trained policy are informative and our theoretical analysis and experiments both show that RICE based on our explanation method outperforms the refining method based on a random explanation. ",
+        "bbox": [
+            501,
+            695,
+            885,
+            904
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "discarded",
+        "text": "1The source code of RICE can be found in https:// github.com/chengzelei/RICE ",
+        "bbox": [
+            88,
+            880,
+            473,
+            904
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            179,
+            58,
+            787,
+            70
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "discarded",
+        "text": "2 ",
+        "bbox": [
+            482,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "image",
+        "img_path": "images/f73ebe59e7b4bbfc52f75525997995cc45969f0afe2264ee54285b6bcb567249.jpg",
+        "image_caption": [
+            "Figure 1. Given a pre-trained DRL policy that is not fully optimal (a), we propose the RICE algorithm that resets the RL agent to specific visited states (a mixture of default initial states and identified critical states) (b), followed by an exploration step initiated from these chosen states (c). "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            93,
+            83,
+            877,
+            279
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            89,
+            348,
+            473,
+            513
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "3. Proposed Technique ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            534,
+            277,
+            550
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "3.1. Problem Setup and Assumption ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            559,
+            339,
+            574
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "We model the problem as a Markov Decision Process (MDP), which is defined as a tuple $\\langle s , \\mathcal { A } , \\mathcal { P } , \\rho , \\mathcal { R } ,$ $\\gamma \\rangle$ . In this tuple, $s$ and $\\mathcal { A }$ are the state and action set, where each $s _ { t }$ and $a _ { t }$ represents the state and action of the agent at time $t$ . $P : \\mathcal { S } \\times \\mathcal { A }  \\Delta ( \\mathcal { S } )$ is the state transition function, $\\mathcal { R } : \\mathcal { S } \\times \\mathcal { A } \\  \\ \\mathbb { R }$ is the reward function. $\\gamma \\in \\mathsf { \\Gamma } ( 0 , 1 )$ is the discount factor. For a policy $\\pi ( a | s )$ : $s  A$ , the value function and $Q$ -function is defined as $\\begin{array} { r } { V ^ { \\pi } ( s ) ~ = ~ \\mathbb { E } _ { \\pi } \\left[ \\sum _ { t = 0 } ^ { \\infty } \\gamma ^ { t } R ( s _ { t } , a _ { t } ) ~ | ~ s _ { 0 } = s \\right] } \\end{array}$ and $\\begin{array} { r } { Q ^ { \\pi } ( s , a ) \\ = \\ \\mathbb { E } _ { \\pi } \\left[ \\sum _ { t = 0 } ^ { \\infty } \\gamma ^ { t } R ( s _ { t } , a _ { t } ) \\ | \\ s _ { 0 } = s , a _ { 0 } = \\right. } \\end{array}$ a]. The advantage function for the policy $\\pi$ is denoted as $A ^ { \\pi } ( s , a ) \\ = \\ Q ^ { \\pi } ( s , a ) - V ^ { \\pi } ( s )$ . We assume the initial state distribution is given by $\\rho$ : $s _ { 0 } ~ \\sim ~ \\rho$ . The goal of RL is to find an optimal policy $\\pi ^ { * }$ that maximizes its expected total reward : $\\pi ^ { * } = \\arg \\operatorname* { m a x } _ { \\pi } \\mathbb { E } _ { s \\sim \\rho } \\left[ V ^ { \\pi } ( s ) \\right]$ . Besides, we also introduce the state occupancy distribution as and the state-action occupancy measure for $\\begin{array} { r } { d _ { \\rho } ^ { \\pi } ( s ) \\ = \\ ( 1 - \\gamma ) \\sum _ { t = 0 } ^ { \\infty } \\gamma ^ { t } \\operatorname* { P r } ^ { \\pi } \\left( s _ { t } = s \\mid s _ { 0 } \\sim \\rho \\right) } \\end{array}$ $\\pi$ , denoted and $d _ { \\rho } ^ { \\pi } ( \\dot { s } , a ) = d _ { \\rho } ^ { \\pi } ( s ) \\pi ( a | s )$ . ",
+        "bbox": [
+            88,
+            583,
+            473,
+            872
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "In our setting, we have a pre-trained policy denoted as $\\pi$ which may be sub-optimal. Our objective is to break through the training bottlenecks of the pre-trained policy with an explanation. Rather than re-training from scratch, we propose to utilize explanation to take full advantage of the guidance of the pre-trained policy $\\pi$ . Importantly, we do not assume knowledge of the original training algorithm used for policy $\\pi$ . And we make the following assumptions about the quality of $\\pi$ . ",
+        "bbox": [
+            88,
+            877,
+            473,
+            892
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            501,
+            348,
+            885,
+            468
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Assumption 3.1. Given a random policy $\\pi ^ { r }$ , we have $\\mathbb { E } _ { a \\sim \\pi ^ { r } } [ A ^ { \\pi } ( s , a ) ] \\le 0 , \\forall s$ . ",
+        "bbox": [
+            500,
+            472,
+            885,
+            503
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Intuitively, the above assumption implies that taking an action based on a random policy $\\pi ^ { r }$ will provide a lower advantage than taking actions based on the policy $\\pi$ . This is a reasonable assumption since $\\pi$ is a pre-trained policy, thus it would perform much better than an untrained (i.e., random) policy. ",
+        "bbox": [
+            500,
+            510,
+            885,
+            599
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Assumption 3.2. The pre-trained policy $\\pi$ cover the states visited by the optimal policy $\\pi ^ { * }$ : $\\left\\| \\frac { \\overline { { { d _ { \\rho } ^ { \\pi } } } } ^ { * } } { d _ { \\rho } ^ { \\pi } } \\right\\| _ { \\infty } \\leq C$ , where $C$ is a constant. ",
+        "bbox": [
+            500,
+            603,
+            885,
+            661
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "In other words, Assumption 3.2 requires that the pre-trained policy visits all good states in the state space. Note that it is a standard assumption in the online policy gradient learning (Agarwal et al., 2021; Uchendu et al., 2023; Li et al., 2023) and is much weaker than the single policy concentrateability coefficient assumption (Rashidinejad et al., 2021; Xie et al., 2021), which requires the pre-trained policy visits all good state-action pairs. The ratio in Assumption 3.2 is also referred to as the distribution mismatch coefficient. ",
+        "bbox": [
+            500,
+            669,
+            885,
+            804
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "3.2. Technical Overview ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            821,
+            666,
+            837
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Recall our goal is to refine the pre-trained DRL agent to break through the training bottlenecks. At a high level, the RICE algorithm integrates a roll-in step, where the RL agent is reset to specific visited states, followed by an exploration step initiated from these chosen states. During the roll-in step, we draw inspiration from established RL-explanation methods (Puri et al., 2019; Guo et al., 2021; Cheng et al., 2023) to identify critical states, referred to as exploration frontiers, within the given policy $\\pi$ . As depicted in Figure 1, when presented with a trajectory sampled from the policy $\\pi$ , we employ a step-level explanation method – StateMask (Cheng et al., 2023) to identify the most crucial time steps influencing the final rewards in this trajectory. Subsequently, we guide the RL agent to revisit these selected states. The rationale behind revisiting these states lies in their ability to offer an expanded initial state distribution compared to $\\rho$ thereby enabling the agent to explore diverse and relevant states it might otherwise neglect. Additionally, we introduce a mixing of these selected states with the initial states sampled from $\\rho$ . This mixing approach serves the purpose of preventing the agent from overfitting to specific states. In Section 3.4, we theoretically show that RICE achieves a tighter regret bound through the utilization of this mixed initial distribution. ",
+        "bbox": [
+            500,
+            845,
+            883,
+            905
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            178,
+            58,
+            789,
+            69
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "discarded",
+        "text": "3 ",
+        "bbox": [
+            482,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            89,
+            85,
+            473,
+            386
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Then, we propose an exploration-based method to further enhance the DRL agent’s performance. The high-level idea is to incentivize the agent to explore when initiating actions from these frontiers. Intuitively, the pre-trained policy $\\pi$ might converge to a local optimal, as shown in Figure 1. Through exploration, we aim to expand state coverage by rewarding the agent for visiting novel states, thereby increasing the likelihood of successfully completing the task. Specifically, we utilize the Proximal Policy Optimization (PPO) algorithm (Schulman et al., 2017) for refining the DRL agent, leveraging the monotonicity of PPO. ",
+        "bbox": [
+            89,
+            395,
+            473,
+            560
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "3.3. Technique Detail ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            577,
+            236,
+            592
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Step-level Explanation. We leverage a state-of-the-art explanation method StateMask (Cheng et al., 2023). At a high level, StateMask parameterizes the importance of the target agent’s current time step as a neural network model (i.e., mask network). This neural network takes the current state as input and then outputs this step’s importance score with respect to the agent’s final reward. To do so, StateMask learns a policy to “blind” the target agent at certain steps without changing the agent’s final reward. Specifically, for an input state $s _ { t }$ , the mask net outputs a binary action $a _ { t } ^ { m }$ of either “zero” or “one”, and the target agent will sample the action $a _ { t }$ from its policy. The final action is determined by the following equation ",
+        "bbox": [
+            88,
+            602,
+            472,
+            797
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/aa8d8b448a46cff596c2e4a97fb16549dc65318150b36dfa812d28d799ecf852.jpg",
+        "text": "$$\na _ { t } \\odot a _ { t } ^ { m } = { \\left\\{ \\begin{array} { l l } { a _ { t } , } & { { \\mathrm { i f ~ } } a _ { t } ^ { m } = 0 , } \\\\ { a _ { \\mathrm { r a n d o m } } } & { { \\mathrm { i f ~ } } a _ { t } ^ { m } = 1 , } \\end{array} \\right. }\n$$",
+        "text_format": "latex",
+        "bbox": [
+            166,
+            801,
+            393,
+            844
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "The mask net is then trained to minimize the following objective function: ",
+        "bbox": [
+            88,
+            848,
+            472,
+            877
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/cf319cd7f12ff835a8ca400cc19e37e270acbab8b965a641d7055a04c03cfb04.jpg",
+        "text": "$$\nJ ( \\theta ) = \\mathrm { m i n } \\left| \\eta ( \\pi ) - \\eta ( \\bar { \\pi } ) \\right| ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            187,
+            888,
+            372,
+            906
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Algorithm 1 Training the Mask Network. ",
+        "text_level": 1,
+        "bbox": [
+            503,
+            84,
+            772,
+            99
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Input: Target agent’s policy $\\pi$   \nOutput: Mask network $\\tilde { \\pi } _ { \\boldsymbol { \\theta } }$   \nInitialization: Initialize the weights $\\theta$ for the mask net $\\tilde { \\pi } _ { \\boldsymbol { \\theta } }$   \n$\\theta _ { o l d }  \\theta$   \nfor iteration ${ } = 1$ , 2, . . . do Set the initial state $s _ { 0 } \\sim \\rho$ $\\mathcal { D }  \\emptyset$ for $\\scriptstyle \\mathrm { t = } 0$ to T do Sample $a _ { t } \\sim \\pi ( a _ { t } | s _ { t } )$ Sample $a _ { t } ^ { m } \\sim \\tilde { \\pi } _ { \\theta _ { o l d } } ( a _ { t } ^ { m } | s _ { t } )$ Compute the actual taken action $a \\gets a _ { t } \\odot a _ { t } ^ { m }$ $( s _ { t + 1 } , \\tilde { \\mathbf { \\Gamma } } _ { } R _ { t } ^ { \\prime } ) \\gets \\mathtt { e n v . s t e p } ( a )$ and record $\\left( s _ { t } , s _ { t + 1 } , a _ { t } ^ { m } , R _ { t } ^ { \\prime } \\right)$ in $\\mathcal { D }$ end for update $\\theta _ { o l d }  \\theta$ using $\\mathcal { D }$ by PPO algorithm   \nend for ",
+        "bbox": [
+            508,
+            104,
+            885,
+            308
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "where $\\pi$ denotes the policy of the target agent (i.e., our pretrained policy), $\\bar { \\pi }$ denotes the policy of the perturbed agent (i.e., integrating the random policy and the target agent $\\pi$ via the mask network $\\tilde { \\pi }$ ), $\\eta ( \\cdot )$ is the expected total reward of an agent by following a certain policy. To solve the Eqn. (2) with monotonicaly guarantee, StateMask carefully designs a surrogate function and utilize the prime-dual methods to optimize the $\\tilde { \\pi }$ . However, we can optimize the learning process of mask net within our setting to enhance simplicity. Specifically, we have the following theorem ",
+        "bbox": [
+            500,
+            335,
+            885,
+            486
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Theorem 3.3. Under Assumption 3.1, we have $\\eta ( \\bar { \\pi } )$ upperbounded by $\\eta ( \\pi )$ : $\\eta ( \\bar { \\pi } ) \\leq \\eta ( \\pi )$ . ",
+        "bbox": [
+            500,
+            492,
+            885,
+            522
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "The proof of the theorem can be found in Appendix A. Leveraging this theorem, we can transform the objective function to $J ( \\theta ) = \\operatorname* { m a x } \\eta ( \\bar { \\pi } )$ . With this reformulation, we can utilize the vanilla PPO algorithm to train the state mask without sacrificing the theoretical guarantee. However, na¨ıvely maximizing the expected total reward may introduce a trivial solution to the problem which is to not blind the target agent at all (always outputs $^ { 6 } 0 ^ { 9 }$ ). To tackle this problem, we add an additional reward by giving an extra bonus when the mask net outputs “1”. The new reward can be written as $R ^ { \\prime } ( s _ { t } , a _ { t } ) = R ( s _ { t } , a _ { t } ) + \\alpha a _ { t } ^ { m }$ where $\\alpha$ is a hyper-parameter. We present the learning process of the mask network in Algorithm 1. By applying this resolved mask to each state, we will be able to assess the state importance (i.e., the probability of mask network outputting $^ { \\circ } 0 ^ { \\circ }$ ) at any time step. ",
+        "bbox": [
+            501,
+            535,
+            885,
+            776
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Constructing Mixed Initial State Distribution. With the state mask $\\tilde { \\pi }$ , we construct a mixed initial state distribution to expand the coverage of the state space. Initially, we randomly sample a trajectory by executing the pre-trained policy $\\pi$ . Subsequently, the state mask is applied to pinpoint the most important state within the episode $\\tau$ by assessing the significance of each state. The resulting distribution of these identified critical states is denoted as $d _ { \\rho } ^ { \\hat { \\pi } } ( s )$ . Indeed, ",
+        "bbox": [
+            501,
+            785,
+            885,
+            906
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            178,
+            58,
+            787,
+            70
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "discarded",
+        "text": "4 ",
+        "bbox": [
+            480,
+            924,
+            490,
+            934
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Algorithm 2 Refining the DRL Agent. ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            84,
+            341,
+            99
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "table",
+        "img_path": "images/ca538da4db15d37e88d548ac160b7fca28c0a35fb797e9c26b204142cf3037b3.jpg",
+        "table_caption": [],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Input:Pre-trained policy π,corresponding state mask π,default initial state distribution ρ,reset probability threshold p Output: The agent&#x27;s policy after refining &#x27; for iteration=1,2,...do D↑0 RAND_NUM ←RAND(0,1) ifRAND_NUM&lt;pthen Run π to obtain a trajectory T of length K Identify the most critical state st in7 via state mask</td></tr><tr><td>Set the initial state so ←St else Set the initial state so ～ p end if</td></tr><tr><td>for t=O to T do Sample at ~ π(at|St) (St+1,Rt)←env.step(at)</td></tr><tr><td>=|f(st+1)-f（st+1) Calculate RND bonus RRN D with normalization Add (st, St+1,at, Rt + λRRND) to D</td></tr></table>",
+        "bbox": [
+            91,
+            99,
+            473,
+            422
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "3.4. Theoretical Analysis ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            84,
+            673,
+            99
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Finally, we provide theoretical analysis demonstrating that our refining algorithm can tighten the sub-optimality gap: SubOpt : $\\mathbf { \\bar { \\rho } } = V ^ { \\mathbf { \\bar { \\pi } } * } ( \\rho ) - V ^ { \\pi ^ { \\prime } } ( \\mathbf { \\bar { \\rho } } )$ , (i.e., the gap between the long-term reward collected by the optimal policy $\\pi ^ { * }$ and that obtained by the refined policy $\\pi ^ { \\prime }$ when starting from the default initial state distribution $\\rho$ ). ",
+        "bbox": [
+            500,
+            108,
+            885,
+            199
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "In particular, we aim to answer the following two questions: Q1:What are the benefits of incorporating StateMask to determine the exploration frontier? ",
+        "bbox": [
+            500,
+            207,
+            885,
+            252
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Q2: what advantages does starting exploration from the mixed initial distribution offer? ",
+        "bbox": [
+            500,
+            260,
+            885,
+            290
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "To answer the questions, we first show that determining the exploration frontiers based on StateMask is equivalent to sampling states from a better policy compared to $\\pi$ . Then, we demonstrate that under the mixed initial distribution as introduced in Section 3.3, we could provide a tighter upper bound for the sub-optimality of trained policy $\\pi$ compared with randomly selecting visited states to form the initial distribution. ",
+        "bbox": [
+            500,
+            296,
+            885,
+            416
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "In order to answer Q1, we begin with Assumption 3.4 to assume the relationship between the policy value and the state distribution mismatch coefficient. ",
+        "bbox": [
+            500,
+            425,
+            885,
+            470
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "in Section 3.4, we demonstrate that this re-weighting-like sampling is equivalent to sampling the state from a better policy $\\hat { \\pi }$ . We then set the initial distribution $\\mu$ as a mixture of the selected important states distribution $d _ { \\rho } ^ { \\hat { \\pi } } ( s )$ and the original initial distribution of interest $\\rho$ : $\\mu ( s ) \\dot { = } \\beta d _ { \\rho } ^ { \\hat { \\pi } } ( s ) + \\quad$ $( 1 - \\beta ) \\rho ( s )$ , where $\\beta$ is a hyper-parameter. ",
+        "bbox": [
+            88,
+            472,
+            473,
+            565
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Exploration with Random Network Distillation. Starting from the new initial state distribution, we continue training the DRL agent while encouraging the agent to do exploration. In contrast to goal-conditional RL (Ren et al., 2019; Ecoffet et al., 2019), which typically involve random exploration from identified frontiers, we advocate for the RL agent to explore novel states to increase the state coverage. Motivated by this, we adopt Random Network Distillation (RND) (Burda et al., 2018) which is proved to be an effective exploration bonus, especially in large and continuous state spaces where count-based bonuses (Bellemare et al., 2016; Ostrovski et al., 2017) can be hard to extend. Specifically, we directly utilize the PPO algorithm to update the policy $\\pi$ , except that we add the intrinsic reward to the task reward, that is, we optimize $R ^ { \\prime } ( s _ { t } , a _ { t } ) = R ( s _ { t } , a _ { t } ) + \\lambda | f ( s _ { t + 1 } ) - \\hat { f } ( s _ { t + 1 } ) | ^ { 2 }$ , where $\\lambda$ controls the trade-off between the task reward and exploration bonus. Along with the policy parameters, the RND predictor network $\\breve { \\hat { f } }$ is updated to regress to the target network $f$ . Note that, as the state coverage increases, RND bonuses decay to zero and a performed policy is recovered. We present our proposed refining method in Algorithm 2. ",
+        "bbox": [
+            88,
+            574,
+            473,
+            905
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Assumption 3.4. For two polices $\\pi$ and $\\hat { \\pi }$ , if $\\eta ( \\hat { \\pi } ) \\geq \\eta ( \\pi )$ ,   \nthen we have $\\begin{array} { r } { \\left\\| \\frac { { d _ { \\rho } ^ { \\pi } } ^ { * } } { d _ { \\rho } ^ { \\hat { \\pi } } } \\right\\| _ { \\infty } \\leq \\left\\| \\frac { { d _ { \\rho } ^ { \\pi } } ^ { * } } { d _ { \\rho } ^ { \\pi } } \\right\\| _ { \\infty } } \\end{array}$ ∞ ",
+        "bbox": [
+            500,
+            474,
+            885,
+            523
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Intuitively, this assumption posits that a superior policy would inherently possess a greater likelihood of visiting all favorable states. We give validation of this assumption in a 2-state MDP in Appendix B.1. ",
+        "bbox": [
+            500,
+            531,
+            885,
+            592
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "We further present Lemma 3.5 to answer Q1, i.e., the benefits of incorporating StateMask to determine the exploration frontier. The proof of Lemma 3.5 can be found in Appendix B.2. ",
+        "bbox": [
+            500,
+            599,
+            885,
+            659
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Lemma 3.5. Given a pre-trained policy $\\pi$ , our MaskNetbased sampling approach in Section 3.3 is equivalent to sampling states from a state occupation distribution induced by an improved policy $\\hat { \\pi }$ . ",
+        "bbox": [
+            500,
+            664,
+            885,
+            724
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "In order to answer Q2, we start with presenting Theorem 3.6 to bound the sub-optimality via the state distribution mismatch coefficient. ",
+        "bbox": [
+            500,
+            736,
+            885,
+            781
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Theorem 3.6. Assume that for the refined policy $\\pi ^ { \\prime }$ $\\mathbb { E } _ { s \\sim d _ { \\mu } ^ { \\pi ^ { \\prime } } } \\left[ \\operatorname* { m a x } _ { a } A ^ { \\pi ^ { \\prime } } ( s , a ) \\right] < \\epsilon$ . For two initial state distributions $\\mu$ and $\\rho _ { ; }$ , we have the following bound (Kakade & Langford, 2002) ",
+        "bbox": [
+            500,
+            785,
+            885,
+            852
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "img_path": "images/ab75b797a358e73c35cd61548ab7c940e7e223dc153c9ea8e0a4df0a67de6800.jpg",
+        "text": "$$\n{ V ^ { \\pi } } ^ { * } ( \\rho ) - { V ^ { \\pi ^ { \\prime } } } ( \\rho ) \\leq \\mathcal O ( \\frac { \\epsilon } { ( 1 - \\gamma ) ^ { 2 } } \\left\\| \\frac { { d _ { \\rho } ^ { \\pi ^ { * } } } } { { d _ { \\rho } ^ { \\hat { \\pi } } } } \\right\\| _ { \\infty } ) .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            553,
+            853,
+            831,
+            893
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            181,
+            58,
+            787,
+            70
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "discarded",
+        "text": "5 ",
+        "bbox": [
+            480,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "The proof of Theorem 3.6 can be found in Appendix B.3. It indicates that the upper bound on the difference between the performance of the optimal policy $\\pi ^ { * }$ and that of the policy $\\pi ^ { \\prime }$ after refining is proportional to $\\left\\| \\frac { { d _ { \\rho } ^ { \\pi } } ^ { * } } { d _ { \\rho } ^ { \\hat { \\pi } } } \\right\\|$ . Wit h Assumption 3.4 and Lemma 3.5, we now claim that our refining method with our explanation could further tighten the sub-optimality gap via reducing the distribution mismatch coefficient compared with forming an initial distribution by random selecting visited states, i.e., with a random explanation. ",
+        "bbox": [
+            88,
+            84,
+            473,
+            250
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Claim 1. We can form a better (mixed) initial state distribution $\\mu$ with our explanation method and tighten the upper bound of $V ^ { \\pi ^ { * } } ( \\rho ) \\stackrel { \\cdot } { - } V ^ { \\pi ^ { \\prime } } ( \\rho )$ compared with random explanation. ",
+        "bbox": [
+            88,
+            258,
+            473,
+            318
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "The details of the analysis can be found in Appendix B.4. Based on Assumption 3.2 and Claim 1, we can learn to perform as well as the optimal policy as long as the visited states of the optimal policy are covered by the (mixed) initial distribution. ",
+        "bbox": [
+            89,
+            334,
+            473,
+            409
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "4. Evaluation ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            429,
+            200,
+            445
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "In this section, we start with our experiment setup and design, followed by experiment results and analysis. We provide additional evaluation details in Appendix C. ",
+        "bbox": [
+            88,
+            455,
+            473,
+            500
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "4.1. Experiment Setup ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            517,
+            245,
+            531
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Environment Selection. We select eight representative environments to demonstrate the effectiveness of RICE across two categories: simulated games (Hopper, Walker2d, Reacher, and HalfCheetah of the MuJoCo games) and realworld applications (selfish mining, network defense, autonomous driving, and malware mutation) 2. We additionally run the experiments in the three sparse MuJoCo games introduced by Mazoure et al. (2019). The details of these applications can be found in Appendix C.2. ",
+        "bbox": [
+            89,
+            542,
+            473,
+            678
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Baseline Explanation Methods. Since our explanation method proposes an alternative design of StateMask, the first baseline is StateMask. We compare our explanation method with StateMask to show the equivalence and efficiency of our method. Additionally, we introduce “Random” as a baseline explanation method. “Random” identifies critical steps by randomly selecting a visited state as the critical state. ",
+        "bbox": [
+            88,
+            686,
+            472,
+            806
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Baseline Refining Methods. We compare our refining method with three baselines. The first baseline is “PPO fine-tuning” (Schulman et al., 2017), i.e., lowering the learning rate and continuing training with the PPO algorithm. The second baseline is a refining method introduced by StateMask (Cheng et al., 2023), i.e., resetting to the critical state and continuing training from the critical state. The third baseline is Jump-Start Reinforcement Learning (referred to as “JSRL”) (Uchendu et al., 2023). JSRL introduces a guided policy $\\pi _ { g }$ to set up a curriculum to train an exploration policy $\\pi _ { e }$ . Through initializing $\\pi _ { e } = \\pi _ { g }$ , we can transform JSRL to be a refining method that can further improve the performance of the guided policy. ",
+        "bbox": [
+            88,
+            816,
+            472,
+            845
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            501,
+            85,
+            885,
+            251
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Evaluation Metrics. To evaluate the fidelity of the generated explanation, we utilize an established fidelity score metric defined in StateMask (Cheng et al., 2023). The idea is to use a sliding window to step through all time steps and then choose the window with the highest average importance score (scored by the explanation method). The width of the sliding window is $l$ while the whole trajectory length is $L$ . Then we randomize the action(s) at the selected critical step(s) in the selected window (i.e., masking) and measure the average reward change as $d$ . Additionally, we denote the maximum possible reward change as $d _ { m a x }$ . Therefore, the fidelity score is calculated as $\\log ( d / d _ { m a x } ) - \\log ( l / L )$ A higher fidelity score indicates higher fidelity. ",
+        "bbox": [
+            501,
+            260,
+            885,
+            455
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "For the applications with dense rewards except the malware mutation application, we measure the reward of the target agent before and after refining. In the case of the malware mutation application, we report the “final reward” as the probability of evading the malware detector, both before and after refining. For the applications with sparse rewards, we report the performance during the refining process. ",
+        "bbox": [
+            501,
+            463,
+            885,
+            569
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "4.2. Experiment Design ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            585,
+            663,
+            601
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "We use the following experiments to evaluate the fidelity and efficiency of the explanation method, the effectiveness of the refining method and other factors that influenced the system performance (e.g., alternative design choices, hyperparameters). ",
+        "bbox": [
+            500,
+            609,
+            885,
+            684
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Experiment I. To show the equivalence of our explanation method with StateMask, we compare the fidelity of our method with StateMask. Given a trajectory, the explanation method first identifies and ranks top- $K$ important time steps. An accurate explanation means the important time steps have significant contributions to the final reward. To validate this, we let the agent fast-forward to the critical step and force the target agent to take random actions. Then we follow the target agent’s policy to complete the rest of the time steps. If the explanation is accurate, we expect a major change to the final reward by randomizing the actions at the important steps. We compute the fidelity score of each explanation method as mentioned in StateMask across 500 trajectories. We set $K = 1 0 \\%$ , $2 0 \\%$ , $3 0 \\%$ , $4 0 \\%$ and report the fidelity of the selected methods under each setup. We repeat each experiment 3 times with various random seeds and report the mean and standard deviation. Additionally, to show the efficiency of our design, we report the training time of the mask network using StateMask and our method when given a fixed number of training samples. ",
+        "bbox": [
+            501,
+            694,
+            885,
+            904
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "discarded",
+        "text": "2These are representative security applications that have a significant impact on the security community (Anderson et al., 2018) and they represent RL tasks with sparse rewards, which are common in security applications. ",
+        "bbox": [
+            88,
+            853,
+            473,
+            905
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            178,
+            58,
+            787,
+            70
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "discarded",
+        "text": "6 ",
+        "bbox": [
+            482,
+            924,
+            491,
+            934
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            89,
+            85,
+            473,
+            175
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "Experiment II. To show the effectiveness of the refining method, we compare the agent’s performance after refining using our method and three aforementioned baseline methods, i.e., PPO fine-tuning (Schulman et al., 2017), StateMask’s fine-tuning from critical steps (Cheng et al., 2023), and Jump-Start Reinforcement Learning (Uchendu et al., 2023). For this experiment, all the refining methods use the same explanation generated by our explanation method if needed, to ensure a fair comparison. Additionally, we conduct a qualitative study to understand how our refining method influences agent behavior and performance. ",
+        "bbox": [
+            89,
+            185,
+            473,
+            349
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "Experiment III To investigate how the quality of explanation affects the downstream refining process, we run our proposed refining method based on the critical steps identified by different explanation methods (Random, StateMask, and our method) and compare the agent’s performance after refining. ",
+        "bbox": [
+            89,
+            359,
+            473,
+            449
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "Experiment IV. To show the versatility of our method, we examine the refining performance when the pre-trained agent was trained by other algorithms such as Soft ActorCritic (SAC) (Haarnoja et al., 2018). First, we obtain a pre-trained SAC agent and then use Generative Adversarial Imitation Learning (GAIL) (Ho & Ermon, 2016) to learn an approximated policy network. We compare the refining performance using our method against baseline methods, i.e., PPO fine-tuning (Schulman et al., 2017), StateMask’s fine-tuning from critical steps (Cheng et al., 2023), and Jump-Start Reinforcement Learning (Uchendu et al., 2023). In addition, we also include fine-tuning the pre-trained SAC agent with the SAC algorithm as a baseline. ",
+        "bbox": [
+            89,
+            458,
+            473,
+            654
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "Experiment V. We test the impact of hyper-parameter choices for two primary hyper-parameters for refining: $p$ (used to control the mixed initial state distribution) and $\\lambda$ (used to control the exploration bonus). For our refining method, we vary $p$ from $\\{ 0 , 0 . 2 5 , 0 . 5 , 0 . 7 5 , 1 \\}$ and vary $\\lambda$ from $\\{ 0 , 0 . 1 , 0 . 0 1 , 0 . 0 0 1 \\}$ . By examining the agent’s performance with various $\\lambda$ values, we can further investigate the necessity of the exploration bonus. Additionally, we evaluate the choice of $\\alpha$ for our explanation method (used to control the mask ratio for the mask network). Specifically, we vary $\\alpha$ from $\\{ 0 . 0 1 , 0 . 0 0 1 , 0 . 0 0 0 1 \\}$ . ",
+        "bbox": [
+            89,
+            664,
+            472,
+            829
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "4.3. Experiment Results ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            847,
+            254,
+            861
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "Fidelity and Efficiency of Explanation. We compare the fidelity scores of our method with StateMask in all applications and provide the full results in Figure 5 of Appendix C.3. We observe that the fidelity scores of StateMask and our method are comparable. Furthermore, We evaluate the efficiency of our explanation method compared with StateMask. We report the cost time and the number of samples when training our explanation method and StateMask in Table 4 of Appendix C.3. We observe an average of $1 6 . 8 \\%$ drop in the training time compared with StateMask. The reason is that the training algorithm of the mask network in StateMask involves an estimation of the discounted accumulated reward with respect to the current policy of the perturbed agent and the policy of the target agent which requires additional computation cost. In contrast, our design only adds an additional term to the reward which is simple but effective. ",
+        "bbox": [
+            89,
+            871,
+            473,
+            900
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            501,
+            85,
+            885,
+            310
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "Effectiveness of Refining. We compare the agent’s performance after refining using different retaining methods across all applications with dense rewards in Table 1. The performance is measured by the final reward of the refined agent. In most applications, rewards are typically assigned positive values. However, in Cage Challenge 2, the reward is designed to incorporate negative values (see Appendix C.2). We have three main observations. First, we observe that our refining method can bring the largest improvement for the target agent in all applications. Second, we find that the PPO fine-tuning method only has marginal improvements for the agents due to its incapability of jumping out of local optima. Third, the refining method proposed in StateMask (which is to start fine-tuning only from critical steps) cannot always improve the agent’s performance. The reason is that this refining strategy can cause overfitting and thus harm the agent’s performance. We illustrate this problem in greater detail in a case study of Malware Mutation in Appendix D. It is also worth mentioning that we discover design flows of Malware Mutation and present the details in Appendix D. ",
+        "bbox": [
+            500,
+            319,
+            885,
+            621
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "We also run our experiments of varying refining methods on selected MuJoCo games with sparse rewards. Figure 2 shows the results of our method against other baselines in SparseHopper and SparseHalfCheetah games. We observe that our refining method has significant advantages over other baselines with respect to final performance and refining efficiency. Through varying explanation methods, we confirm that the contribution should owe to our explanation method. We leave the refining results of the SparseWalker2d game and the hyper-parameter sensitivity results of all sparse MuJoCo games in Appendix C.4. ",
+        "bbox": [
+            501,
+            630,
+            885,
+            795
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "In addition to numerical results, we also provide a qualitative analysis of the autonomous driving case to understand how RICE influences agent behavior and performance, particularly in a critical state, in Appendix C.5. We visualize the agent’s behavior before and after refining the agent to show that RICE is able to help the agent break through the bottleneck based on the identified critical states of the failure. ",
+        "bbox": [
+            501,
+            804,
+            885,
+            893
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            178,
+            58,
+            787,
+            70
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "discarded",
+        "text": "7 ",
+        "bbox": [
+            482,
+            922,
+            490,
+            934
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "table",
+        "img_path": "images/6305e657201ee8e6ac3d751e68477abb70a43b1b59bf2497fb129df6b1f76ee7.jpg",
+        "table_caption": [
+            "Table 1. Agent Refining Performance—“No Refine” indicates the target agent’s performance before refining. For the first group of experiments (left), we fixed the explanation method to our method (mask network) and varied the refining methods. For the second group of experiments (right), we fixed the refining method to our method and varied the explanation methods. We report the mean value (standard deviations) of the final reward after refining. A higher value is better. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td rowspan=2 colspan=1>Task</td><td rowspan=2 colspan=1>No Refine</td><td rowspan=1 colspan=4>FixExplanation;VaryRefineMethods</td><td rowspan=1 colspan=3>FixRefine;VaryExplanation Methods</td></tr><tr><td rowspan=1 colspan=1>PPO</td><td rowspan=1 colspan=1>JSRL</td><td rowspan=1 colspan=1>StateMask-R</td><td rowspan=1 colspan=1>Ours</td><td rowspan=1 colspan=1>Random</td><td rowspan=1 colspan=1>StateMask</td><td rowspan=1 colspan=1>Ours</td></tr><tr><td rowspan=1 colspan=1>Hopper</td><td rowspan=1 colspan=1>3559.44 (19.15)</td><td rowspan=1 colspan=1>3638.75 (16.67)</td><td rowspan=1 colspan=1>3635.08 (9.82)</td><td rowspan=1 colspan=1>3652.06 (8.63)</td><td rowspan=1 colspan=1>3663.91 (20.98)</td><td rowspan=1 colspan=1>3648.98 (39.06)</td><td rowspan=1 colspan=1>3661.86 (19.95)</td><td rowspan=1 colspan=1>3663.91 (20.98)</td></tr><tr><td rowspan=1 colspan=1>Walker2d</td><td rowspan=1 colspan=1>3768.79 (18.68)</td><td rowspan=1 colspan=1>3965.63 (9.46)</td><td rowspan=1 colspan=1>3963.57 (6.73)</td><td rowspan=1 colspan=1>3966.96 (3.39)</td><td rowspan=1 colspan=1>3982.79 (3.15)</td><td rowspan=1 colspan=1>3969.64(6.38)</td><td rowspan=1 colspan=1>3982.67 (5.55)</td><td rowspan=1 colspan=1>3982.79 (3.15)</td></tr><tr><td rowspan=1 colspan=1>Reacher</td><td rowspan=1 colspan=1>-5.79 (0.73)</td><td rowspan=1 colspan=1>-3.04(0.04)</td><td rowspan=1 colspan=1>-3.23(0.26)</td><td rowspan=1 colspan=1>-3.45 (0.32)</td><td rowspan=1 colspan=1>-2.66 (0.03)</td><td rowspan=1 colspan=1>-3.11 (0.42)</td><td rowspan=1 colspan=1>-2.69 (0.28)</td><td rowspan=1 colspan=1>-2.66 (0.03)</td></tr><tr><td rowspan=1 colspan=1>HalfCheetah</td><td rowspan=1 colspan=1>2024.09 (28.34)</td><td rowspan=1 colspan=1>2133.31 (4.11)</td><td rowspan=1 colspan=1>2128.04 (0.91)</td><td rowspan=1 colspan=1>2085.28 (1.92)</td><td rowspan=1 colspan=1>2138.89 (3.22)</td><td rowspan=1 colspan=1>2132.01 (0.76)</td><td rowspan=1 colspan=1>2136.23 (0.49)</td><td rowspan=1 colspan=1>2138.89 (3.22)</td></tr><tr><td rowspan=1 colspan=1>Selfish Mining</td><td rowspan=1 colspan=1>14.36 (0.24)</td><td rowspan=1 colspan=1>14.93 (0.45)</td><td rowspan=1 colspan=1>14.88 (0.51)</td><td rowspan=1 colspan=1>14.53 (0.33)</td><td rowspan=1 colspan=1>16.56 (0.63)</td><td rowspan=1 colspan=1>15.09 (0.28)</td><td rowspan=1 colspan=1>16.49 (0.46)</td><td rowspan=1 colspan=1>16.56 (0.63)</td></tr><tr><td rowspan=1 colspan=1>Cage Challenge 2</td><td rowspan=1 colspan=1>-23.64 (0.27)</td><td rowspan=1 colspan=1>-23.58 (0.37)</td><td rowspan=1 colspan=1>-22.97 (0.57)</td><td rowspan=1 colspan=1>-26.98 (0.84)</td><td rowspan=1 colspan=1>-20.02 (0.32)</td><td rowspan=1 colspan=1>-25.94 (2.34)</td><td rowspan=1 colspan=1>-20.07 (1.33)</td><td rowspan=1 colspan=1>-20.02 (0.32)</td></tr><tr><td rowspan=1 colspan=1>Auto Driving</td><td rowspan=1 colspan=1>10.30 (2.25)</td><td rowspan=1 colspan=1>13.37 (3.10)</td><td rowspan=1 colspan=1>11.26 (3.66)</td><td rowspan=1 colspan=1>7.62 (1.77)</td><td rowspan=1 colspan=1>17.03 (1.65)</td><td rowspan=1 colspan=1>11.72 (1.77)</td><td rowspan=1 colspan=1>16.28 (2.33)</td><td rowspan=1 colspan=1>17.03 (1.65)</td></tr><tr><td rowspan=1 colspan=1>Malware Mutation</td><td rowspan=1 colspan=1>42.20 (6.86)</td><td rowspan=1 colspan=1>49.33 (8.59)</td><td rowspan=1 colspan=1>43.10 (7.24)</td><td rowspan=1 colspan=1>50.13 (8.14)</td><td rowspan=1 colspan=1>57.53 (8.71)</td><td rowspan=1 colspan=1>48.60 (7.60)</td><td rowspan=1 colspan=1>57.16 (8.51)</td><td rowspan=1 colspan=1>57.53 (8.71)</td></tr></table>",
+        "bbox": [
+            89,
+            148,
+            883,
+            251
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/475bd7028ba1329a6457682197248ff74321e1c2099eba2505c81e9811eedc99.jpg",
+        "image_caption": [
+            "Figure 2. Agent Refining Performance in two Sparse MuJoCo Games—For Group (a), we fix the explanation method to our method (mask network) if needed while varying refining methods. For Group (b), we fix the refining method to our method while varying the explanation methods. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            91,
+            266,
+            882,
+            386
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            88,
+            462,
+            472,
+            491
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Refining based on Different Explanations. To examine how the quality of explanation affects the downstream refining process, we present Table 1. We run our proposed refining method based on the critical steps identified by ours and Random. We have two main observations. First, using the explanation generated by our mask network, the refining achieves the best outcome across all applications. Second, using the explanation generated by our explanation significantly outperforms the random baseline. This aligns with our theoretical analysis that our refining framework provides a tighter bound for the sub-optimality. ",
+        "bbox": [
+            88,
+            501,
+            473,
+            666
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Refining a Pre-trained Agent of Other Algorithms. To show that our framework is general to refine pre-trained agents that were not trained by PPO algorithms, we do experiments on refining a SAC agent in the Hopper game. Figure 3 demonstrates the advantage of our refining method against other baselines when refining a SAC agent. Additionally, we observe that fine-tuning the DRL agent with the SAC algorithm still suffers from the training bottleneck while switching to the PPO algorithm provides an opportunity to break through the bottleneck. We provide the refining curves when varying hyper-parameters $p$ and $\\lambda$ in Appendix C.3. ",
+        "bbox": [
+            88,
+            675,
+            473,
+            854
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Impact of Hyper-parameters. Due to space limit, we provide the sensitivity of hyper-parameters $p , \\lambda ,$ , and $\\alpha$ in ",
+        "bbox": [
+            88,
+            866,
+            473,
+            896
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/fdfddd8df2b38cf1c4930b9588d2a95af5bba29d840a8f60720903bab746da2c.jpg",
+        "image_caption": [
+            "Figure 3. SAC Agent Refining Performance in Hopper Game —In the left part, we show the training curve of obtaining a pretrained policy through the SAC algorithm. In the right part, we show the refining curves of different methods. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            501,
+            460,
+            882,
+            570
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Appendix C.3. We have three main observations. ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            664,
+            820,
+            679
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "First, $p$ controls the mixing ratio of critical states (identified by the explanation method) and the initial state distribution for refining. The performance is low when $p \\ : = \\ : 0$ (all starting from the default initial distribution) or $p = 1$ (all starting from the identified critical states). The performance has significant improvements when $0 < p < 1$ , i.e., using a mixed initial state distribution. Across all applications, we observe that setting $p$ to 0.25 or 0.5 is most beneficial. A mixed initial distribution can help eliminate the problem of overfitting. ",
+        "bbox": [
+            501,
+            686,
+            885,
+            837
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Second, as long as $\\lambda > 0$ (thereby enabling exploration), there is a noticeable improvement in performance, highlighting the importance of exploration in refining the pre-trained agent. The result is less sensitive to the specific value of $\\lambda$ . In general, a $\\lambda$ value of 0.01 yields good performance across all four applications. ",
+        "bbox": [
+            500,
+            845,
+            885,
+            905
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            179,
+            58,
+            787,
+            70
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "discarded",
+        "text": "8 ",
+        "bbox": [
+            482,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            88,
+            85,
+            472,
+            114
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Third, recall that the hyper-parameter $\\alpha$ is to control the bonus of blinding the target agent when training the mask network. We vary $\\alpha$ from $\\{ 0 . 0 1 , 0 . 0 0 1 , 0 . 0 0 0 1 \\}$ and find that our explanation method is not that sensitive to $\\alpha$ . ",
+        "bbox": [
+            88,
+            123,
+            472,
+            183
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "5. Discussion ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            202,
+            196,
+            218
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Applicability. RICE is suitable for DRL applications that are trained within controllable environment (e.g., simulators), in order to generate explanations. In fact, most of today’s DRL applications rely on some form of simulator for their training. For example, for safety-critical applications such as autonomous driving, DRL agents are usually designed, trained, and tested in a simulated environment first before moving them to real-world testing. Simulation platforms broadly include Carla (Dosovitskiy et al., 2017) and MetaDrive (Li et al., 2022) which have been used to facilitate the training of DRL agents (Zhang et al., 2021; Wang et al., 2023; Peng et al., 2022). Therefore, RICE should be applicable to such DRL systems (especially during their development phase) for refining a pre-trained DRL agent. ",
+        "bbox": [
+            89,
+            231,
+            473,
+            454
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Warm Start vs Cold Start. As is mentioned in Section 3, our method requires a “warm start” setting, i.e., the agent has good coverage of the state distribution of the optimal policy. Even if the agent has good coverage of the state distribution, it does not necessarily mean that the agent has already learned a good policy due to the potential of choosing wrong actions (Uchendu et al., 2023). Therefore, the training bottleneck can still exist under a good coverage of the state distribution. In contrast, Our method does not work well in a “cold start” setting, i.e., when the state coverage of the pre-trained policy is extremely poor. In that case, step-level explanation methods cannot give useful help and our method is actually equivalent to the RND method 3. ",
+        "bbox": [
+            89,
+            465,
+            473,
+            660
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Critical State Filtering. Though RICE identifies critical states based on their necessity for achieving good outcomes, it does not fully consider their importance for further agent learning. For instance, a state might be deemed critical, yet the trained agent could have already converged to the optimal action for that state. In such cases, resetting the environment to this state doesn’t significantly benefit the learning process. Future work could explore additional filtering of critical states using metrics such as policy convergence or temporal difference (TD) errors, which may help concentrate efforts and accelerate refinement. ",
+        "bbox": [
+            89,
+            670,
+            473,
+            835
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "6. Conclusion ",
+        "text_level": 1,
+        "bbox": [
+            500,
+            83,
+            614,
+            99
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "In this paper, we present RICE to break through bottlenecks of reinforcement learning training with explanation. We propose an alternative design of StateMask to provide high-fidelity explanations for DRL agents’ behaviors, by identifying critical time steps that contribute the most to the agent’s success/failure. We encourage the agent to explore starting from a mixture of default initial states and the identified critical states. Compared with existing refining strategies, we empirically show that our method brings the largest improvement after refining with theoretical guarantees. ",
+        "bbox": [
+            501,
+            111,
+            885,
+            273
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Acknowledgements ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            295,
+            663,
+            311
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "This project was supported in part by Northwestern University TGS Fellowship and NSF Grants 2225234, 2225225, 2229876, 1955719, and 2055233. ",
+        "bbox": [
+            500,
+            321,
+            887,
+            364
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Impact Statement ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            386,
+            650,
+            402
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "This paper presents work whose goal is to advance the field of reinforcement learning with explanation. There are many potential social impacts of our work. Our approach provides a feasible solution to break through the training bottlenecks of reinforcement learning with explanation, which is an automatic process and saves manual effort. ",
+        "bbox": [
+            501,
+            412,
+            883,
+            501
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "However, it is also worth noting the potential negative societal impacts of our work. Some of the real-world applications we select such as malware mutation can create attack examples that may bring additional ethical concerns. In the realm of security research, the ultimate goal of these tasks is to generate stronger testing cases to enhance the defense, and it is standard practice. Take malware mutation as an example, the produced samples can be used to proactively improve the robustness and effectiveness of malware detection systems (e.g., through adversarial training), thereby benefiting cybersecurity defense (Yang et al., 2017). ",
+        "bbox": [
+            501,
+            510,
+            885,
+            675
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "References ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            695,
+            591,
+            712
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "GitHub - bfilar/malware rl: Malware Bypass Research using Reinforcement Learning — github.com. https: //github.com/bfilar/malware_rl, a. ",
+        "bbox": [
+            500,
+            719,
+            887,
+            763
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "GitHub - cage-challenge/cage-challenge-2: TTCP CAGE Challenge 2 — github.com. https://github.com/ cage-challenge/cage-challenge-2, b. ",
+        "bbox": [
+            500,
+            790,
+            885,
+            834
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "GitHub - john-cardiff/-cyborg-cage-2 — github.com. https://github.com/john-cardiff/ -cyborg-cage-2, c. ",
+        "bbox": [
+            500,
+            861,
+            885,
+            905
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "discarded",
+        "text": "3We provide an example of Mountain Car game in Appendix E to illustrate this limitation. ",
+        "bbox": [
+            88,
+            845,
+            472,
+            872
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            181,
+            58,
+            787,
+            70
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "discarded",
+        "text": "9 ",
+        "bbox": [
+            482,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "GitHub - roibarzur/pto-selfish-mining: Code repository for technical papers about selfish mining analysis. — github.com. https://github.com/roibarzur/ pto-selfish-mining, d. ",
+        "bbox": [
+            88,
+            85,
+            475,
+            145
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Mountain car continuous. https://mgoulao. github.io/gym-docs/environments/ classic_control/mountain_car_ continuous/. Accessed: 2024-05-24. ",
+        "bbox": [
+            88,
+            156,
+            475,
+            215
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Agarwal, A., Henaff, M., Kakade, S., and Sun, W. Pcpg: Policy cover directed exploration for provable policy gradient learning. Proc. of NeurIPS, 2020. ",
+        "bbox": [
+            88,
+            227,
+            475,
+            271
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Agarwal, A., Kakade, S. M., Lee, J. D., and Mahajan, G. On the theory of policy gradient methods: Optimality, approximation, and distribution shift. Journal of Machine Learning Research, 2021. ",
+        "bbox": [
+            88,
+            282,
+            475,
+            342
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Agarwal, R., Schwarzer, M., Castro, P. S., Courville, A. C., and Bellemare, M. Reincarnating reinforcement learning: Reusing prior computation to accelerate progress. In Proc. of NeurIPS, 2022. ",
+        "bbox": [
+            88,
+            353,
+            475,
+            412
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Anderson, H. S., Kharkar, A., Filar, B., Evans, D., and Roth, P. Learning to evade static pe machine learning malware models via reinforcement learning. arXiv preprint arXiv:1801.08917, 2018. ",
+        "bbox": [
+            86,
+            424,
+            475,
+            483
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Bar-Zur, R., Abu-Hanna, A., Eyal, I., and Tamar, A. Werlman: To tackle whale (transactions), go deep (rl). In Proc. of IEEE S&P, 2023. ",
+        "bbox": [
+            86,
+            496,
+            475,
+            540
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Bellemare, M., Srinivasan, S., Ostrovski, G., Schaul, T., Saxton, D., and Munos, R. Unifying count-based exploration and intrinsic motivation. In Proc. of NeurIPS, 2016. ",
+        "bbox": [
+            88,
+            551,
+            475,
+            609
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Burda, Y., Edwards, H., Storkey, A., and Klimov, O. Exploration by random network distillation. In Proc. of ICLR, 2018. ",
+        "bbox": [
+            86,
+            622,
+            475,
+            666
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "CAGE. Ttcp cage challenge 2. In Proc. of AAAI-22 Workshop on Artificial Intelligence for Cyber Security (AICS), 2022. ",
+        "bbox": [
+            88,
+            678,
+            475,
+            722
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Cai, X.-Q., Ding, Y.-X., Chen, Z., Jiang, Y., Sugiyama, M., and Zhou, Z.-H. Seeing differently, acting similarly: Heterogeneously observable imitation learning. In Proc. of ICLR, 2022. ",
+        "bbox": [
+            86,
+            733,
+            475,
+            792
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Cai, X.-Q., Zhang, Y.-J., Chiang, C.-K., and Sugiyama, M. Imitation learning from vague feedback. In Proc. of NeurIPS, 2023. ",
+        "bbox": [
+            86,
+            804,
+            475,
+            848
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Chang, J. D., Brantley, K., Ramamurthy, R., Misra, D., and Sun, W. Learning to generate better than your llm. arXiv preprint arXiv:2306.11816, 2023. ",
+        "bbox": [
+            86,
+            861,
+            473,
+            905
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Cheng, Z., Wu, X., Yu, J., Sun, W., Guo, W., and Xing, X. Statemask: Explaining deep reinforcement learning through state mask. In Proc. of NeurIPS, 2023. ",
+        "bbox": [
+            500,
+            85,
+            885,
+            130
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Dosovitskiy, A., Ros, G., Codevilla, F., Lopez, A., and Koltun, V. CARLA: An open urban driving simulator. In Proc. of CoRL, pp. 1–16, 2017. ",
+        "bbox": [
+            500,
+            143,
+            885,
+            188
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "drive Contributors, D. DI-drive: OpenDILab decision intelligence platform for autonomous driving simulation. https://github.com/opendilab/ DI-drive, 2021. ",
+        "bbox": [
+            498,
+            202,
+            885,
+            262
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Ecoffet, A., Huizinga, J., Lehman, J., Stanley, K. O., and Clune, J. Go-explore: a new approach for hardexploration problems. arXiv preprint arXiv:1901.10995, 2019. ",
+        "bbox": [
+            500,
+            276,
+            887,
+            334
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Ecoffet, A., Huizinga, J., Lehman, J., Stanley, K. O., and Clune, J. First return, then explore. Nature, 2021. ",
+        "bbox": [
+            500,
+            349,
+            885,
+            378
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Erez, T., Tassa, Y., and Todorov, E. Infinite-horizon model predictive control for periodic tasks with contacts. Robotics: Science and systems VII, pp. 73, 2012. ",
+        "bbox": [
+            500,
+            392,
+            885,
+            438
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Eyal, I. and Sirer, E. G. Majority is not enough: Bitcoin mining is vulnerable. Communications of the ACM, 61 (7):95–102, 2018. ",
+        "bbox": [
+            500,
+            450,
+            885,
+            496
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Eysenbach, B., Salakhutdinov, R., and Levine, S. The information geometry of unsupervised reinforcement learning. In Proc. of ICLR, 2021. ",
+        "bbox": [
+            498,
+            510,
+            885,
+            554
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Fu, J., Luo, K., and Levine, S. Learning robust rewards with adverserial inverse reinforcement learning. In Proc. of ICLR, 2018. ",
+        "bbox": [
+            500,
+            569,
+            885,
+            612
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Guan, L., Verma, M., Guo, S. S., Zhang, R., and Kambhampati, S. Widening the pipeline in human-guided reinforcement learning with explanation and context-aware data augmentation. In Proc.of NeurIPS, 2021. ",
+        "bbox": [
+            500,
+            626,
+            885,
+            686
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Guo, W., Wu, X., Khan, U., and Xing, X. Edge: Explaining deep reinforcement learning policies. In Proc. of NeurIPS, 2021. ",
+        "bbox": [
+            500,
+            700,
+            885,
+            743
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Haarnoja, T., Zhou, A., Abbeel, P., and Levine, S. Soft actorcritic: Off-policy maximum entropy deep reinforcement learning with a stochastic actor. In Proc. of ICML, pp. 1861–1870, 2018. ",
+        "bbox": [
+            500,
+            758,
+            885,
+            818
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Ho, J. and Ermon, S. Generative adversarial imitation learning. In Proc. of NeurIPS, 2016. ",
+        "bbox": [
+            498,
+            832,
+            885,
+            862
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Kakade, S. and Langford, J. Approximately optimal approximate reinforcement learning. In Proc. of ICML, 2002. ",
+        "bbox": [
+            500,
+            876,
+            887,
+            905
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            176,
+            56,
+            787,
+            70
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Li, Q., Peng, Z., Feng, L., Zhang, Q., Xue, Z., and Zhou, B. Metadrive: Composing diverse driving scenarios for generalizable reinforcement learning. IEEE Transactions on Pattern Analysis and Machine Intelligence, 2022.   \nLi, Q., Zhai, Y., Ma, Y., and Levine, S. Understanding the complexity gains of single-task rl with a curriculum. In Proc. of ICML, pp. 20412–20451, 2023.   \nMazoure, B., Doan, T., Durand, A., Hjelm, R. D., and Pineau, J. Leveraging exploration in off-policy algorithms via normalizing flows. In Proc. of CoRL, 2019.   \nMnih, V., Kavukcuoglu, K., Silver, D., Graves, A., Antonoglou, I., Wierstra, D., and Riedmiller, M. Playing atari with deep reinforcement learning. arXiv preprint arXiv:1312.5602, 2013.   \nOh, J., Chockalingam, V., Lee, H., et al. Control of memory, active perception, and action in minecraft. In Proc. of ICML, 2016.   \nOh, J., Guo, Y., Singh, S., and Lee, H. Self-imitation learning. In Proc. of ICML, pp. 3878–3887, 2018.   \nOstrovski, G., Bellemare, M. G., Oord, A., and Munos, R. Count-based exploration with neural density models. In Proc. of ICML, 2017.   \nPaszke, A., Gross, S., Massa, F., Lerer, A., Bradbury, J., Chanan, G., Killeen, T., Lin, Z., Gimelshein, N., Antiga, L., et al. Pytorch: An imperative style, high-performance deep learning library. In Proc. of NeurIPS, 2019.   \nPeng, Z., Li, Q., Liu, C., and Zhou, B. Safe driving via expert guided policy optimization. In Proc. of CoRL, 2022.   \nPuri, N., Verma, S., Gupta, P., Kayastha, D., Deshmukh, S., Krishnamurthy, B., and Singh, S. Explain your move: Understanding agent actions using specific and relevant feature attribution. In Proc. of ICLR, 2019.   \nRaff, E., Barker, J., Sylvester, J., Brandon, R., Catanzaro, B., and Nicholas, C. Malware detection by eating a whole exe. arXiv preprint arXiv:1710.09435, 2017.   \nRaffin, A., Hill, A., Gleave, A., Kanervisto, A., Ernestus, M., and Dormann, N. Stable-baselines3: Reliable reinforcement learning implementations. Journal of Machine Learning Research, 2021.   \nRashidinejad, P., Zhu, B., Ma, C., Jiao, J., and Russell, S. Bridging offline reinforcement learning and imitation learning: A tale of pessimism. In Proc. of NeurIPS, 2021.   \nRen, Z., Dong, K., Zhou, Y., Liu, Q., and Peng, J. Exploration via hindsight goal generation. In Proc. of NeurIPS, 2019. ",
+        "bbox": [
+            83,
+            25,
+            477,
+            905
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Schulman, J., Wolski, F., Dhariwal, P., Radford, A., and Klimov, O. Proximal policy optimization algorithms. arXiv preprint arXiv:1707.06347, 2017. ",
+        "bbox": [
+            500,
+            85,
+            887,
+            130
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Sundararajan, M., Taly, A., and Yan, Q. Axiomatic attribution for deep networks. In Proc. of ICML, 2017. ",
+        "bbox": [
+            500,
+            140,
+            885,
+            170
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Todorov, E., Erez, T., and Tassa, Y. Mujoco: A physics engine for model-based control. In Proc. of IROS, 2012. ",
+        "bbox": [
+            500,
+            180,
+            885,
+            210
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Uchendu, I., Xiao, T., Lu, Y., Zhu, B., Yan, M., Simon, J., Bennice, M., Fu, C., Ma, C., Jiao, J., et al. Jump-start reinforcement learning. In Proc. of ICML, 2023. ",
+        "bbox": [
+            500,
+            220,
+            885,
+            266
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Van Waveren, S., Pek, C., Tumova, J., and Leite, I. Correct me if i’m wrong: Using non-experts to repair reinforcement learning policies. In Proc. of HRI, 2022. ",
+        "bbox": [
+            500,
+            276,
+            885,
+            321
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Vinyals, O., Babuschkin, I., Czarnecki, W. M., Mathieu, M., Dudzik, A., Chung, J., Choi, D. H., Powell, R., Ewalds, T., Georgiev, P., et al. Grandmaster level in starcraft ii using multi-agent reinforcement learning. Nature, 2019. ",
+        "bbox": [
+            500,
+            332,
+            887,
+            392
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Vyas, S., Hannay, J., Bolton, A., and Burnap, P. P. Automated cyber defence: A review. arXiv preprint arXiv:2303.04926, 2023. ",
+        "bbox": [
+            500,
+            401,
+            885,
+            446
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Wang, X., Zhang, J., Hou, D., and Cheng, Y. Autonomous driving based on approximate safe action. IEEE Transactions on Intelligent Transportation Systems, 2023. ",
+        "bbox": [
+            500,
+            457,
+            885,
+            502
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Weng, J., Chen, H., Yan, D., You, K., Duburcq, A., Zhang, M., Su, Y., Su, H., and Zhu, J. Tianshou: A highly modularized deep reinforcement learning library. Journal of Machine Learning Research, 2022. ",
+        "bbox": [
+            500,
+            512,
+            885,
+            573
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Xie, T., Jiang, N., Wang, H., Xiong, C., and Bai, Y. Policy finetuning: Bridging sample-efficient offline and online reinforcement learning. In Proc. of NeurIPS, 2021. ",
+        "bbox": [
+            500,
+            583,
+            885,
+            628
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Yang, W., Kong, D., Xie, T., and Gunter, C. A. Malware detection in adversarial settings: Exploiting feature evolutions and confusions in android apps. In Proc. of ACSAC, 2017. ",
+        "bbox": [
+            500,
+            638,
+            887,
+            698
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Yu, J., Guo, W., Qin, Q., Wang, G., Wang, T., and Xing, X. Airs: Explanation for deep reinforcement learning based security applications. In Proc. of USENIX Security, 2023. ",
+        "bbox": [
+            500,
+            709,
+            887,
+            755
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Zhang, Z., Liniger, A., Dai, D., Yu, F., and Van Gool, L. End-to-end urban driving by imitating a reinforcement learning coach. In Proc. of ICCV, 2021. ",
+        "bbox": [
+            500,
+            763,
+            885,
+            809
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            176,
+            56,
+            789,
+            70
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "discarded",
+        "text": "11 ",
+        "bbox": [
+            477,
+            922,
+            493,
+            935
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "A. Proof of Theorem 3.3 ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            82,
+            292,
+            99
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Based on the Performance Difference Lemma (Kakade & Langford, 2002), we have ",
+        "bbox": [
+            86,
+            109,
+            640,
+            125
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "equation",
+        "img_path": "images/e1debd8439ee690f577afe0ae884f1f67646a5c5bc2abfda85d35891a0a75b91.jpg",
+        "text": "$$\n\\eta ( \\bar { \\pi } ) - \\eta ( \\pi ) = \\frac { 1 } { 1 - \\gamma } \\mathbb { E } _ { s \\sim d _ { \\rho } ^ { \\bar { \\pi } } } \\mathbb { E } _ { a \\sim \\bar { \\pi } ( \\cdot \\vert s ) } A ^ { \\pi } \\left( s , a \\right) ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            325,
+            131,
+            645,
+            162
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "where $\\pi$ is the policy of the target agent, $\\bar { \\pi }$ is the perturbed policy, $\\rho$ is the initial distribution, and $\\gamma$ is the discount rate. ",
+        "bbox": [
+            96,
+            167,
+            870,
+            184
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Note that the perturbed policy $\\bar { \\pi }$ is a mixture of the target agent’s policy $\\pi$ and a random policy $\\pi ^ { r }$ (i.e., $\\bar { \\pi } ( \\cdot | s ) = \\tilde { \\pi } ( a ^ { e } =$ $0 | s ) \\pi ( \\cdot | s ) + \\tilde { \\pi } ( a ^ { e } = 1 | s ) \\pi ^ { r } ( \\cdot | s ) )$ . Denote the probability of the mask network outputting 0 at state $s$ as $\\tilde { \\pi } ( a ^ { e } = 0 | s ) =$ $\\xi ( s )$ and the probability of the mask network outputting 1 at state $s$ as $\\tilde { \\pi } ( a ^ { e } = 1 | s ) = 1 - \\xi ( s )$ Given the fact that $A ^ { \\pi } \\left( s , \\pi ( \\cdot | s ) \\right) = \\mathbb { E } _ { a \\sim \\pi ( s ) } A ^ { \\pi } ( s , a ) = 0$ , we have ",
+        "bbox": [
+            88,
+            190,
+            883,
+            253
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "equation",
+        "img_path": "images/6b841ead249d5a2ed03345e55f69633dc0d6c00df019569e2fa687845d792378.jpg",
+        "text": "$$\n\\begin{array} { l } { \\displaystyle \\eta ( \\overline { { \\pi } } ) - \\eta ( \\overline { { \\pi } } ) = \\frac { 1 } { 1 - \\gamma } \\mathbb { E } _ { \\sigma \\sim d _ { \\rho } ^ { \\kappa } } \\mathbb { E } _ { a \\sim \\overline { { \\pi } } ( \\cdot \\vert s ) } A ^ { \\pi } \\left( s , a \\right) } \\\\ { \\displaystyle \\qquad = \\frac { 1 } { 1 - \\gamma } \\mathbb { E } _ { s \\sim d _ { \\rho } ^ { \\kappa } } \\sum _ { a } \\bar { \\pi } ( a \\vert s ) A ^ { \\pi } \\left( s , a \\right) } \\\\ { \\displaystyle \\qquad = \\frac { 1 } { 1 - \\gamma } \\mathbb { E } _ { s \\sim d _ { \\rho } ^ { \\kappa } } \\sum _ { a } \\xi ( s ) \\pi ( a \\vert s ) A ^ { \\pi } \\left( s , a \\right) + \\frac { 1 } { 1 - \\gamma } \\mathbb { E } _ { s \\sim d _ { \\rho } ^ { \\kappa } } \\sum _ { a } ( 1 - \\xi ( s ) ) \\pi ^ { r } ( a \\vert s ) A ^ { \\pi } \\left( s , a \\right) } \\\\ { \\displaystyle \\qquad = \\frac { 1 } { 1 - \\gamma } \\mathbb { E } _ { s \\sim d _ { \\rho } ^ { \\kappa } } \\xi ( s ) \\mathbb { E } _ { a \\sim \\pi ( \\cdot \\vert s ) } A ^ { \\pi } \\left( s , a \\right) + \\frac { 1 } { 1 - \\gamma } \\mathbb { E } _ { s \\sim d _ { \\rho } ^ { \\kappa } } ( 1 - \\xi ( s ) ) \\mathbb { E } _ { a \\sim \\pi ^ { r } ( \\cdot \\vert s ) } A ^ { \\pi } \\left( s , a \\right) } \\\\ { \\displaystyle \\qquad = \\frac { 1 } { 1 - \\gamma } \\mathbb { E } _ { s \\sim d _ { \\rho } ^ { \\kappa } } \\left( 1 - \\xi ( s ) \\right) \\mathbb { E } _ { a \\sim \\pi ^ { r } ( \\cdot \\vert s ) } A ^ { \\pi } \\left( s , a \\right) \\leq 0 . } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            160,
+            276,
+            816,
+            453
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Therefore, we show that $\\eta ( \\bar { \\pi } )$ is upper bounded by $\\eta ( \\pi )$ given Assumption 3.1. ",
+        "bbox": [
+            88,
+            463,
+            604,
+            479
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "B. Theoretical Guarantee ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            498,
+            302,
+            516
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "B.1. Validation of Assumption 3.4 in a 2-state MDP ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            525,
+            444,
+            540
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "In a 2-state MDP, we have two different states, namely, $s _ { A }$ and $s _ { B }$ . The state distribution of any policy $\\pi$ follows $d _ { \\rho } ^ { \\pi } ( s _ { A } ) + d _ { \\rho } ^ { \\pi } ( s _ { B } ) = 1$ . As such, the set of feasible state marginal distribution can be described by a line $[ ( 0 , 1 ) , ( 1 , 0 ) ]$ in $\\mathbb { R } ^ { 2 }$ . Let’s denote vector $\\textbf { s } = \\ [ s _ { A } , s _ { B } ]$ . The expected total reward of a policy $\\pi$ can be represented as $\\eta ( \\pi ) = <$ $d _ { \\rho } ^ { \\pi } ( \\mathbf { s } ) , R ( \\mathbf { s } ) >$ (Eysenbach et al., 2021), where $R ( \\mathbf { s } ) = [ R ( s _ { A } ) , R ( s _ { B } ) ]$ . Figure 4 shows the area of achievable state distribution via the initial state distribution $\\rho$ (highlighted in orange). ",
+        "bbox": [
+            86,
+            547,
+            885,
+            625
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "It should be noted that not all the points in the line $[ ( 0 , 1 ) , ( 1 , 0 ) ]$ corresponded to a valid Markovian policy. However, for any convex combination of valid state occupancy measures, there exists a Markovian policy that has this state occupancy measure. As such, the policy search occurs within a convex polytope, essentially a segment (i.e., , marked in orange) along this line. In Figure 4, we visualize $R ( \\mathbf { s } )$ as vectors starting at the origin. Since $V ^ { \\hat { \\pi } } ( \\rho ) \\geq V ^ { \\pi } ( \\rho )$ , We mark $d _ { \\rho } ^ { \\hat { \\pi } } ( \\mathbf { s } )$ closer to $R ( \\mathbf { s } )$ (i.e., the inner product between $d _ { \\rho } ^ { \\hat { \\pi } } ( \\mathbf { s } )$ and $R ( \\mathbf { s } )$ and is larger than $d _ { \\boldsymbol { \\rho } } ^ { \\pi } ( \\mathbf { s } )$ and $R ( \\mathbf { s } ) \\big > ,$ ). The following theorem explains how we determine the location of the location of $d _ { \\rho } ^ { \\pi ^ { * } } ( \\mathbf { s } )$ in Figure 4. ",
+        "bbox": [
+            88,
+            631,
+            887,
+            727
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Theorem B.1 (Fact 1 (Eysenbach et al., 2021)). For every state-dependent reward function, among the set of policies that maximize that reward function is one that lies at a vertex of the state marginal polytope. ",
+        "bbox": [
+            86,
+            729,
+            885,
+            761
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "According to Theorem B.1, $d _ { \\rho } ^ { \\pi ^ { * } } ( \\mathbf { s } )$ located at either vertex in the orange segment. Since $\\pi ^ { * }$ is the optimal policy, it lies at the vertex that has the larger inner product within $R ( s )$ . Once the position of $d _ { \\rho } ^ { \\pi ^ { * } }$ (s) is determined, we can easily find $\\begin{array} { r } { \\left. \\frac { d _ { \\rho } ^ { \\pi ^ { * } } ( s ) } { d _ { \\rho } ^ { \\hat { \\pi } } ( s ) } \\right. _ { \\infty } \\leq \\left. \\frac { d _ { \\rho } ^ { \\pi ^ { * } } ( s ) } { d _ { \\rho } ^ { \\pi } ( s ) } \\right. _ { \\infty } } \\end{array}$ based on Figure 4. ",
+        "bbox": [
+            88,
+            768,
+            887,
+            839
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "B.2. Proof of Lemma 3.5 ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            852,
+            259,
+            866
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Proof. Since our explanation method provides the importance of each state, we could view the sampling based on the state’s importance as a reweighting of the state occupancy measure. Mathematically, it can be expressed as $\\begin{array} { r } { d _ { \\rho } ^ { \\hat { \\pi } } ( s ) = d _ { \\rho } ^ { \\pi } ( s ) w ( s ) } \\end{array}$ , where $\\hat { \\pi }$ is the equivalent policy of reweighting the original policy $\\pi$ and $w ( s )$ is the weight provided by the mask network. Although the mask network takes the current input state as input, it implicitly considers the current action as well, as detailed by StateMask (Cheng et al., 2023). Consequently, a more accurate formulation is $d _ { \\rho } ^ { \\hat { \\pi } } ( s , a ) = d _ { \\rho } ^ { \\pi } ( s , a ) w ( s , a )$ , where $w ( s , a )$ represent the weight assigned by mask network. ",
+        "bbox": [
+            83,
+            875,
+            890,
+            906
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            181,
+            56,
+            787,
+            70
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            935
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "image",
+        "img_path": "images/8c46f4821124d8f9763fb25c3e838de46002305314eb6b5f72b9495649d422ed.jpg",
+        "image_caption": [
+            "Figure 4. Visualization of state occupancy measures with respect to different policies and the reward function in a 2-state MDP. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            369,
+            85,
+            604,
+            256
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            88,
+            303,
+            887,
+            364
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Recall that our proposed explanation method is to randomize actions at non-critical steps, which essentially considers the value of $Q _ { d i f f } = Q ^ { \\pi } ( s , a ) - \\mathbb { E } _ { a ^ { \\prime } \\in \\mathcal { A } } [ Q ^ { \\pi } ( s , a ^ { \\prime } ) ]$ . In fact, a larger $Q _ { d i f f }$ indicates current time step is more critical to the agent’s final reward. Our mask network approximates the value of $Q _ { d i f f }$ via the deep neural network to determine the importance of each step, which implies $w ( s , a ) \\propto Q _ { d i f f } \\propto Q ^ { \\pi } ( s , a )$ . ",
+        "bbox": [
+            88,
+            371,
+            887,
+            434
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Next, we aim to prove that our MaskNet-based sampling approach is equivalent to sampling from a better policy $\\hat { \\pi }$ . ",
+        "bbox": [
+            89,
+            439,
+            839,
+            455
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "First, the equivalent policy $\\hat { \\pi }$ after reweighting can be expressed as ",
+        "bbox": [
+            88,
+            462,
+            527,
+            478
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "equation",
+        "img_path": "images/51685c16f7ea35d7a2cfea6fcc7cb7edb6064a9047a0887973dd943f78524c46.jpg",
+        "text": "$$\n\\hat { \\pi } ( a | s ) = \\frac { d _ { \\rho } ^ { \\hat { \\pi } } ( s , a ) } { d _ { \\rho } ^ { \\hat { \\pi } } ( s ) } = \\frac { d _ { \\rho } ^ { \\pi } ( s , a ) w ( s , a ) } { d _ { \\rho } ^ { \\hat { \\pi } } ( s ) } = w ( s , a ) \\pi ( a | s ) \\frac { d _ { \\rho } ^ { \\pi } ( s ) } { d _ { \\rho } ^ { \\hat { \\pi } } ( s ) } .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            294,
+            491,
+            678,
+            523
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Further , we would like to show that if $w ( s , a ) = f ( Q ^ { \\pi } ( s , a ) )$ where $f ( \\cdot )$ is a monotonic increasing function, $\\hat { \\pi }$ is uniformly as good as,or better than $\\pi$ , i.e., $V ^ { \\hat { \\pi } } ( s ) \\geq V ^ { \\pi } ( s )$ . ",
+        "bbox": [
+            91,
+            544,
+            885,
+            577
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Proposition B.2. Suppose two policies $\\hat { \\pi }$ and $\\pi$ satisfy $g \\left( { \\hat { \\pi } } ( a \\vert s ) \\right) = g ( \\pi ( a \\vert s ) ) + h \\left( s , Q ^ { \\pi } ( s , a ) \\right)$ where $g ( \\cdot )$ is a monotonically increasing function, and $h ( s , \\cdot )$ is monotonically increasing for any fixed $s$ . Then we have $V ^ { \\hat { \\pi } } ( s ) \\geq V ^ { \\pi } ( s ) , \\forall s \\in \\mathcal { S }$ . ",
+        "bbox": [
+            84,
+            592,
+            890,
+            625
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Proof. For a given $s$ , we partition the action set $\\mathcal { A }$ into two subsets $\\boldsymbol { \\mathcal { A } } _ { 1 }$ and $\\boldsymbol { A } _ { 2 }$ . ",
+        "bbox": [
+            88,
+            664,
+            606,
+            680
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "equation",
+        "img_path": "images/b970e38712cdd2ad28f195af696f9f339e61f98a299c1adcfb90550c9941e980.jpg",
+        "text": "$$\n\\begin{array} { r l } & { { \\cal A } _ { 1 } \\triangleq \\left\\{ a \\in { \\cal A } | \\hat { \\pi } ( a | s ) \\geqslant \\pi ( a | s ) \\right\\} . } \\\\ & { } \\\\ & { { \\cal A } _ { 2 } \\triangleq \\left\\{ a \\in { \\cal A } | \\hat { \\pi } ( a | s ) < \\pi ( a | s ) \\right\\} . } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            372,
+            693,
+            599,
+            748
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Thus, $\\forall a _ { 1 } \\in { \\mathcal { A } } _ { 1 }$ , $\\forall a _ { 2 } \\in \\mathcal { A } _ { 2 }$ , we have ",
+        "bbox": [
+            88,
+            765,
+            331,
+            781
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "equation",
+        "img_path": "images/db88feff31e5d31d174b96b8d9ade3aed862ae4db5552105d605e84a79a01d5d.jpg",
+        "text": "$$\n\\begin{array} { r l } & { h \\left( s , Q ^ { \\pi } ( s , a _ { 1 } ) \\right) = g \\left( \\hat { \\pi } ( a _ { 1 } | s ) \\right) - g ( \\pi ( a _ { 1 } | s ) ) } \\\\ & { \\qquad \\ge 0 } \\\\ & { \\qquad \\ge g \\left( \\hat { \\pi } ( a _ { 2 } | s ) \\right) - g ( \\pi ( a _ { 2 } | s ) ) } \\\\ & { \\qquad = h \\left( s , Q ^ { \\pi } ( s , a _ { 2 } ) \\right) . } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            336,
+            792,
+            635,
+            869
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Let $h \\left( s , Q ^ { \\pi } ( s , a ) \\right) = Q ^ { \\pi } ( s , a )$ . We can get $Q ^ { \\pi } ( s , a _ { 1 } ) \\geq Q ^ { \\pi } ( s , a _ { 2 } )$ which means we can always find $q ( s ) \\in \\mathbb { R }$ such that ",
+        "bbox": [
+            89,
+            888,
+            883,
+            907
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            178,
+            56,
+            789,
+            70
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "discarded",
+        "text": "13 ",
+        "bbox": [
+            478,
+            922,
+            495,
+            935
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "equation",
+        "img_path": "images/0c8b8dd63fa6217ba01b714e974e8e2abcc39c5dcb3f9c17ca9808542f9de041.jpg",
+        "text": "$$\n\\begin{array} { r l } & { \\displaystyle \\sum _ { a \\in A } \\hat { \\pi } ( a | s ) Q ^ { \\pi } ( s , a ) - \\sum _ { a \\in A } \\pi ( a | s ) Q ^ { \\pi } ( s , a ) } \\\\ & { = \\displaystyle \\sum _ { a _ { 1 } \\in A _ { 1 } } \\left( \\hat { \\pi } \\left( a _ { 1 } | s \\right) - \\pi ( a _ { 1 } | s ) \\right) Q ^ { \\pi } \\left( s , a _ { 1 } \\right) + \\sum _ { a _ { 2 } \\in A _ { 2 } } \\left( \\hat { \\pi } \\left( a _ { 2 } | s \\right) - \\pi ( a _ { 2 } | s ) \\right) Q ^ { \\pi } ( s , a _ { 2 } ) } \\\\ & { \\displaystyle \\geq \\sum _ { a _ { 1 } \\in A _ { 1 } } \\left( \\hat { \\pi } \\left( a _ { 1 } | s \\right) - \\pi \\left( a _ { 1 } | s \\right) \\right) q ( s ) + \\sum _ { a _ { 2 } \\in A _ { 2 } } \\left( \\hat { \\pi } \\left( a _ { 2 } | s \\right) - \\pi \\left( a _ { 2 } | s \\right) \\right) q ( s ) } \\\\ & { = q ( s ) \\displaystyle \\sum _ { a \\in A } \\left( \\pi ^ { \\prime } ( a | s ) - \\pi ( a | s ) \\right) } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            217,
+            106,
+            754,
+            252
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "Let $V _ { 0 } ( s ) ~ = ~ V ^ { \\pi } ( s )$ . And we denote the value function of following $\\hat { \\pi }$ for $l$ steps then following $\\pi$ as $V _ { l } ( s ) \\ =$ $E _ { a \\sim \\hat { \\pi } \\left( . | s \\right) } \\left[ E _ { s ^ { \\prime } , r | s , a } \\left( r + \\gamma V _ { l - 1 } \\left( s ^ { \\prime } \\right) \\right) \\right]$ if $l \\geq 1$ . ",
+        "bbox": [
+            84,
+            281,
+            888,
+            314
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "First, we observe that ",
+        "bbox": [
+            88,
+            320,
+            232,
+            334
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/3dc038f08563b8d7fe25d14daf9ede35862be8c29c6185dbfcf4307786bba757.jpg",
+        "text": "$$\n\\begin{array} { l } { { \\displaystyle V _ { 1 } ( s ) = E _ { a \\sim \\hat { \\pi } ( . \\vert s ) } \\left[ E _ { s ^ { \\prime } , r \\vert s , a } \\left( r + \\gamma V ^ { \\pi } ( s ^ { \\prime } ) \\right) \\right] } } \\\\ { { \\displaystyle ~ = \\sum _ { a \\in \\mathcal { A } } \\hat { \\pi } ( a \\vert s ) Q ^ { \\pi } ( s , a ) } } \\\\ { { \\displaystyle ~ \\geqslant \\sum _ { a \\in \\mathcal { A } } \\pi ( a \\vert s ) Q ^ { \\pi } ( s , a ) } } \\\\ { { \\displaystyle ~ = V _ { 0 } ( s ) . } } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            338,
+            329,
+            632,
+            441
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "By induction, we assume $V _ { l } ( s ) \\geq V _ { l - 1 } ( s )$ . Given that ",
+        "bbox": [
+            86,
+            450,
+            444,
+            468
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/a88695c02b0652f96e9e7725584801194bbac4873dc71da3760be12ab8e085b5.jpg",
+        "text": "$$\n\\begin{array} { r l } & { V _ { l + 1 } ( s ) = E _ { a \\sim \\hat { \\pi } } \\left[ E _ { s ^ { \\prime } , r | s , a } \\left( r + V _ { l } \\left( s ^ { \\prime } \\right) \\right) \\right] , } \\\\ & { V _ { l } ( s ) = E _ { a \\sim \\hat { \\pi } } \\left[ E _ { s ^ { \\prime } , r | s , a } \\left( r + V _ { l - 1 } \\left( s ^ { \\prime } \\right) \\right) \\right] , } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            346,
+            473,
+            625,
+            520
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "we have $V _ { l + 1 } ( s ) \\geq V _ { l } ( s )$ . ",
+        "bbox": [
+            88,
+            521,
+            259,
+            537
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "Therefore, we can conclude that $V _ { l + 1 } ( s ) \\geq V _ { l } ( s ) , \\forall l \\geq 0$ . We have $V _ { \\infty } ( s ) \\geq V _ { 0 } ( s )$ which is $V ^ { \\hat { \\pi } } ( s ) \\geq V ^ { \\pi } ( s )$ ",
+        "bbox": [
+            84,
+            542,
+            807,
+            561
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "Based on the Proposition B.2, if we choose $g$ as a logarithmic function and $h = \\log ( w ( s , a ) ) + \\log ( d _ { \\rho } ^ { \\pi } ( s ) ) - \\log ( d _ { \\rho } ^ { \\hat { \\pi } } ( s ) )$ , we can easily verify that our MaskNet-based sampling approach is equivalent to sampling from a better policy $\\hat { \\pi }$ . ",
+        "bbox": [
+            86,
+            575,
+            893,
+            607
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "B.3. Proof of Theorem 3.6 ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            643,
+            269,
+            660
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "Proof. Given the fact that the refined policy $\\pi ^ { \\prime }$ is converged, (i.e., the local one-step improvement is small $\\begin{array} { r } { \\mathbb { E } _ { s \\sim d _ { \\mu } ^ { \\pi ^ { \\prime } } } \\left[ \\operatorname* { m a x } _ { a } A ^ { \\pi ^ { \\prime } } ( s , a ) \\right] < \\epsilon ) } \\end{array}$ , we have ",
+        "bbox": [
+            84,
+            667,
+            890,
+            702
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/ab62c5ccf2dff32ced5da6ea38b70ec606cdd5f3a8631d0eff86b20f538d7141.jpg",
+        "text": "$$\n\\begin{array} { r l } & { \\epsilon > \\displaystyle \\sum _ { s \\in \\mathcal { S } } d _ { \\mu } ^ { \\pi ^ { \\prime } } ( s ) \\left[ \\operatorname* { m a x } _ { a } A ^ { \\pi ^ { \\prime } } ( s , a ) \\right] } \\\\ & { \\ge \\operatorname* { m i n } _ { s } \\left( \\frac { d _ { \\mu } ^ { \\pi ^ { \\prime } } ( s ) } { d _ { \\rho } ^ { \\pi ^ { * } } ( s ) } \\right) \\displaystyle \\sum _ { s } d _ { \\rho } ^ { \\pi ^ { * } } ( s ) \\operatorname* { m a x } _ { a } A ^ { \\pi ^ { \\prime } } ( s , a ) } \\\\ & { \\ge \\left\\| \\frac { d _ { \\rho } ^ { \\pi ^ { \\prime } } } { d _ { \\mu } ^ { \\pi ^ { \\prime } } } \\right\\| _ { \\infty } ^ { - 1 } \\displaystyle \\sum _ { s , a } d _ { \\rho } ^ { \\pi ^ { * } } ( s ) \\pi ^ { * } ( a | s ) A ^ { \\pi ^ { \\prime } } ( s , a ) . } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            331,
+            702,
+            640,
+            829
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "Based on the Performance Difference Lemma (Kakade & Langford, 2002), for two policies $\\pi ^ { * } , \\pi ^ { \\prime }$ and a state distribution $\\rho$ the performance difference is bounded by ",
+        "bbox": [
+            88,
+            840,
+            887,
+            872
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "equation",
+        "img_path": "images/46f9a43cbc3cd2f5a749dea0728923eb958e4e92ec97fc3a847d95bc7092f571.jpg",
+        "text": "$$\nV ^ { \\pi ^ { * } } \\left( \\rho \\right) - V ^ { \\pi ^ { \\prime } } \\left( \\rho \\right) = \\frac { 1 } { 1 - \\gamma } E _ { s \\sim d _ { \\rho } ^ { \\pi ^ { * } } } E _ { a \\sim \\pi ^ { * } \\left( . | s \\right) } \\left[ A ^ { \\pi ^ { \\prime } } ( s , a ) \\right] .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            289,
+            877,
+            684,
+            910
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            179,
+            56,
+            787,
+            70
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "discarded",
+        "text": "□ ",
+        "bbox": [
+            869,
+            613,
+            885,
+            627
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "discarded",
+        "text": "□ ",
+        "bbox": [
+            869,
+            545,
+            885,
+            559
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "Then we have ",
+        "bbox": [
+            88,
+            85,
+            181,
+            99
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "equation",
+        "img_path": "images/e22b5965ded35c9ef5c874bc69cedd6194fc4d7f2ec705e02fce1900062a7af4.jpg",
+        "text": "$$\n\\epsilon > \\left( 1 - \\gamma \\right) \\left. \\left. \\frac { d _ { \\rho } ^ { \\pi ^ { * } } } { d _ { \\mu } ^ { \\pi ^ { \\prime } } } \\right. \\right. _ { \\infty } ^ { - 1 } \\left( V ^ { \\pi } \\left( \\rho \\right) - V ^ { \\pi ^ { \\prime } } \\left( \\rho \\right) \\right) .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            339,
+            102,
+            633,
+            147
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Therefore, we have ",
+        "bbox": [
+            88,
+            159,
+            217,
+            174
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "equation",
+        "img_path": "images/72fa0701adcecf766e36e5f300a937a8c25f21caa968712656f3255f6317f0ad.jpg",
+        "text": "$$\nV ^ { \\pi ^ { * } } ( \\rho ) - V ^ { \\pi ^ { \\prime } } ( \\rho ) \\leq \\frac { \\epsilon } { 1 - \\gamma } \\left\\| \\frac { d _ { \\rho } ^ { \\pi ^ { * } } } { d _ { \\mu } ^ { \\pi ^ { \\prime } } } \\right\\| _ { \\infty } .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            367,
+            171,
+            604,
+            210
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Due to $d _ { \\mu } ^ { \\pi ^ { \\prime } } ( s ) \\geq ( 1 - \\gamma ) \\mu ( s )$ , we further obtain ",
+        "bbox": [
+            86,
+            219,
+            405,
+            238
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "equation",
+        "img_path": "images/5447431251e2da406939513658f64765fadf4673cedde9800dc43042c9ee099a.jpg",
+        "text": "$$\n{ V ^ { \\pi } } ^ { * } ( \\rho ) - { V ^ { \\pi } } ^ { \\prime } ( \\rho ) \\leq \\frac { \\epsilon } { ( 1 - \\gamma ) ^ { 2 } } \\left\\| \\frac { { d _ { \\rho } ^ { \\pi } } ^ { * } } { \\mu } \\right\\| _ { \\infty } .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            357,
+            243,
+            614,
+            282
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Since $\\mu ( s ) = \\beta d _ { \\rho } ^ { \\hat { \\pi } } ( s ) + ( 1 - \\beta ) \\rho ( s ) \\geq \\beta d _ { \\rho } ^ { \\hat { \\pi } } ( s )$ , we have ",
+        "bbox": [
+            86,
+            286,
+            462,
+            305
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "equation",
+        "img_path": "images/e106aa04d2275331b7f6752ff2152e1aab105ba7fab7043088dfaa397335d002.jpg",
+        "text": "$$\n{ V ^ { \\pi } } ^ { * } ( \\rho ) - { V ^ { \\pi } } ^ { \\prime } ( \\rho ) \\leq \\frac { \\epsilon } { ( 1 - \\gamma ) ^ { 2 } } \\left\\| \\frac { { d _ { \\rho } ^ { \\pi } } ^ { * } } { \\beta d _ { \\rho } ^ { \\hat { \\pi } } } \\right\\| _ { \\infty } .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            356,
+            310,
+            616,
+            349
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "In our case, $\\beta$ is a constant (i.e., a hyper-parameter), thus we could derive that ",
+        "bbox": [
+            86,
+            353,
+            596,
+            369
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "equation",
+        "img_path": "images/86c45941af7d7b8ccd3c79906cca40c865602067c09defe708f7cdc84bade44c.jpg",
+        "text": "$$\n{ V ^ { \\pi } } ^ { * } ( \\rho ) - { V ^ { \\pi } } ^ { \\prime } ( \\rho ) \\leq \\mathcal O ( \\frac { \\epsilon } { ( 1 - \\gamma ) ^ { 2 } } \\left\\| \\frac { { d _ { \\rho } ^ { \\pi } } ^ { * } } { d _ { \\rho } ^ { \\hat { \\pi } } } \\right\\| _ { \\infty } ) ,\n$$",
+        "text_format": "latex",
+        "bbox": [
+            346,
+            373,
+            624,
+            412
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "which completes the proof. ",
+        "bbox": [
+            88,
+            416,
+            266,
+            431
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "B.4. Analysis of Claim 1 ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            448,
+            258,
+            463
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Recall that Lemma 3.5 indicates that our MaskNet-based sampling approach is equivalent to sampling states from a better policy $\\hat { \\pi }$ compared with a random explanation sampling from the policy $\\pi$ , i.e., $\\eta ( \\hat { \\pi } ) \\geq \\eta ( \\pi )$ . Let us denote the new initial distribution using our MaskNet-based sampling approach as $\\mu$ . By Assumption 3.4, we have $\\begin{array} { r } { \\left\\| \\frac { d _ { \\rho } ^ { \\pi ^ { * } } } { d _ { \\rho } ^ { \\hat { \\pi } } } \\right\\| _ { \\infty } \\leq \\left\\| \\frac { d _ { \\rho } ^ { \\pi ^ { * } } } { d _ { \\rho } ^ { \\pi } } \\right\\| _ { \\infty } } \\end{array}$ . Using 。 our explanation method introduces a smaller distribution mismatch coefficient than using a random explanation method. Therefore, we claim that using our explanation method, we are able to form a better initial distribution $\\mu$ and tighten the upper bound in Theorem 3.6, i.e., enhancing the agent’s performance after refining. ",
+        "bbox": [
+            88,
+            470,
+            887,
+            578
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "C. Details of Evaluation ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            595,
+            289,
+            613
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "C.1. Implementation Details ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            622,
+            285,
+            637
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Implementation of Our Method. We implement the proposed method using PyTorch (Paszke et al., 2019). We implement our method in four selected MuJoCo games based on Stable-Baselines3 (Raffin et al., 2021). We train the agents on a server with 8 NVIDIA A100 GPUs for all the learning algorithms. For all our experiments, if not otherwise stated, we use a set of default hyper-parameters for $p , \\lambda$ , and $\\alpha$ (listed in Appendix C.3). ",
+        "bbox": [
+            88,
+            647,
+            885,
+            708
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "We implement the environment reset function similar to Ecoffet et al. (2019) to restore the environment to selected critical states. This method is feasible in our case, as we operate within simulator-based environments. However, in the real world, it may not be always possible to return to a certain state with the same sequences of actions due to the stochastic nature of state transition. It’s important to note that our framework is designed to be versatile and is indeed compatible with a goal/state-conditioned policy approach such as Ecoffet et al. (2021). Given a trajectory with an identified most important state, we can select the most important state as the final goal and select the en-route intermediate states as sub-goals. Then we can train an agent to reach the final goal by augmenting each state with the next goal and giving a goal-conditioned reward once the next goal is reached until all goals are achieved. ",
+        "bbox": [
+            88,
+            715,
+            885,
+            837
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Implementation of Baseline Methods. Regarding baseline approaches, we use the code released by the authors or implement our own version if the authors don’t release the code. Specifically, as for StateMask, we use their released opensourced code from https://github.com/nuwuxian/RL-state_mask. Regarding Jump-Start Reinforcement Learning, we use the implementation from https://github.com/steventango/jumpstart-rl. ",
+        "bbox": [
+            88,
+            844,
+            887,
+            906
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            173,
+            56,
+            789,
+            70
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "discarded",
+        "text": "□ ",
+        "bbox": [
+            869,
+            416,
+            885,
+            430
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "C.2. Extra Introduction to Applications ",
+        "text_level": 1,
+        "bbox": [
+            91,
+            84,
+            364,
+            99
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "Hopper. Hopper game is a captivating two-dimensional challenge featuring a one-legged figure comprising a torso, thigh, leg, and a single supporting foot (Erez et al., 2012). The objective is to propel the Hopper forward through strategic hops by applying torques to the three hinges connecting its body parts. Observations include positional values followed by velocities of each body part, and the action space involves applying torques within a three-dimensional action space. Under the dense reward setting, the reward system combines healthy reward, forward reward, and control cost. Under the sparse reward setting (Mazoure et al., 2019), the reward informs the x position of the hopper only if $x > 0 . 6$ in our experiments. The episode concludes if the Hopper becomes unhealthy. We use “Hopper-v3” in our experiments. ",
+        "bbox": [
+            88,
+            109,
+            885,
+            215
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "Walker2d. Walker2d is a dynamic two-dimensional challenge featuring a two-legged figure with a torso, thighs, legs, and feet. The goal is to coordinate both sets of lower limbs to move in the forward direction by applying torques to the six hinges connecting these body parts. The action space involves six dimensions, allowing exert torques at the hinge joints for precise control. Observations encompass positional values and velocities of body parts, with the former preceding the latter. Under the dense reward setting, the reward system combines a healthy reward bonus, forward reward, and control cost. Under the sparse reward setting (Mazoure et al., 2019), the reward informs the x position of the hopper only if $x > 0 . 6$ in our experiments. The episode concludes if the walker is deemed unhealthy. We use “Walker2d-v3” in our experiments and normalize the observation when training the DRL agent. ",
+        "bbox": [
+            88,
+            223,
+            885,
+            344
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "Reacher. Reacher is an engaging two-jointed robot arm game where the objective is to skillfully maneuver the robot’s end effector, known as the fingertip, towards a randomly spawned target. The action space involves applying torques at the hinge joints. Observations include the cosine and sine of the angles of the two arms, the coordinates of the target, angular velocities of the arms, and the vector between the target and the fingertip. It is worth noting that there is no sparse reward implementation of Reacher-v2 in Mazoure et al. (2019). The reward system comprises two components: “reward distance” indicating the proximity of the fingertip to the target, and “reward control” penalizing excessive actions with a negative squared Euclidean norm. The total reward is the sum of these components, and an episode concludes either after 50 timesteps with a new random target or if any state space value becomes non-finite. We use “Reacher-v2” in our experiments. ",
+        "bbox": [
+            88,
+            353,
+            885,
+            474
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "HalfCheetah. HalfCheetah is an exhilarating 2D robot game where players control a 9-link cheetah with 8 joints, aiming to propel it forward with applied torques for maximum speed. The action space contains six dimensions, that enable strategic movement. Observations include positional values and velocities of body parts. Under the dense reward setting, the reward system balances positive “forward reward” for forward motion with “control cost” penalties for excessive actions. Under the sparse reward setting (Mazoure et al., 2019), the reward informs the x position of the hopper only if $x > 5$ in our experiments. Episodes conclude after 1000 timesteps, offering a finite yet thrilling gameplay experience. We use “HalfCheetah-v3” in our experiments and normalize the observation when training the DRL agent. ",
+        "bbox": [
+            88,
+            482,
+            885,
+            589
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "Selfish Mining. Selfish mining is a security vulnerability in blockchain protocols, identified by Eyal & Sirer (2018). When a miner holds a certain amount of computing power, they can withhold their freshly minted blocks from the public blockchain, thereby initiating a fork that is subsequently mined ahead of the official public blockchain. With this advantage, the miner can introduce this fork into the network, overwriting the original blockchain and obtaining more revenue. ",
+        "bbox": [
+            88,
+            597,
+            885,
+            657
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "To find the optimal selfish mining strategies, Bar-Zur et al. (2023) proposed a deep reinforcement learning model to generate a mining policy. The policy takes the current chain state as the input and chooses from the three pre-determined actions, i.e., adopting, revealing, and mining. With this policy network, the miner can obtain more mining rewards compared to using heuristics-based strategies. ",
+        "bbox": [
+            88,
+            665,
+            885,
+            726
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "We train a PPO agent in the blockchain model developed by Bar-Zur et al. (git, d). The network architecture of the PPO agent is a 4-layer Multi-Layer Perceptron (MLP) with a hidden size of 128, 128, 128, and 128 in each layer. We adopt a similar network structure for training our mask network. The whale transaction has a fee of 10 with the occurring probability of 0.01 while other normal transactions have a fee of 1. The agent will receive a positive reward if his block is accepted and will be penalized if his action is determined to be unsuccessful, e.g., revealing a private chain. ",
+        "bbox": [
+            88,
+            733,
+            885,
+            809
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "In our selfish mining task (Bar-Zur et al., 2023), three distinct actions are defined as follows: ",
+        "bbox": [
+            88,
+            815,
+            692,
+            832
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "Adopt l: The miner chooses to adopt the first $l$ blocks in the public chain while disregarding their private chain. Following this, the miner will continue their mining efforts, commencing from the last adopted block. ",
+        "bbox": [
+            91,
+            839,
+            882,
+            869
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "Reveal l: This action becomes legal when the miner’s private chain attains a length of at least $l$ . The consequence of this action may result in either the creation of an active fork in the public chain or the overriding of the public chain. ",
+        "bbox": [
+            89,
+            877,
+            883,
+            892
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            181,
+            58,
+            787,
+            70
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            924,
+            495,
+            934
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            88,
+            84,
+            818,
+            99
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "Mine: This action simply involves continuing with the mining process. Once executed, a new block is mined and subsequently added to either the private chain of the rational miner or to the public chain, contingent on which entity successfully mined the block. ",
+        "bbox": [
+            88,
+            107,
+            885,
+            151
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "CAGE Challenge 2. To inspire new methods for automating cyber defense, the Technical Cooperation Program (TTCP) launched the Autonomous Cyber Defence Challenge (CAGE Challenge) to produce AI-based blue teams for instantaneous response against cyber attacks (CAGE, 2022). The goal is to create a DRL blue agent to protect a network against a red agent. The action space of the blue agent includes monitoring, analyzing, decoyApache, decoyFemitter, decoyHarakaSMPT, decoySmss, decoySSHD, decoySvchost, decoyTomcat, removing, and restoring. Note that the blue agent can receive a negative reward when the red agent gets admin access to the system (and continues to receive negative rewards as the red agent maintains the admin access). We use CAGE challenge 2 for our evaluation. ",
+        "bbox": [
+            88,
+            161,
+            885,
+            267
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "We choose the champion scheme proposed by Cardiff University (git, c) in CAGE challenge 2 (git, b). The target agent is a PPO-based blue agent to defend a network against the red agent “B-line”. The trail has three different lengths, i.e., 30, 50, and 100. The final reward is the sum of the average rewards of these three different lengths. ",
+        "bbox": [
+            88,
+            275,
+            885,
+            319
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "The action set of the blue agent is defined as follows. ",
+        "bbox": [
+            88,
+            327,
+            434,
+            342
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "Monitor: The blue agent automatically collects the information about flagged malicious activity on the system and reports network connections and associated processes that are identified as malicious. ",
+        "bbox": [
+            93,
+            349,
+            879,
+            380
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "Analyze: The blue agent analyzes the information on files associated with recent alerts including signature and entropy. ",
+        "bbox": [
+            96,
+            387,
+            870,
+            402
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "DecoyApache, DecoyFemitter, DecoyHarakaSMPT, DecoySmss, DecoySSHD, DecoySvchost, DecoyTomcat: The blue agent sets up the corresponding decoy service on a specified host. An alert will be raised if the red agent accesses the decoy service. ",
+        "bbox": [
+            88,
+            410,
+            885,
+            455
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "Remove: The blue agent attempts to remove red from a host by destroying malicious processes, files, and services. ",
+        "bbox": [
+            89,
+            463,
+            836,
+            478
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "Restore: The blue agent restores a system to a known good state. Since it significantly impacts the system’s availability, a reward penalty of -1 will be added when executing this action. ",
+        "bbox": [
+            88,
+            486,
+            883,
+            516
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "Autonomous Driving. Deep reinforcement learning has been applied in autonomous driving to enhance driving safety. One representative driving simulator is MetaDrive (Li et al., 2022). A DRL agent is trained to guide a vehicle safely and efficiently to travel to its destination. MetaDrive converts the Birds Eye View (BEV) of the road conditions and the sensor information such as the vehicle’s steering, direction, velocity, and relative distance to traffic lanes into a vector representation of the current state. The policy network takes this state vector as input and yields driving actions, including accelerating, braking, and steering commands. MetaDrive employs a set of reward functions to shape the learning process. For instance, penalties are assigned when the agent collides with other vehicles or drives out of the road boundary. To promote smooth and efficient driving, MetaDrive also incorporates rewards to encourage forward motion and the maintenance of an appropriate speed. ",
+        "bbox": [
+            88,
+            525,
+            885,
+            660
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "We select the “Macro-v1” environment powered by the MetaDrive simulator (Li et al., 2022). The goal of the agent is to learn a deep policy to successfully cross the car flow and reach the destination. We train the target agent and our mask network by the PPO algorithm following the implementation of DI-drive (drive Contributors, 2021). The environment receives normalized action to control the target agent $\\mathbf { a } = [ a _ { 1 } , a _ { 2 } ] \\in [ - 1 , 1 ] ^ { 2 } .$ . The action vector a will then be converted to the steering (degree), acceleration (hp), and brake signal (hp). ",
+        "bbox": [
+            88,
+            667,
+            885,
+            744
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "Malware Mutation. DRL has been used to assess the robustness of ML-based malware detectors. For example, Anderson et al. (2018) propose a DRL-based approach to attack malware detectors for portable executable (PE) files. We use the “Malconv” gym environment Raff et al. (2017) implemented in (git, a) for our experiments. We train a DRL agent based on Tianshou framework (Weng et al., 2022). The input of the DRL agent is a feature vector of the target malware and outputs the corresponding action to guide the malware manipulation. We present the action set of the MalConv gym environment in Table 2 for ease of comprehension in the case study section. A big reward of 10 is provided when evading detection. ",
+        "bbox": [
+            88,
+            752,
+            885,
+            843
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "The reward mechanism of the “Malconv” environment is as follows. Initially, the malware detection model will provide a score $s c _ { 0 }$ of the current malware. If $s c _ { 0 }$ is lower than some threshold, the malware has already evaded the detection. Otherwise, the DRL agent will take some mutation actions to bypass the detection. At step $t$ , after executing the agent’s action, the malware detection model will provide a new score $s c _ { t }$ . If $s c _ { t }$ is lower than some threshold, the mutation is successful and a big reward of 10 will be given. Otherwise, the reward will be $s c _ { 0 } - s c _ { t }$ . The maximum allowed number of steps is 10. ",
+        "bbox": [
+            88,
+            851,
+            885,
+            896
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            179,
+            58,
+            787,
+            70
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "table",
+        "img_path": "images/2669c2003e53a8b12ebceb8b98737b513cf1f91d414c9af61b1069dcfedd7551.jpg",
+        "table_caption": [
+            "Table 2. Action set of the MalConv gym environment. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td rowspan=1 colspan=1>Action index</td><td rowspan=1 colspan=1>Action meaning</td></tr><tr><td rowspan=1 colspan=1>0</td><td rowspan=1 colspan=1>&quot;modify_machine_type&quot;</td></tr><tr><td rowspan=1 colspan=1>1</td><td rowspan=1 colspan=1>&quot;pad_overlay&quot;</td></tr><tr><td rowspan=1 colspan=1>2</td><td rowspan=1 colspan=1>“append_benign_data_overlay”</td></tr><tr><td rowspan=1 colspan=1>3</td><td rowspan=1 colspan=1>&quot;append_benign_binary_overlay”</td></tr><tr><td rowspan=1 colspan=1>4</td><td rowspan=1 colspan=1>&quot;add_bytes_to_section_cave&quot;</td></tr><tr><td rowspan=1 colspan=1>5</td><td rowspan=1 colspan=1>“add_section_strings&quot;</td></tr><tr><td rowspan=1 colspan=1>6</td><td rowspan=1 colspan=1>&quot;add_section_benign_data&quot;</td></tr><tr><td rowspan=1 colspan=1>7</td><td rowspan=1 colspan=1>&quot;add_strings_to_overlay&quot;</td></tr><tr><td rowspan=1 colspan=1>8</td><td rowspan=1 colspan=1>&quot;add_imports&quot;</td></tr><tr><td rowspan=1 colspan=1>9</td><td rowspan=1 colspan=1>&quot;rename_section”</td></tr><tr><td rowspan=1 colspan=1>10</td><td rowspan=1 colspan=1>&quot;remove_debug”</td></tr><tr><td rowspan=1 colspan=1>11</td><td rowspan=1 colspan=1>&quot;modify_optional_header&quot;</td></tr><tr><td rowspan=1 colspan=1>12</td><td rowspan=1 colspan=1>&quot;modify_timestamp&quot;</td></tr><tr><td rowspan=1 colspan=1>13</td><td rowspan=1 colspan=1>&quot;break_optional_header_checksum&#x27;</td></tr><tr><td rowspan=1 colspan=1>14</td><td rowspan=1 colspan=1>&quot;upx_unpack&quot;</td></tr><tr><td rowspan=1 colspan=1>15</td><td rowspan=1 colspan=1>&quot;upx_pack&quot;</td></tr></table>",
+        "bbox": [
+            321,
+            108,
+            647,
+            333
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "table",
+        "img_path": "images/d97c8d2c4841d6f3dae19f2c8f89e2b4b30aebe2bbc6f54d13b5aee69d35129a.jpg",
+        "table_caption": [
+            "Table 3. Hyper-parameter choices in Experiment I-V. “Selfish” represents Selfish Mining. “Cage” represents Cage Challenge 2. “Auto” represents Autonomous Driving. “Malware” represents Malware Mutation. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td rowspan=1 colspan=1>Hyper-parameter</td><td rowspan=1 colspan=1>Hopper</td><td rowspan=1 colspan=1>Walker2d</td><td rowspan=1 colspan=1>Reacher</td><td rowspan=1 colspan=1>HalfCheetah</td><td rowspan=1 colspan=1>Selfish</td><td rowspan=1 colspan=1>Cage</td><td rowspan=1 colspan=1>Auto</td><td rowspan=1 colspan=1>Malware</td></tr><tr><td rowspan=1 colspan=1>P</td><td rowspan=1 colspan=1>0.25</td><td rowspan=1 colspan=1>0.25</td><td rowspan=1 colspan=1>0.50</td><td rowspan=1 colspan=1>0.50</td><td rowspan=1 colspan=1>0.25</td><td rowspan=1 colspan=1>0.50</td><td rowspan=1 colspan=1>0.25</td><td rowspan=1 colspan=1>0.50</td></tr><tr><td rowspan=1 colspan=1>入</td><td rowspan=1 colspan=1>0.001</td><td rowspan=1 colspan=1>0.01</td><td rowspan=1 colspan=1>0.001</td><td rowspan=1 colspan=1>0.01</td><td rowspan=1 colspan=1>0.001</td><td rowspan=1 colspan=1>0.01</td><td rowspan=1 colspan=1>0.01</td><td rowspan=1 colspan=1>0.01</td></tr><tr><td rowspan=1 colspan=1>a</td><td rowspan=1 colspan=1>0.0001</td><td rowspan=1 colspan=1>0.0001</td><td rowspan=1 colspan=1>0.0001</td><td rowspan=1 colspan=1>0.0001</td><td rowspan=1 colspan=1>0.0001</td><td rowspan=1 colspan=1>0.0001</td><td rowspan=1 colspan=1>0.0001</td><td rowspan=1 colspan=1>0.0001</td></tr></table>",
+        "bbox": [
+            145,
+            392,
+            826,
+            449
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            89,
+            481,
+            887,
+            526
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "C.3. Additional Experiment Results ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            542,
+            338,
+            559
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "Hyper-parameter Choices in Experiment I-V. Table 3 summarizes our hyper-parameter choices in Experiment I-V. For all applications, we choose the coefficient of the intrinsic reward for training the mask network $\\alpha$ as 0.01. The hyper-parameters $p$ and $\\lambda$ for our refining method vary by application. ",
+        "bbox": [
+            88,
+            568,
+            887,
+            613
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "Fidelity Scores in Experiment I. Figure 5 shows the fidelity score comparison across all explanation methods. We have three key observations. First, We observe that our explanation method has similar fidelity scores with StateMask across all applications, empirically indicating the equivalence of our explanation method with StateMask. Second, we observe that our explanation method and StateMask have higher fidelity scores than random explanation across all applications, indicating that the mask network provides more faithful explanations for the target agents. ",
+        "bbox": [
+            88,
+            622,
+            885,
+            698
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "Efficiency Comparison in Experiment II. Table 4 reports the efficiency evaluation results when training a mask network using StateMask and our method. We observe that it takes $1 6 . 8 \\%$ less time on average to train a mask network using our method than using StateMask, which shows the advantage of our method with respect to efficiency. ",
+        "bbox": [
+            89,
+            705,
+            887,
+            752
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "Comparison with Self-Imitation Learning. We compare RICE against the self-imitation learning (SIL) approach (Oh et al., 2018) across four MuJoCo games. We present the results presented in Table 5. These experiment results demonstrate that RICE consistently outperforms the self-imitation learning method. While self-imitation learning has the advantage of encouraging the agent to imitate past successful experiences by prioritizing them in the replay buffer, it cannot address scenarios where the agent (and its past experience) has errors or sub-optimal actions. In contrast, RICE constructs a mixed initial distribution based on the identified critical states (using explanation methods) and encourages the agent to explore the new initial states. This helps the agent escape from local minima and break through the training bottlenecks. ",
+        "bbox": [
+            88,
+            760,
+            885,
+            866
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "Impact of Other Explanation Methods. We investigate the impact of other explanation methods (i.e., AIRS (Yu et al., 2023) and Integrated Gradients (Sundararajan et al., 2017)) on four Mujoco games. we fix the refining method and use different explanation methods to identify critical steps for refinement. The results are reported in Table 6. We observe that using the explanation generated by our mask network, the refining achieves the best outcome across all four applications. Using other explanation methods (Integrated Gradients and AIRS), our framework still achieves better results than the random baseline, suggesting that our framework can work with different explanation method choices. ",
+        "bbox": [
+            88,
+            875,
+            885,
+            905
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            181,
+            56,
+            787,
+            70
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "image",
+        "img_path": "images/e7581460597e69a4e98e3223899dbca0af6cdb3715e75f417f730bd3b07d56e4.jpg",
+        "image_caption": [
+            "Figure 5. Fidelity scores for explanation generated by baseline methods and our proposed explanation method. Note that a higher score implies higher fidelity. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            88,
+            80,
+            887,
+            315
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "table",
+        "img_path": "images/be58bed8f2b69034cf9d8b8333759ead17165c471b91ef0cc33b40df4a3e93b4.jpg",
+        "table_caption": [
+            "Table 4. Efficiency comparison when training the mask network. We report the number of seconds when training the mask using a fixed number of samples. “Selfish” represents Selfish Mining. “Cage” represents Cage Challenge 2. “Auto” represents Autonomous Driving. “Malware” represents Malware Mutation. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td rowspan=1 colspan=1>Applications</td><td rowspan=1 colspan=1>Hopper</td><td rowspan=1 colspan=1>Walker2d</td><td rowspan=1 colspan=1>Reacher</td><td rowspan=1 colspan=1>HalfCheetah</td><td rowspan=1 colspan=1>Selfish</td><td rowspan=1 colspan=1>Cage</td><td rowspan=1 colspan=1>Auto</td><td rowspan=1 colspan=1>Malware</td></tr><tr><td rowspan=1 colspan=1>Num. of samples</td><td rowspan=1 colspan=1>3×105</td><td rowspan=1 colspan=1>3×105</td><td rowspan=1 colspan=1>3×105</td><td rowspan=1 colspan=1>3×105</td><td rowspan=1 colspan=1>1.5×106</td><td rowspan=1 colspan=1>1×107</td><td rowspan=1 colspan=1>2443260</td><td rowspan=1 colspan=1>32349</td></tr><tr><td rowspan=1 colspan=1>StateMask</td><td rowspan=1 colspan=1>15393</td><td rowspan=1 colspan=1>2240</td><td rowspan=1 colspan=1>8571</td><td rowspan=1 colspan=1>1579</td><td rowspan=1 colspan=1>9520</td><td rowspan=1 colspan=1>79382</td><td rowspan=1 colspan=1>109802</td><td rowspan=1 colspan=1>50775</td></tr><tr><td rowspan=1 colspan=1>Ours</td><td rowspan=1 colspan=1>12426</td><td rowspan=1 colspan=1>1899</td><td rowspan=1 colspan=1>7033</td><td rowspan=1 colspan=1>1317</td><td rowspan=1 colspan=1>8360</td><td rowspan=1 colspan=1>65400</td><td rowspan=1 colspan=1>88761</td><td rowspan=1 colspan=1>41340</td></tr></table>",
+        "bbox": [
+            119,
+            429,
+            849,
+            487
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            88,
+            506,
+            887,
+            565
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "Sensitivty of $p$ and $\\lambda$ in Hopper game with an imitated PPO agent. We report the sensitivity of hyper-parameters $p$ and $\\lambda$ in Hopper game with an imitated PPO agent in Figure 6. We observe that in general, a mixture probability of $p = 0 . 2 5$ or $p = 0 . 5$ is a better choice. An RND bonus can facilitate the agent with faster refinement. ",
+        "bbox": [
+            88,
+            574,
+            887,
+            619
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "Sensitivity of Hyper-parameters $p$ and $\\lambda$ . We provide the sensitivity results of $p$ in all applications in Figure 7. We observe that generally a mixture probability of $p = 0 . 2 5$ or $p = 0 . 5$ is a good choice. Additionally, recall that we need to use the hyper-parameter $\\lambda$ to balance the scale of the “true” environment reward and the exploration bonus. We test the sensitivity of $\\lambda$ from the space $\\{ 0 . 1 , 0 . 0 1 , 0 . 0 0 1 \\}$ . Figure 8 reports the agent’s performance after refining under different settings of $\\lambda$ . We observe that our retaining method is insensitive to the choice of $\\lambda$ . The agent’s performance does not vary a lot with different settings of $\\lambda$ . But $\\lambda = 0 . 0 1$ gives the best performance in all applications except selfish mining. ",
+        "bbox": [
+            88,
+            628,
+            885,
+            719
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "Sensitivity of $\\alpha$ . Recall that under certain assumptions, we are able to simplify the design of StateMask. We propose an intrinsic reward mechanism to encourage the mask network to blind more states without sacrificing performance. The hyper-parameter $\\alpha$ is then introduced to balance the performance of the perturbed agent and the need for encouraging blinding. We test the sensitivity of $\\alpha$ from the space $\\{ 0 . 0 1 , 0 . 0 0 1 , 0 . 0 0 0 1 \\}$ and report the fidelity scores under different settings of $\\alpha$ in Figure 9. We observe that though the value of $\\alpha$ varies, the fidelity score does not change much. ",
+        "bbox": [
+            88,
+            728,
+            885,
+            804
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "C.4. Evaluation Results of MuJoCo Games with Sparse Rewards ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            819,
+            539,
+            835
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "text",
+        "text": "Results of SparseWalker2d. First, we compare our refining method with other baseline methods (i.e., PPO fine-tuning, StateMask-R, and JSRL) in the SparseWalker2d game. Figure 10 shows that our refining method is able to help the DRL agent break through the bottleneck with the highest efficiency compared with other baseline refining methods. Additionally, by replacing our explanation method with a random explanation, we observe that the refining performance is getting worse. ",
+        "bbox": [
+            88,
+            845,
+            887,
+            905
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            176,
+            58,
+            789,
+            70
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "image",
+        "img_path": "images/fff2f09ba1e1ed45fee22d13116c07735fb91dacb1d5f22a6369505d07e81418.jpg",
+        "image_caption": [
+            "Figure 6. Sensitivity results of hyper-parameters $p$ and $\\lambda$ in Hopper game with an imitated PPO agent. We vary the hyper-parameter $\\lambda$ from $\\{ 0 , 0 . 1 , 0 . 0 1 , 0 . 0 0 1 \\}$ and record the performance of the agent after refining. A smaller choice of $\\lambda$ means a smaller reward bonus for exploration. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            88,
+            103,
+            883,
+            415
+        ],
+        "page_idx": 19
+    },
+    {
+        "type": "image",
+        "img_path": "images/955f68a54a83ed933f281935b27e0c6c7974b1b9db115c5652a51c1b6db2d1a7.jpg",
+        "image_caption": [
+            "Figure 7. Sensitivity results of hyper-parameter $p$ in all applications. We vary the hyper-parameter $p$ from $\\{ 0 , 0 . 2 5 , 0 . 5 , 0 . 7 5 , 1 \\}$ under different $\\lambda$ , and record the performance of the agent after refining. When $p = 0$ , refining starts from the default initial states of the environment. When $p = 1$ , refining starts exclusively from critical states. We show that the “mixed” initial state distribution helps to achieve a better performance. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            88,
+            529,
+            885,
+            808
+        ],
+        "page_idx": 19
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            176,
+            58,
+            789,
+            70
+        ],
+        "page_idx": 19
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            477,
+            922,
+            496,
+            934
+        ],
+        "page_idx": 19
+    },
+    {
+        "type": "image",
+        "img_path": "images/274b67e25dfaa6f7a7cdf6e99db9ce587730971905f2d8e2d936921413f34e5c.jpg",
+        "image_caption": [
+            "Figure 8. Sensitivity results of hyper-parameter $\\lambda$ . We vary the hyper-parameter $\\lambda$ from $\\{ 0 . 1 , 0 . 0 1 , 0 . 0 0 1 \\}$ and record the performance of the agent after refining. A smaller choice of $\\lambda$ means a smaller reward bonus for exploration. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            88,
+            141,
+            885,
+            422
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "image",
+        "img_path": "images/08b26ad36ab96497740946e970bc805ba31904f5af68c1cacbadf1e4e9f83989.jpg",
+        "image_caption": [
+            "Figure 9. Sensitivity results of hyper-parameter $\\alpha$ . We vary the hyper-parameter $\\alpha$ from $\\{ 0 . 0 1 , 0 . 0 0 1 , 0 . 0 0 0 1 \\}$ and record the fidelity scores of the mask network trained under different settings of $\\alpha$ . A higher fidelity score means a higher fidelity. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            125,
+            589,
+            849,
+            800
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            178,
+            58,
+            789,
+            70
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "discarded",
+        "text": "21 ",
+        "bbox": [
+            477,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "table",
+        "img_path": "images/2af497e88e05b825d93688d87cbbfb63a6faa5c67db49a08b1e7ae758b99ad3e.jpg",
+        "table_caption": [
+            "Table 5. Performance comparison between Self-Imitation Learning (SIL) and RICE on four MuJoCo tasks. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td rowspan=1 colspan=1>Method</td><td rowspan=1 colspan=1>Hopper</td><td rowspan=1 colspan=1>Walker2d</td><td rowspan=1 colspan=1>Reacher</td><td rowspan=1 colspan=1>HalfCheetah</td></tr><tr><td rowspan=1 colspan=1>SIL</td><td rowspan=1 colspan=1>3646.46 (23.12)</td><td rowspan=1 colspan=1>3967.66 (1.53)</td><td rowspan=1 colspan=1>-2.87 (0.09)</td><td rowspan=1 colspan=1>2069.80 (3.44)</td></tr><tr><td rowspan=1 colspan=1>Ours</td><td rowspan=1 colspan=1>3663.91 (20.98)</td><td rowspan=1 colspan=1>3982.79 (3.15)</td><td rowspan=1 colspan=1>-2.66 (0.03)</td><td rowspan=1 colspan=1>2138.89 (3.22)</td></tr></table>",
+        "bbox": [
+            240,
+            107,
+            728,
+            150
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "table",
+        "img_path": "images/aa56c30f27a3ae27a5f17671d80a6edf369045a00fa43f0de107d50eb1795ef0.jpg",
+        "table_caption": [
+            "Table 6. Performance comparison when using different explanation methods across four MuJoCo tasks. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td rowspan=1 colspan=1>Task</td><td rowspan=1 colspan=1>Random Explanation</td><td rowspan=1 colspan=1>Integrated Gradients</td><td rowspan=1 colspan=1>AIRS</td><td rowspan=1 colspan=1>Ours</td></tr><tr><td rowspan=1 colspan=1>Hopper</td><td rowspan=1 colspan=1>3648.98 (39.06)</td><td rowspan=1 colspan=1>3653.24 (14.23)</td><td rowspan=1 colspan=1>3654.49 (8.12)</td><td rowspan=1 colspan=1>3663.91 (20.98)</td></tr><tr><td rowspan=1 colspan=1>Walker2d</td><td rowspan=1 colspan=1>3969.64 (6.38)</td><td rowspan=1 colspan=1>3972.15 (4.77)</td><td rowspan=1 colspan=1>3976.35 (2.40)</td><td rowspan=1 colspan=1>3982.79 (3.15)</td></tr><tr><td rowspan=1 colspan=1>Reacher</td><td rowspan=1 colspan=1>-3.11 (0.42)</td><td rowspan=1 colspan=1>-2.99 (0.31)</td><td rowspan=1 colspan=1>-2.89 (0.19)</td><td rowspan=1 colspan=1>-2.66 (0.03)</td></tr><tr><td rowspan=1 colspan=1>HalfCheetah</td><td rowspan=1 colspan=1>2132.01 (0.76)</td><td rowspan=1 colspan=1>2132.81 (0.83)</td><td rowspan=1 colspan=1>2133.98 (2.52)</td><td rowspan=1 colspan=1>2138.89 (3.22)</td></tr></table>",
+        "bbox": [
+            184,
+            190,
+            787,
+            261
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "Sensitivity of $p$ and $\\lambda$ . We report the sensitivity of hyper-parameters $p$ and $\\lambda$ in the three MuJoCo games with sparse rewards in Figure 11, Figure 12, and Figure 13. We have the following observations: First, generally, a mixed probability $p$ within the range of 0.25 and 0.5 would be a good choice. Second, the refining benefits from the exploration bonus in the sparse MuJoCo games. Third, PPO fine-tuning cannot guarantee that the refined agent can achieve a good performance. Especially in SparseWalker2d game, we observe that ppo fine-tuning cannot break through the training bottleneck of the DRL agent. ",
+        "bbox": [
+            88,
+            287,
+            887,
+            378
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "C.5. Qualitative Analysis ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            395,
+            263,
+            410
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "We do a qualitative analysis of the autonomous driving case to understand how RICE impacts agent behavior and performance. We visualize the agent’s behavior before and after refining the agent. Figure 14(a) shows a trajectory wherein the target agent (depicted by the green car) fails to reach its destination due to a collision with a pink car on the road. Given the undesired outcome, we use our method to identify the critical steps that contribute to the final (undesired) outcome. The important steps are highlighted in red color. Our method identifies the important step as the one when the green car switches across two lanes into the lane of the pink car. The critical state is reasonable because this early step allows the green car to switch lanes to avoid the collision. Based on the provided explanation, we apply our refining method to improve the target agent. The trajectory after refining is shown in Figure 14(b). It shows that after refining, the refined agent (the green car) successfully identifies an alternative path to reach the destination while avoiding collision. ",
+        "bbox": [
+            88,
+            417,
+            885,
+            555
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "D. Case Study: Malware Mutation ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            573,
+            377,
+            590
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "D.1. Design Intuitions ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            599,
+            241,
+            614
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "First, we use malware mutation as a case study to confirm our design intuitions before the proposed refining method. Recall that the refining method contains three important ideas. First, we integrate the explanation result (identified critical step) into the refining process. Second, we design a mixed initial state distribution to guide the refining of the target agent. Third, we encourage the agent to perform exploration for diverse states during the refining phase. In the following, we create multiple baselines by gradually adding these ideas to a naive baseline to show the contribution of each idea. We also provide evidence to support our stance against overfitting. Table 7 summarizes the results. ",
+        "bbox": [
+            88,
+            623,
+            887,
+            714
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "To start, the original agent is trained for 100 epochs until convergence. We test the target agent for 500 runs, resulting in an average evasion probability of $3 3 . 8 \\%$ . To extract behavioral patterns, we perform a frequency analysis on the mutation actions taken by the agent across all 500 runs. As shown in the first row of Table 7, there is a clear preference for $A _ { 4 }$ (i.e., “add bytes to section cave”). A complete list of the possible actions (16 in total) is shown in Table 2 (Appendix). ",
+        "bbox": [
+            88,
+            720,
+            885,
+            782
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "Continue Learning w/o Explanation. The most common refining method is to lower the learning rate and continue training. We continue to train this target agent using the PPO algorithm for an additional 30 epochs and evaluate its performance over 500 runs. This yields an average evasion probability of $3 8 . 8 \\%$ (second row in Table 7). It is worth noting that $A _ { 4 }$ (i.e., “add bytes to section cave”) remains the most frequently selected action. ",
+        "bbox": [
+            88,
+            791,
+            885,
+            852
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "text",
+        "text": "Leverage Explanation Results for Refining. Subsequently, we assess the refining outcome by incorporating our explanation result into the refining process. Specifically, we initiate the refining exclusively from the critical steps identified by the explanation method. For this setting, we do not perform exploration. ",
+        "bbox": [
+            88,
+            859,
+            885,
+            905
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            179,
+            56,
+            789,
+            70
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "image",
+        "img_path": "images/6dceec9ffbe8a1d6491beea69b4c4e329bd14f084bf55cb2072fe19d14d3dfaa.jpg",
+        "image_caption": [
+            "Figure 10. Agent Refining Performance in the SparseWalker2d Games. For the left figure, we fix the explanation method to our method (mask network) if needed while varying refining methods. For the right figure, we fix the refining method to our method while varying the explanation methods. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            91,
+            82,
+            882,
+            246
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "table",
+        "img_path": "images/700a8c3380fe6eb97165dfdcb3b1ba66b0600d93c56fd9dee84b8f6877a79ab4.jpg",
+        "table_caption": [
+            "Table 7. Malware Mutation Case Study—We evaluate the evasion probability of the agent under different settings and count the corresponding action frequencies. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td rowspan=1 colspan=1>Refine Setting</td><td rowspan=1 colspan=1>Test Seting</td><td rowspan=1 colspan=1>Action Frequency</td><td rowspan=1 colspan=1>Evasion</td></tr><tr><td rowspan=1 colspan=1>Original agent w/o refinement</td><td rowspan=1 colspan=1>From default initial S</td><td rowspan=1 colspan=1>{A4: 4,914, Ag: 5}</td><td rowspan=1 colspan=1>33.8%</td></tr><tr><td rowspan=1 colspan=1>Continue training</td><td rowspan=1 colspan=1>From default initial S</td><td rowspan=1 colspan=1>{A4: 2,590, A7: 55, A1: 99, A9: 95}</td><td rowspan=1 colspan=1>38.8%</td></tr><tr><td rowspan=2 colspan=1>Refine from critical states</td><td rowspan=1 colspan=1>From critical states</td><td rowspan=1 colspan=1>{A12: 2,546, A5: 138, A4: 32, Ag: 8}</td><td rowspan=1 colspan=1>50.8%</td></tr><tr><td rowspan=1 colspan=1>From default initial S</td><td rowspan=1 colspan=1>{A12: 4,728,A5: 62}</td><td rowspan=1 colspan=1>36.2%</td></tr><tr><td rowspan=1 colspan=1>Refine from mixed initial state dist.</td><td rowspan=1 colspan=1>From default initial S</td><td rowspan=1 colspan=1>{A4: 1,563, A12: 1,135, A5: 332, A6: 12}</td><td rowspan=1 colspan=1>58.4%</td></tr><tr><td rowspan=1 colspan=1>Refine from mixed initial state dist. + exploration</td><td rowspan=1 colspan=1>From default initial S</td><td rowspan=1 colspan=1>{A5: 2,448,A7: 165,A12: 138, A4: 6}</td><td rowspan=1 colspan=1>68.2%</td></tr></table>",
+        "bbox": [
+            89,
+            358,
+            882,
+            460
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "During the test phase, we explore two testing settings. First, we artificially reset the test environment to start from these critical steps. We find that evasion probability surges to $5 0 . 8 \\%$ . $A _ { 1 2 }$ (i.e., “modify timestamp”) becomes as the most frequently chosen action. This indicates the refined agent learns a policy when encountering the critical state again. However, for more realistic testing, we need to set the test environment to the default initial state (i.e., the correct testing condition). Under this setting, we find the evasion probability diminishes to $3 6 . 2 \\%$ . This stark contrast in results shows evidence of overfitting. The refined agent excels at solving the problem when starting from critical steps but falters when encountering the task from default initial states. ",
+        "bbox": [
+            88,
+            491,
+            887,
+            597
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "Impact of Mixed Initial State Distribution. Given the above result, we further build a baseline by refining from the proposed mixed initial state distribution (i.e., blending the default initial state distribution with the critical states). For this setting, we also do not perform exploration. Through 500 runs of testing, we observe a notable improvement, with the average evasion probability reaching $5 8 . 4 \\%$ (from the previous baseline’s $3 6 . 2 \\%$ ). Furthermore, the action frequency pattern has also undergone a shift. It combines the preferred actions from the two previous refining strategies, highlighting the frequent selection of both $A _ { 4 }$ and $A _ { 1 2 }$ . ",
+        "bbox": [
+            88,
+            606,
+            885,
+            696
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "Impact of Exploration. Finally, we explore the impact of exploration. This baseline represents the complete version of our proposed system by adding the exploration step and using the mixed initial distribution. We notice that the average evasion probability across 500 runs has a major increase, reaching $6 8 . 2 \\%$ . The most frequent action now is $A _ { 5 }$ (i.e., “add section strings”). $A _ { 4 }$ and $A _ { 1 2 }$ are still among the top actions but their frequencies are lowered. This shows the benefits of exploring previously unseen states and diverse mutation paths. In return, the refined agent is able to get out of the local minima to identify more optimal policies. ",
+        "bbox": [
+            88,
+            705,
+            885,
+            796
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "D.2. Discovery of Design Flaws ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            813,
+            305,
+            828
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "Additionally, our explanation results have led to the discovery of design flaws in the malware mutation application (Raff et al., 2017). We will further explain how we use RICE to identify these problems. ",
+        "bbox": [
+            94,
+            835,
+            887,
+            866
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "text",
+        "text": "Questions and Intuitions. When using RICE to explain the malware mutation process, we observe a scenario where the agent constantly chooses the same action “upx pack” in multiple consecutive steps. According to the agent, these actions receive a similar reward. However, RICE (our mask network) returns different “explanations” for these steps (i.e., they have highly different importance scores). According to RICE, only the first action holds a high importance score, while the other consecutive actions barely have an impact on the final reward (i.e., they appear redundant). This raises the question: why does the agent assign a similar reward to these consecutive steps in the first place? ",
+        "bbox": [
+            88,
+            875,
+            882,
+            905
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            176,
+            58,
+            789,
+            70
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "image",
+        "img_path": "images/f2604d5ada70ebfb7ae1d9dcf9315da93699eb4be484fce2a0d840eb077ae6d8.jpg",
+        "image_caption": [
+            "Figure 11. Sensitivity results of hyper-parameter $\\lambda$ in SparseHopper game. We vary the hyper-parameter $\\lambda$ from $\\{ 0 , 0 . 1 , 0 . 0 1 , 0 . 0 0 1 \\}$ and record the performance of the agent after refining. A smaller choice of $\\lambda$ means a smaller reward bonus for exploration. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            86,
+            101,
+            883,
+            429
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "image",
+        "img_path": "images/17ba73c6a4126fa750de35d66399c6c7f5551a1abfaabe95b89a5fae8f827cc6.jpg",
+        "image_caption": [
+            "Figure 12. Sensitivity results of hyper-parameter $\\lambda$ in SparseWalker2d game. We vary the hyper-parameter $\\lambda$ from $\\{ 0 , 0 . 1 , 0 . 0 1 , 0 . 0 0 1 \\}$ and record the performance of the agent after refining. A smaller choice of $\\lambda$ means a smaller reward bonus for exploration. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            86,
+            511,
+            885,
+            842
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            179,
+            58,
+            787,
+            70
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "discarded",
+        "text": "24 ",
+        "bbox": [
+            477,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "image",
+        "img_path": "images/28d19fb4263b90579ebfeec0c662f62e1e8081596ca669d21c99c461252253d5.jpg",
+        "image_caption": [
+            "Figure 13. Sensitivity results of hyper-parameter $\\lambda$ in SparseHalfCheetah game. We vary the hyper-parameter $\\lambda$ from $\\{ 0 , 0 . 1 , 0 . 0 1 , 0 . 0 0 1 \\}$ and record the performance of the agent after refining. A smaller choice of $\\lambda$ means a smaller reward bonus for exploration. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            86,
+            82,
+            885,
+            410
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            88,
+            494,
+            885,
+            555
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "text",
+        "text": "Another interesting observation is from refining experiments. We find that PPO-based refining cannot yield substantial improvements. While we have expected that these methods do not perform as well as ours (given our exploration step), the difference is still bigger than we initially expected. This motivates us to further examine the reward function design to explore whether it has inadvertently discouraged the DRL agent from finding good evasion paths. ",
+        "bbox": [
+            88,
+            563,
+            885,
+            623
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "text",
+        "text": "Problems of Reward Design. Driven by the intuitions above, we examined the reward design and identified two problems. Firstly, the reward mechanism is inherently non-Markovian which deviates from the expectation of a typical reinforcement learning (RL) framework. In typical RL settings, rewards are contingent on the current state $s$ and the next state $s ^ { \\prime }$ . However, the current design computes the reward based on the initial state $s _ { 0 }$ and the subsequent state $s ^ { \\prime }$ . Consequently, this may assign an identical reward for the same action (e.g., “upx pack”) in consecutive steps. This non-Markovian nature of the reward mechanism can mislead the DRL agent and hurt its performance. ",
+        "bbox": [
+            88,
+            632,
+            887,
+            723
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "text",
+        "text": "Second, we find that the intermediate rewards exhibit unusually high sparsity, i.e., many intermediate rewards tend to have a value close to zero, which poses a significant challenge for the PPO algorithm to learn a good policy based on such intermediate rewards. Agents refined with these methods can be easily trapped in local minima. ",
+        "bbox": [
+            89,
+            731,
+            885,
+            776
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "text",
+        "text": "Fixing the Problematic Reward Design. Based on these insights, we fix the bugs in the reward design with two simple steps: (1) We make the reward function Markovian, which depends only on the current state and the next state. (2) We perform scaling on the intermediate reward with a coefficient of 3. After that, we re-run an experiment to evaluate the correctness of our modifications. We train a DRL agent for 100 epochs with the same parameters under the new reward design and test its performance over 3 trials of 500 runs. The experiment shows that the evasion probability of the agent under the new reward design jumps from $4 2 . 2 \\%$ (using the old reward function, see Table 1) to $7 2 . 0 \\%$ , which further confirms our intuitions. This case study illustrates how developers can use RICE to debug their system and improve their designs. ",
+        "bbox": [
+            88,
+            784,
+            885,
+            905
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            174,
+            58,
+            789,
+            70
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "image",
+        "img_path": "images/8e5f451d9e032355224acf1050ea0859cf93500c24bc127dc53282e4ea93c604.jpg",
+        "image_caption": [
+            "Figure 14. (a): In the original trajectory, the target agent (the green car) eventually collides with the pink car, which is an undesired outcome. Each time step is marked with a different color: “yellow” indicates the least important step and “red” represents the most important step. (b): We highlight the critical states identified by our explanation method and the corresponding outcome after refining. Using our explanation method, the target agent (the green car) successfully avoids collision. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            91,
+            79,
+            883,
+            233
+        ],
+        "page_idx": 25
+    },
+    {
+        "type": "image",
+        "img_path": "images/17b0b0b3e62c52c313b0f58d76f59c52ee95f569324618d43d4b751a30b9290c.jpg",
+        "image_caption": [
+            "Figure 15. Refining performance with our method and RND method in MountainCarContinuous-v0 game. The state coverage of the pre-trained policy is limited to a small range around the initial point. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            248,
+            319,
+            722,
+            511
+        ],
+        "page_idx": 25
+    },
+    {
+        "type": "text",
+        "text": "E. Limitation ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            578,
+            202,
+            594
+        ],
+        "page_idx": 25
+    },
+    {
+        "type": "text",
+        "text": "We use the continuous “Mountain Car” environment (mou) as a negative control task to illustrate a scenario where RICE does not work well. In this “extreme” case, Assumption 3.2 is completely broken since the state coverage of the pre-trained agent is limited to a small range around the initial point. In this experiment, we train a target agent using Proximal Policy Optimization (PPO) for 1 million steps. The results show that the policy performance remained poor, with the agent frequently getting trapped at the starting point of the environment. In such cases where the original policy fails to learn an effective strategy, the role of explanations becomes highly limited. Since RICE relies on the identified critical states to enhance the policy, if the policy itself is extremely weak (i.e., not satisfying Assumption 3.2), then the explanations will not be meaningful, which further huts the refinement. In the case of the Mountain Car experiment, RICE essentially reduces to being equivalent to Random Network Distillation (RND) due to the lack of meaningful explanation. We show the result when refining the pre-trained agent using our method and RND in Figure 15. ",
+        "bbox": [
+            88,
+            604,
+            885,
+            756
+        ],
+        "page_idx": 25
+    },
+    {
+        "type": "discarded",
+        "text": "RICE: Breaking Through the Training Bottlenecks of Reinforcement Learning with Explanation ",
+        "bbox": [
+            176,
+            58,
+            790,
+            70
+        ],
+        "page_idx": 25
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            477,
+            922,
+            496,
+            934
+        ],
+        "page_idx": 25
+    }
+]

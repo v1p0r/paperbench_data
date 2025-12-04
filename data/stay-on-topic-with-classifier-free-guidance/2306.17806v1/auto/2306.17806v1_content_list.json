@@ -1,0 +1,3397 @@
+[
+    {
+        "type": "text",
+        "text": "Stay on topic with Classifier-Free Guidance ",
+        "text_level": 1,
+        "bbox": [
+            235,
+            154,
+            761,
+            178
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Guillaume V. Sanchez\\* Hexaglobe EleutherAI gsanchez@hexaglobe.com ",
+        "bbox": [
+            158,
+            232,
+            351,
+            287
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Honglu Fan\\*   \nUniversity of Geneva   \nEleutherAI   \nhonglu.fan@unige.ch ",
+        "bbox": [
+            400,
+            232,
+            566,
+            287
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Alexander Spangher\\* Information Sciences Institute University of Southern California spangher@usc.edu ",
+        "bbox": [
+            617,
+            232,
+            839,
+            289
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Elad Levi Sightful eladlevico $@$ gmail.com ",
+        "bbox": [
+            151,
+            309,
+            307,
+            351
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Pawan Sasanka Ammanamanchi IIIT Hyderabad Eleuther AI pawansasanka@gmail.com ",
+        "bbox": [
+            351,
+            309,
+            591,
+            364
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Stella Biderman Booz Allen Hamilton EleutherAI stellabiderman@gmail.com ",
+        "bbox": [
+            635,
+            309,
+            844,
+            364
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Abstract ",
+        "text_level": 1,
+        "bbox": [
+            462,
+            400,
+            535,
+            416
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Classifier-Free Guidance (CFG) [37] has recently emerged in text-to-image generation as a lightweight technique to encourage prompt-adherence in generations. In this work, we demonstrate that CFG can be used broadly as an inference-time technique in pure language modeling. We show that CFG (1) improves the performance of Pythia, GPT-2 and LLaMA-family models across an array of tasks: Q&A, reasoning, code generation, and machine translation, achieving SOTA on LAMBADA with LLaMA-7B over PaLM-540B; (2) brings improvements equivalent to a model with twice the parameter-count; (3) can stack alongside other inference-time methods like Chain-of-Thought and Self-Consistency, yielding further improvements in difficult tasks; (4) can be used to increase the faithfulness and coherence of assistants in challenging form-driven and content-driven prompts: in a human evaluation we show a $7 5 \\%$ preference for GPT4All using CFG over baseline. ",
+        "bbox": [
+            173,
+            429,
+            826,
+            568
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "1 Introduction ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            589,
+            251,
+            606
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "In recent years large language models have exhibited strong generative capabilities to solve a diverse range of tasks [26, 15, 71]. “Prompting” is typically used to condition generation, with task instructions and context [64], or a small set of examples [15]. However, language generation, especially with smaller models, has been shown to struggle with issues such as hallucination [49], degradation [38] and meandering [76]. Various approaches have been proposed to address this, e.g.: instruction-finetuning [81, 70] and reinforcement learning [56, 4, 6]. These techniques are expensive and their compute and data cost may not be accessible to all users. In this paper we propose an inference time methodology which, as shown in Figure 1, gives more importance to the user intent, expressed through the prompt. Our hypothesis in this paper is: focusing more on the prompt at inference-time will result in generations that better align with expected behavior. ",
+        "bbox": [
+            116,
+            619,
+            485,
+            854
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "image",
+        "img_path": "images/e4a9d9f31d6b79f87c74ba3cbb2487d9499b411f85d70524e58b07f2c637aac3.jpg",
+        "image_caption": [
+            "Figure 1: A notional 2D projection of a textual latent space showing how increasing the guidance weight $\\gamma$ increases the importance of the prompt “Today in France,”. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            509,
+            593,
+            851,
+            784
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Text-to-image-generation, too, has been shown to suffer from similar problems [28]. Standard inference approaches can ignore parts of the prompt-conditioning, especially with specific or uncommon prompts [53]. Classifier Guidance [28] was proposed to enhance the generative quality of diffusion models, by using a separate classifier to encourage desired characteristics in the output image. Classifier-Free Guidance (CFG) [37] was later introduced, in which the classifier is removed and the generative model itself is used as an implicit classifier. ",
+        "bbox": [
+            114,
+            861,
+            887,
+            890
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "\\*These authors contributed equally to this work ",
+        "bbox": [
+            137,
+            898,
+            415,
+            911
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            22,
+            270,
+            62,
+            708
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            117,
+            127,
+            879,
+            136
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "table",
+        "img_path": "images/c2f37afe9a9e1c46854dc0eb6fa8b06cd007ca3f80e891e03e052d75da8627d9.jpg",
+        "table_caption": [
+            "Table 1: Demonstration of CFG-guided generation for an assistant-style prompt (using GPT4All with $\\gamma = 5$ ). The assistant has a system-level prompt (“Instructions”) that is potentially out-of-distribution (e.g. “write an enthusiastic response”) and a user-level prompt (“Prompt”). In Vinalla Sampling, the model ignores the system-level directive, but with CFG, the model adheres to both the system-level and the user-level prompt. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td colspan=\"2\">Instruction: “Respond enthusiastically to the following user prompt.&quot; Prompt: “What was the Cambridge Analytica scandal?&quot;</td></tr><tr><td> Vanilla Sampling</td><td> Classifier Free Guidance-based Sampling</td></tr><tr><td>The Cambridge Analytica scandal was a huge scandal in which it was revealed that Cam- bridge Analytica, a political consulting firm, had used personal data from Facebook to target and influence the 2O16 US presidential elec- tion.This scandal raised questions about the role of social media in political campaigns...</td><td>Oh my goodness! What a scandal! The Cam- bridge Analytica scandal was when a company used personal information obtained through online activities to influence political cam- paigns,essentially hacking people&#x27;s brains. It was a serious breach of trust and privacy, and rightfully so! It is a wake-up call for..</td></tr></table>",
+        "bbox": [
+            181,
+            90,
+            816,
+            251
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            114,
+            353,
+            883,
+            395
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Inspired by its effectiveness in the text-to-image-generation [68, 37, 46], we adapt CFG to unimodal text generation to increase the model alignment to the given prompt. While text-to-image models (which primarily utilize diffusion models) need to be specifically trained with conditioning dropout [37] to utilize CFG, we show that, in text generation, we can use CFG out-of-the-box in many situations. We demonstrate the effectiveness of CFG to improve alignment on a wide range of prompting approaches including zero-shot prompting, Chain-of-Thought prompting, long-form generative prompting and complex chatbot-style prompting (see Table 1). ",
+        "bbox": [
+            116,
+            401,
+            883,
+            486
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "We make the following contributions: ",
+        "bbox": [
+            117,
+            491,
+            362,
+            506
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "1. We devise a framework for using CFG in language modeling and show significant improvements across a range of standard benchmarks. These benchmarks capture a variety of different prompting techniques: basic prompting, chain-of-thought prompting, long-text prompting and chatbot-style prompting. Notably, we achieve SOTA on LAMBADA with LLaMA-7B over PaLM-540B.   \n2. We show that for the same inference cost, one can train a model that is half the size and obtain similar performance on those benchmarks;   \n3. By using a negative prompt, we demonstrate that we can have a more granular control over the aspects emphasized by CFG. In a blind human evaluation we show $7 5 \\%$ preference for GPT4All using CFG over the vanilla sampling;   \n4. We provide interpretations for the impact that CFG on text generation both (1) qualitatively, by visualizing how CFG is upweighting words more related to the prompt (our visualization, we note, can be an integral part of effective prompt engineering) and (2) quantitatively, by showing that CFG decreases entropy in the sampling distribution. ",
+        "bbox": [
+            151,
+            516,
+            885,
+            712
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "2 Methodology ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            734,
+            256,
+            752
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "Autoregressive language models are trained to generate plausible continuations of sequences of text. Given a sequence of tokens $w _ { 1 } , \\cdots , w _ { T }$ , the model samples each subsequent token from the conditional probability distribution $\\mathrm { P } _ { \\theta } ( w | w _ { t \\leq T } )$ It is now typical for some or all of the initial tokens to be considered a prompt, which specifies information about the task or how it is to be solved. In practice, prompts are syntactically and semantically distinct from the initial text to be continued. ",
+        "bbox": [
+            116,
+            766,
+            883,
+            835
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "However, standard generation methods for large language models do not differentiate between prompt text, $w _ { 1 } . . . w _ { p }$ and subsequent generations $w _ { p + 1 } , . . . w _ { t - 1 }$ . Directly sampling from $\\mathbf { P } _ { \\theta } \\big ( w _ { i + 1 } | w _ { t \\leq i } \\big )$ may result in continuations that lose adherence to the prompt (see Table 1, for example) over the course of the generation. Inspired by successes with diffusion models, we propose to address this problem by applying Classifier-Free Guidance [37] to the decoding process in autoregressive language models. ",
+        "bbox": [
+            116,
+            842,
+            882,
+            911
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "discarded",
+        "text": "2 ",
+        "bbox": [
+            493,
+            935,
+            504,
+            946
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "2.1 Guidance in Text-to-Image Models ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            90,
+            397,
+            106
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Let $ { \\mathrm { P } } _ { \\theta } ( x )$ be the unconditional generative model for an image $x$ with parameters $\\theta$ . During inference, we wish to condition the generation on a label or text description $c$ in order to model $\\mathrm { P } ( x | c )$ . Generative models usually generate data from an abstract representation $z$ in semantic space that is decoded into an actual sample (e.g. the latent vectors in GANs or the intermediate sampling steps in diffusion models). Controlling the generation usually involves guiding or adding constraints to that semantic representation. In Classifier Guidance [28], an auxiliary classifier ${ \\mathrm P } _ { \\phi } ( c | x )$ is introduced, which guides the sampling from $ { \\mathrm { P } } _ { \\theta } ( x )$ with the gradients $\\gamma \\nabla _ { z } \\mathbf { P } _ { \\phi } ( c | x )$ to increase the likelihood of $c$ for generation $x$ . This modification results in approximate samples from the distribution: ",
+        "bbox": [
+            114,
+            116,
+            883,
+            215
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "equation",
+        "img_path": "images/6ad9136a24e1939a520189f41b531d2a8b0ac5f2c0177d43090863f220a37104.jpg",
+        "text": "$$\n\\widehat { \\mathrm { P } } ( x | c ) \\propto \\mathrm { P } _ { \\theta } ( x ) \\cdot \\mathrm { P } _ { \\phi } ( c | x ) ^ { \\gamma }\n$$",
+        "text_format": "latex",
+        "bbox": [
+            408,
+            232,
+            588,
+            252
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "where $\\gamma$ is called the guidance strength. This guidance results in a reweighting of the density according to the classifier likelihood. For $\\gamma = 0$ , it reduces to the unconditional generation, while $\\gamma = 1$ reduces to the conditional generation. When $\\gamma > 1$ then $\\widehat { \\mathrm { P } }$ overemphasizes the conditioning, which as noticed by [28] results in a better inception score at the cost of diversity. This approach has been successfully used in a variety of works [32, 41, 22] ",
+        "bbox": [
+            114,
+            256,
+            883,
+            314
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Classifier-Free Guidance, [37] observes that by using Bayes rule we can eliminate the necessity of an external classifier. By training the same model $\\mathrm { P } _ { \\theta }$ to support both conditional and unconditional generation with conditioning dropout, we can thus rewrite the second term in Equation 1 as Pθ(c|x) ∝ Pθ(x|c)Pθ(x) . Then, the sampling is performed according to the probability: ",
+        "bbox": [
+            114,
+            319,
+            883,
+            382
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "equation",
+        "img_path": "images/e5bad60fefdf21026380224d4bea4b52d1d003400b6732110fe72edc22b57f0d.jpg",
+        "text": "$$\n{ \\widehat { \\mathrm { P } _ { \\theta } } } ( x | c ) \\propto { \\frac { \\mathrm { P } _ { \\theta } ( x | c ) ^ { \\gamma } } { \\mathrm { P } _ { \\theta } ( x ) ^ { \\gamma - 1 } } } .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            423,
+            398,
+            573,
+            433
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Modeling the diffusion process with ${ \\widehat \\mathrm { P } } _ { \\theta } ( x | c )$ effectively means predicting the PDF of the sample noise $\\epsilon _ { t }$ as ",
+        "bbox": [
+            114,
+            444,
+            818,
+            462
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "equation",
+        "img_path": "images/77d434abba704f7ce000bc86b02fe9d247cb6273c7da3792ce5a54f67c39f47d.jpg",
+        "text": "$$\n\\log \\widehat { \\mathrm { P } _ { \\theta } } ( \\epsilon _ { t } | x _ { t + 1 } , c ) = \\gamma \\log \\mathrm { P } _ { \\theta } ( \\epsilon _ { t } | x _ { t + 1 } , c ) - ( \\gamma - 1 ) \\log \\mathrm { P } _ { \\theta } ( \\epsilon _ { t } | x _ { t + 1 } ) .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            274,
+            478,
+            722,
+            500
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "An important tool with diffusion models is Negative Prompting [29, 1, 23, 65]. We can rewrite Equation 3 as ",
+        "bbox": [
+            111,
+            508,
+            836,
+            525
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "equation",
+        "img_path": "images/93b04ccaca29454c8aa011bb32be230fb72dfbb761c5e5054c6ad078e5433e26.jpg",
+        "text": "$$\n\\begin{array} { r } { \\log \\widehat { \\mathrm { P } _ { \\theta } } ( \\epsilon _ { t } | x _ { t + 1 } , c ) = \\log \\mathrm { P } _ { \\theta } ( \\epsilon _ { t } | x _ { t + 1 } ) + \\gamma \\big ( \\log \\mathrm { P } _ { \\theta } ( \\epsilon _ { t } | x _ { t + 1 } , c ) - \\log \\mathrm { P } _ { \\theta } ( \\epsilon _ { t } | x _ { t + 1 } ) \\big ) } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            235,
+            541,
+            761,
+            563
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Aside from its probabilistic interpretation, this equation also represents a vector arithmetic operation in latent space: we take a step of size $\\gamma$ away from the unconditional vector in the direction of the conditioning. Semantic vector linear arithmetic has proven to be effective in many situations in vision: striking examples have been generated by interpolations in GANs or diffusion models [47, 75, 14]. ",
+        "bbox": [
+            114,
+            571,
+            883,
+            628
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Moreover, the initial point does not have to be the unconditional latent, but any representation we want to move away from. We can introduce the \"negative conditioning\" or \"negative prompt\" $\\bar { c }$ , as well as a generalized equation resulting in Equation 3 when $\\overline { { c } } = \\emptyset$ : ",
+        "bbox": [
+            116,
+            633,
+            882,
+            678
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "equation",
+        "img_path": "images/fbd7daf3bdbfec34740e80a4c638ff1b3d750ead196055e7c58d76aa8f2fb374.jpg",
+        "text": "$$\n\\begin{array} { r } { \\log \\widehat { \\mathbf { P } _ { \\theta } } ( \\epsilon _ { t } | x _ { t + 1 } , c , \\overline { { c } } ) = \\log \\mathbf { P } _ { \\theta } ( \\epsilon _ { t } | x _ { t + 1 } , \\overline { { c } } ) + \\gamma \\big ( \\log \\mathbf { P } _ { \\theta } ( \\epsilon _ { t } | x _ { t + 1 } , c ) - \\log \\mathbf { P } _ { \\theta } ( \\epsilon _ { t } | x _ { t + 1 } , \\overline { { c } } ) \\big ) } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            214,
+            694,
+            782,
+            715
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "2.2 Classifier-Free Guidance of Language Models ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            729,
+            473,
+            744
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "To apply Classifier-Free Guidance to language models, we first have to define the semantic space to operate in. As demonstrated in [51, 60] and [27, 61], word embeddings and sentence embeddings have strong semantic structures. This makes the logits of token predictions a good choice of our latent space, due to its linear relationship with the last hidden layer. Using the logits avoids network editing [9] and is architecture agnostic. ",
+        "bbox": [
+            114,
+            756,
+            883,
+            813
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Next, we need to define what is considered conditioning, $c$ , in decoder-only language models. In the common situations, a user provides a prompt $c$ which can be a context, an instruction, or the beginning of some text, and uses a language model to sample a sequence of continuation tokens $w _ { i }$ for the prompt $c$ . Since a good continuation is expected to highly correlate to the prompt, we consider the prompt as our conditioning. ",
+        "bbox": [
+            114,
+            816,
+            883,
+            875
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Similarly to Classifier Guidance [24, 84, 76], we wish to generate a text $w$ which has a high likelihood of starting with $c$ We define the $\\gamma$ -reweighted distribution $\\widehat { \\mathrm { P } } ( w | c ) \\propto \\mathbf { P } ( w ) \\cdot \\mathbf { P } ( c | w ) ^ { \\gamma }$ , and approximate it with CFG as $\\begin{array} { r } { \\widehat { \\mathbf { P } } ( w | c ) \\propto \\frac { \\mathbf { \\bar { P } } ( w | c ) ^ { \\gamma } } { \\mathbf { P } ( w ) ^ { \\gamma - 1 } } } \\end{array}$ ",
+        "bbox": [
+            114,
+            880,
+            882,
+            912
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "discarded",
+        "text": "3 ",
+        "bbox": [
+            493,
+            935,
+            504,
+            946
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "In the case of autoregressive language models modeling $\\begin{array} { r } { \\mathbf { P } _ { \\theta } ( w ) = \\prod _ { i } ^ { N } \\mathbf { P } _ { \\theta } ( w _ { i } | w _ { j < i } ) } \\end{array}$ , we can unroll the formulation and obtain Equation 2 again: ",
+        "bbox": [
+            116,
+            88,
+            885,
+            121
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/928afdb98366fcbb81b694e2f432630b4949c3334569823f32b8dbb3577dcaa7.jpg",
+        "text": "$$\n\\widehat { \\mathbf { P } _ { \\theta } } ( w | c ) \\propto \\prod _ { i = 1 } ^ { T } \\widehat { \\mathbf { P } _ { \\theta } } ( w _ { i } | w _ { j < i } , c ) \\propto \\prod _ { i = 1 } ^ { T } \\frac { \\mathbf { P } _ { \\theta } ( w _ { i } | w _ { j < i } , c ) ^ { \\gamma } } { \\mathbf { P } _ { \\theta } ( w _ { i } | w _ { j < i } ) ^ { \\gamma - 1 } } \\propto \\frac { \\mathbf { P } _ { \\theta } ( w | c ) ^ { \\gamma } } { \\mathbf { P } _ { \\theta } ( w ) ^ { \\gamma - 1 } }\n$$",
+        "text_format": "latex",
+        "bbox": [
+            272,
+            140,
+            723,
+            184
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "While conditioned diffusion models cannot predict unconditioned distributions without extra training, language models handle both $\\mathrm P _ { \\theta } ( w | c )$ and $ { \\mathrm { P } } _ { \\theta } ( w )$ naturally due to being trained on finite context windows. Being able to drop the prefix $c$ is a natural feature. We can thus sample the next $i$ -th token $w _ { i }$ in the logits space: ",
+        "bbox": [
+            116,
+            196,
+            883,
+            238
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/1136f07a179afc20e6f03797bdda0073b750238893cb7ec3c58b4c62866c46c4.jpg",
+        "text": "$$\n\\log \\widehat { \\mathrm { P } _ { \\theta } } ( w _ { i } | w _ { j < i } , c ) = \\log \\mathrm { P } _ { \\theta } ( w _ { i } | w _ { j < i } ) + \\gamma \\big ( \\log \\mathrm { P } _ { \\theta } ( w _ { i } | w _ { i < j } , c ) - \\log \\mathrm { P } _ { \\theta } ( w _ { i } | w _ { j < i } ) \\big )\n$$",
+        "text_format": "latex",
+        "bbox": [
+            222,
+            257,
+            774,
+            280
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "This formulation can be extended to accomodate “negative prompting”, as in Equation 5. Negative prompting as applied in autoregressive LMs will be further addressed in Section 3.4. Now, we will continue on to the next section, where we introduce our experiments. In this section, we will explore the effects of CFG on different variations of prompting. ",
+        "bbox": [
+            114,
+            291,
+            885,
+            335
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "3 Experiments ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            357,
+            253,
+            375
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "In this section we show that Classifier-Free Guidance reliably boosts performance across a variety of common prompting approaches. In Section 3.1 we show that CFG boosts zero-shot performance on a variety of standard NLP benchmarks, including achieving state-of-the-art performance on LAMBADA with LLaMa-7B. In Section 3.2 we apply CFG to Chain-of-Thought prompts [55, 82] an approach to allows the model to reason first before answering the question. Next, we test the performance of CFG on text-to-text generation prompts in Section 3.3. Finally, we show in Section 3.4 that CFG can be applied to assistant prompts (i.e. prompts with system-instructions). ",
+        "bbox": [
+            116,
+            390,
+            883,
+            474
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "3.1 Basic Prompting: Zero-Shot Prompts ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            492,
+            415,
+            507
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "To test basic, zero-shot prompting, we consider a suite of zero-shot benchmarks implemented in the Language Model Evaluation Harness [33], which includes close-book QA [5, 39], common sense reasoning tasks [85, 69, 18, 12, 20, 8, 19], and sentence completion-tasks [58]. In these settings, the desired completions are short (often 1-2 tokens), so risks of meandering [76] or degradation [38] are low. We hypothesize that the main impact of CFG in these settings will be to reduce variance in output choices, as we explore more in Section 5. ",
+        "bbox": [
+            116,
+            518,
+            883,
+            588
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "We evaluate the GPT-2 model family[62], the Pythia model family [11] and the LLaMA model family[78] using different guidance strengths across a range of standard NLP benchmarks using EleutherAI’s Language Model Evaluation Harness [33] and implement CFG by starting the unconditional prompt at the last token of the initial prompt. The results are shown in Table 2. For better visualization, the charts for the GPT2 models, the Pythia models and the LLaMA models over the standard benchmarks are also shown in Figure 8, 9, and 10, respectively. We observe that except ARC (challenge) and Winogrande, the boost of performances from CFG is nontrivial and consistent. The reasons for these discrepancies are still unknown. ",
+        "bbox": [
+            114,
+            594,
+            883,
+            693
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Furthermore, we note that even the smallest LLaMA 7B model achieves $8 1 \\%$ accuracy in Lambada (OpenAI) zero-shot benchmark with $\\gamma = 1 . 5$ , outperforming the current SOTA (zero-shot) of PaLM-540B $( 7 7 . 9 \\% )$ . Despite the fact that CFG almost doubles the computation during inference, the comparison is still noteworthy given that other models with comparable performances on Lambada (OpenAI) have much more parameters and would still require more compute than LLaMA 7B with CFG. Taken together, we show that CFG increases performance in basic prompting settings significantly. ",
+        "bbox": [
+            116,
+            698,
+            883,
+            782
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "3.2 Deliberative Prompting: Chain-of-Thought ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            800,
+            455,
+            816
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "A variation on basic prompting has emerged recently called Chain-of-Thought (CoT) prompting [82]. In this setting, the model is prompted to generate a series of reasoning steps before giving an answer to the task: i.e. $p ( w _ { c o t } , w _ { a } | w _ { p } )$ , where $w _ { c o t } = w _ { p + 1 } . . . w _ { c - 1 }$ and $w _ { a }$ is the answer. ${ w _ { c o t } }$ is designed to mimic the human reasoning or deliberation process. CoT has been shown to perform well in complex reasoning tasks that can not be fully addressed by model- or data-scaling [63], however, as observed by [82], long reasoning chains can diverge and either do not generate correct answers, or do not follow the expected result structure given by the prompt. ",
+        "bbox": [
+            116,
+            827,
+            883,
+            911
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "discarded",
+        "text": "4 ",
+        "bbox": [
+            493,
+            935,
+            503,
+            946
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "table",
+        "img_path": "images/3d305aac3d248566fc94c84b7d9fb30d15f870ec972473195064c192fb919d3b.jpg",
+        "table_caption": [],
+        "table_footnote": [],
+        "table_body": "<table><tr><td></td><td>ARC-c</td><td>ARC-e</td><td>BoolQ</td><td>HellaSwag</td></tr><tr><td>GPT2-small</td><td>22.7 / 23.0</td><td>39.5 / 42.1</td><td>48.7 / 57.0</td><td>31.1/ 31.9</td></tr><tr><td>GPT2-medium</td><td>25.0 / 23.9</td><td>43.6 / 47.6</td><td>58.6 / 60.1</td><td>39.4 / 40.9</td></tr><tr><td>GPT2-large</td><td>25.1/24.7</td><td>46.6 / 51.0</td><td>60.5 / 62.1</td><td>45.3 / 47.1</td></tr><tr><td>GPT2-xl</td><td>28.5 / 30.0</td><td>51.1 / 56.5</td><td>61.8/ 62.6</td><td>50.9 / 52.4</td></tr><tr><td>Pythia-160M</td><td>23.5 /23.0</td><td>39.5 / 42.2</td><td>55.0 / 58.3</td><td>30.1/ 31.2</td></tr><tr><td>Pythia-410M</td><td>24.1 / 23.8</td><td>45.7/ 50.3</td><td>60.6 / 61.2</td><td>40.6/ 41.6</td></tr><tr><td>Pythia-1B</td><td>27.0 / 28.0</td><td>49.0/ 54.9</td><td>60.7 / 61.8</td><td>47.1 / 48.9</td></tr><tr><td>Pythia-1.4B</td><td>28.6 / 29.6</td><td>53.8 / 59.6</td><td>63.0 / 63.8</td><td>52.1/ 54.3</td></tr><tr><td>Pythia-2.8B</td><td>33.1 / 34.5</td><td>58.8 / 65.4</td><td>64.7 / 64.7</td><td>59.3 / 61.9</td></tr><tr><td>Pythia-6.9B</td><td>35.2 / 36.1</td><td>61.3 / 67.4</td><td>63.7 / 64.6</td><td>64.0/ 66.5</td></tr><tr><td>Pythia-12B</td><td>36.9/ 38.7</td><td>64.1/ 72.6</td><td>67.6/ 67.8</td><td>67.3 / 69.6</td></tr><tr><td>LLaMA-7B</td><td>41.5/ 43.9</td><td>52.5 / 58.9</td><td>73.1 / 71.8</td><td>73.0 / 76.9</td></tr><tr><td>LLaMA-13B</td><td>47.8 / 54.2</td><td>74.8 / 79.1</td><td>78.0 / 75.8</td><td>79.1/ 82.1</td></tr><tr><td>LLaMA-30B</td><td>52.9 / 57.4</td><td>78.9 / 83.2</td><td>82.7 / 80.0</td><td>82.6/ 85.3</td></tr><tr><td>LLaMA-65B</td><td>55.6 / 59.0</td><td>79.7 / 84.2</td><td>84.8 / 83.0</td><td>84.1/ 86.3</td></tr><tr><td colspan=\"5\">(a)</td></tr></table>",
+        "bbox": [
+            250,
+            88,
+            746,
+            349
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "table",
+        "img_path": "images/00bfc4a62cb277b820c94c4f162d6c6876d20f42623231ec3f7930ea0a55666e.jpg",
+        "table_caption": [],
+        "table_footnote": [],
+        "table_body": "<table><tr><td></td><td>PIQA</td><td>SCIQ</td><td>TriviaQA</td><td>WinoGrande</td><td></td><td>Lambada</td></tr><tr><td>GPT2-small</td><td>62.5 / 63.8</td><td>64.4 /</td><td>70.8</td><td>5.5 / 6.5</td><td>51.6 / 50.5</td><td>32.6 / 44.6</td></tr><tr><td>GPT2-medium</td><td>66.4/ 66.9</td><td>67.2 /</td><td>76.7</td><td>8.3 / 9.3</td><td>53.1/ 52.1</td><td>43.0/ 55.8</td></tr><tr><td>GPT2-large</td><td>69.2 / 70.2</td><td>69.4 /</td><td>78.8</td><td>11.1 / 12.0</td><td>55.4 / 54.4</td><td>47.7/ 60.5</td></tr><tr><td>GPT2-xl</td><td>70.5 / 71.3</td><td>76.1/</td><td>82.4</td><td>14.7 / 15.2</td><td>58.3 / 55.6</td><td>51.2 / 62.5</td></tr><tr><td>Pythia-160M</td><td>61.4 / 62.1</td><td>67.0 /</td><td>75.4</td><td>4.1/ 5.3</td><td>52.3 / 51.1</td><td>32.8/ 47.4</td></tr><tr><td>Pythia-410M</td><td>67.1/ 67.8</td><td>72.1 /</td><td>79.0</td><td>7.9 / 9.1</td><td>52.9 / 50.7</td><td>51.3/ 64.0</td></tr><tr><td>Pythia-1B</td><td>69.2 / 70.5</td><td>76.0 /</td><td>82.9</td><td>12.3 /12.3</td><td>53.9 / 51.5</td><td>56.2/ 69.0</td></tr><tr><td>Pythia-1.4B</td><td>71.1 / 72.5</td><td>79.4 /</td><td>85.1</td><td>15.9 / 15.9</td><td>57.4 / 56.0</td><td>61.6 / 72.7</td></tr><tr><td>Pythia-2.8B</td><td>73.6 / 75.8</td><td>83.3 /</td><td>88.2</td><td>22.1/20.9</td><td>60.1 / 57.9</td><td>64.6 / 76.5</td></tr><tr><td>Pythia-6.9B</td><td>76.3 / 77.4</td><td>84.3 /</td><td>89.7</td><td>28.2 / 27.2</td><td>61.1 / 60.3</td><td>67.1 / 78.8</td></tr><tr><td>Pythia-12B</td><td>77.0 / 78.4</td><td>87.7/</td><td>91.9</td><td>33.4 / 32.1</td><td>65.0 / 63.4</td><td>70.4 / 80.6</td></tr><tr><td>LLaMA-7B</td><td>77.4 / 79.8</td><td>66.3 /</td><td>75.4</td><td>56.0 / 52.7</td><td>67.1 / 65.5</td><td>73.6 / 81.3</td></tr><tr><td>LLaMA-13B</td><td>80.1/ 80.9</td><td>91.1 /</td><td>95.1</td><td>62.4 / 59.8</td><td>72.8 / 71.5</td><td>76.2 / 82.2</td></tr><tr><td>LLaMA-30B</td><td>82.3 / 82.3</td><td>94.3/</td><td>96.4</td><td>69.7 / 67.9</td><td>75.8 / 74.1</td><td>77.5 / 83.9</td></tr><tr><td>LLaMA-65B</td><td>82.3 / 82.6</td><td>95.1/</td><td>96.6</td><td>73.3 / 71.8</td><td>77.4 / 76.1</td><td>79.1 / 84.0</td></tr><tr><td colspan=\"7\">(b)</td></tr></table>",
+        "bbox": [
+            199,
+            367,
+            799,
+            633
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "This setting poses a variation on the prior base-case setting: now, the continuation $w _ { c } = [ w _ { c o t } , w _ { a } ]$ is expected to be longer than 1-2 tokens. We hypothesize that compared to basic zero-shot prompting explored in Section 3.1, CFG will also be able to enforce better reasoning chains with less drift. ",
+        "bbox": [
+            116,
+            765,
+            883,
+            808
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "We evaluate the effectiveness of our proposed CFG method with respect to chain-of-thought prompting on two arithmetic reasoning tasks: GSM8K [21] and AQuA [48]. We follow [80] few-shot prompt and parsing setting, with respect to two open source LLM models: WizardLM-30B [83] and Guanaco-65B [25]. As can be seen in Figure 3, 15, using CFG increases the percentage of CoT which results in a valid answer that could be parsed. For low guidance strengths, this results in boosting the model performances. However, for large values, although the model returns more valid results, the quality of the chains is also impacted, and overall the model performances degrade. A qualitative comparison is provided in Table 15, 14. ",
+        "bbox": [
+            114,
+            814,
+            883,
+            911
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "discarded",
+        "text": "5 ",
+        "bbox": [
+            493,
+            935,
+            504,
+            946
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "image",
+        "img_path": "images/77a923b06edfeb51c6543e02ff1924cbc845dfbfe3c2e5425708d7b9162e667a.jpg",
+        "image_caption": [
+            "Figure 3: CFG impact on chain-of-thought prompting with respect to GSM8K dataset. For small CFG values, using CFG increases the percentage of chains which end in a valid answer structure while increasing the model accuracy. For large values the invalid percentage remains small but the accuracy drop. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            192,
+            92,
+            807,
+            200
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "We have only scratched the surface of exploring CFG’s interactions with CoT; for instance, instead of upweighting just $w _ { p }$ , we might upweight $w _ { p } , w _ { c o t }$ , or other variations. We anticipate in future work being able to more fully test variations of CFG-weighting on different parts of the CoT process. ",
+        "bbox": [
+            114,
+            280,
+            883,
+            324
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "3.3 Text-to-Text Prompts: Generation ",
+        "text_level": 1,
+        "bbox": [
+            117,
+            338,
+            392,
+            353
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "In contrast to basic prompting and CoT-prompting, where we ultimately expect a short answer, $w _ { a }$ , many settings require lengthier continuations. In this section, we study a prompt setting where the quality of answers are highly dependent the ability to stay on target over long sequences of text (both prompt, $w _ { p }$ and continuation, $w _ { c , \\ - }$ ). Here we focus on code generation, and in Appendix D.1 we report results on machine translation. We hypothesize that, in contrast to Sections 3.1 and 3.2, these tasks require longer-form completions, which Classifier-Free Guidance’s effectiveness in enforcing adherences to many different parts of the prompt. ",
+        "bbox": [
+            116,
+            364,
+            882,
+            448
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "3.3.1 Program synthesis evaluations ",
+        "text_level": 1,
+        "bbox": [
+            117,
+            462,
+            377,
+            477
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Computer programs represent an important language-modeling case, as formal language differs from natural language in many ways including the use of well-defined structures. Testing Classifier-Free Guidance on code-related tasks improves the robustness of our hypothesis over different distributions of data. In the exploratory experiments, we prompt GPT-J [79] and CodeGen-350M-mono [54] for small-scale code generations and observe positive results results (see Appendix D.2). And then we perform a thorough evaluation on the HumanEval benchmark [16]. ",
+        "bbox": [
+            116,
+            486,
+            882,
+            555
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "3.3.2 HumanEval benchmark ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            569,
+            333,
+            584
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "To systematically investigate the impact of Classifier-Free Guidance on code completion abilities, we evaluate models using different CFG strengths on HumanEval benchmark [16]. HumanEval benchmark contains 164 coding tasks in Python where the prompts are given by a function signature and a docstring. The model will generate continuations of the prompt, and the resulting programs will be tested against a set of unit tests for each task which evaluate the correctness of Python programs. We choose CodeGen-350M-mono, CodeGen-2B-mono and CodeGen-6B-mono ([54]) which are specialized in Python program synthesis.1 ",
+        "bbox": [
+            116,
+            593,
+            882,
+            678
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Various CFG strengths 2 are tested on 3 different temperatures 0.2, 0.6, 0.8 with the evaluation metrics being pass $@ k$ for $k = 1 , 1 0 , 1 0 0 ^ { \\overline { { 3 } } }$ . Here we show the results for temperature $= 0 . 2$ in Table 2. The full results are summarized in Appendix C.3 in Table 5, 6 and 7 and Figure 12, 13 and 14. ",
+        "bbox": [
+            116,
+            683,
+            883,
+            724
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "We observe that low CFG $( \\gamma \\leq 1 . 5 )$ increases the pass $@ 1$ rate uniformly4. High CFG $( \\gamma \\geq 1 . 5 )$ leads to a deterioration of performance. We also note that the improvement from CFG diminishes or harms performance at pass $@ k$ at high $k$ ",
+        "bbox": [
+            120,
+            731,
+            883,
+            760
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "To further investigate the effect of CFG, we break down the pass $@ 1$ evaluations on CodeGen-350M-mono for $\\gamma = 1 , 1 . 2 5$ task-by-task 5. We notice that the number of tasks where CFG outperforms is still more than the one where CFG underperforms for all temperatures 0.2, 0.6, 0.8 (See Table 4). ",
+        "bbox": [
+            117,
+            765,
+            883,
+            808
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "discarded",
+        "text": "1Note: CodeGen-16B-mono is omitted due to the compute constraint. $^ 2 \\gamma = 1 . 0$ , 1.1, 1.25, 1.5, 1.75, 2.0 3The definition of pass $@ k$ according to [16]: “ $k$ code samples are generated per problem, a problem is considered solved if any sample passes the unit tests, and the total fraction of problems solved is reported.\" 4Note that the effect of low CFG on the pass $@ 1$ rate is consistent with the results of the general benchmarks in the previous section. 5See the scatter plot at temperature 0.2, 0.6, 0.8 in appendix, Figure 15a, 15b, 15c ",
+        "bbox": [
+            114,
+            816,
+            885,
+            912
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "discarded",
+        "text": "6 ",
+        "bbox": [
+            493,
+            936,
+            504,
+            946
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "table",
+        "img_path": "images/dbdd0685ab4112f6b86c5ab3c147e87181d95e1004f5d2057412ec61cd6e9d93.jpg",
+        "table_caption": [],
+        "table_footnote": [
+            "Table 2: CodeGen results with temperature $= 0 . 2$ . CFG in nearly all cases increases performance, but the optimal $\\gamma$ value varies. "
+        ],
+        "table_body": "<table><tr><td></td><td colspan=\"3\">CodeGen-350M</td><td colspan=\"3\">CodeGen-2B</td><td colspan=\"3\">CodeGen-6B</td></tr><tr><td>Y</td><td>k=1</td><td>k=10</td><td>k=100</td><td>k=1</td><td>k=10</td><td>k=100</td><td>k=1</td><td>k=10</td><td>k=100</td></tr><tr><td>1.0</td><td>11.0%</td><td>17.0%</td><td>22.0%</td><td>19.5%</td><td>25.5%</td><td>29.8%</td><td>19.5%</td><td>25.5%</td><td>29.8%</td></tr><tr><td>1.1</td><td>11.8%</td><td>18.1%</td><td>20.1%</td><td>20.4%</td><td>25.4%</td><td>28.0</td><td>20.4%</td><td>25.4%</td><td>28.0%</td></tr><tr><td>1.25</td><td>11.4%</td><td>17.3%</td><td>18.9%</td><td>19.7%</td><td>25.4%</td><td>28.0</td><td>19.7%</td><td>25.4%</td><td>28.0%</td></tr><tr><td>1.5</td><td>10.9%</td><td>16.7%</td><td>18.3%</td><td>20.9%</td><td>26.7%</td><td>29.2%</td><td>20.9%</td><td>26.7%</td><td>29.2</td></tr><tr><td>1.75</td><td>10.3%</td><td>16.0%</td><td>18.2%</td><td>20.4%</td><td>26.2%</td><td>28.6%</td><td>20.4%</td><td>26.2%</td><td>28.6%</td></tr><tr><td>2.0</td><td>8.6%</td><td>14.6%</td><td>17.6%</td><td>16.5%</td><td>22.4%</td><td>24.4%</td><td>16.5%</td><td>22.4%</td><td>24.4%</td></tr></table>",
+        "bbox": [
+            183,
+            88,
+            813,
+            222
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "image",
+        "img_path": "images/88d558b7741f768ccfe9c92044365f7b6a162465bbf5c847e069665d1ab8b156.jpg",
+        "image_caption": [
+            "Figure 4: HumanEval task count comparison between $\\gamma = 1 , 1 . 2 5$ for CodeGen-350M-mono "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            119,
+            316,
+            449,
+            501
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "image",
+        "img_path": "images/2d9d11a051a2e3fa0d68feb08c7ef40e0c04434c9bc64a59f92b806dd937e13a.jpg",
+        "image_caption": [
+            "Figure 5: Evaluators (611 votes, 71 unique voters) significantly preferred the system-prompt with CFG (max at $\\gamma = 3 ,$ ) . The user-prompt relevance, not subject to CFG, did not degrade until $\\gamma \\geq 4$ , showing a clear win without tradeoff at $\\gamma = 3$ . "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            540,
+            290,
+            854,
+            491
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "We also find that without CFG, many tasks exhibit small nonzero passing rates while having $0 \\%$ rate with CFG. This explains the decreasing improvement of CFG in pass $@ k$ for large $k$ , as larger $k$ significantly boosts the passing rate of difficult tasks where the rates are low but nonzero. ",
+        "bbox": [
+            116,
+            597,
+            882,
+            638
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "Overall, the consistent improvement on pass $@ 1$ rates and the reduced effect on pass $@ 1 0 0$ rates support our hypothesis that CFG strengthens the adherence to the prompt at the small cost of reduced variability and creativity. ",
+        "bbox": [
+            114,
+            646,
+            879,
+            674
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "3.4 Negative Prompting: Improving Assistants ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            694,
+            452,
+            709
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "Finally, we explore an addition to Classifier-Free Guidance called negative prompting. With negative prompting, the user specifies what they do not want in the output (e.g. “low resolution”, “bad hands, bad anatomy, amateur drawing” in text-to-image), which is then used to improve generation quality. ",
+        "bbox": [
+            116,
+            722,
+            882,
+            763
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "We explore this idea in the context of chatbots. Chatbots give us a setting where the prompt is expanded into a multi-stage prompt6. In chatbots, the language model is prompted with a two-part prompt: (1) the instruction, $w _ { s }$ (sometimes called \"system prompt\") which may give contextual information (e.g. the “current date”), or behavioral guidelines (e.g. style, alignment, persona, etc.); and (2) $w _ { p }$ , the user-prompt, or the user’s query. See Table 1 for an example. Adherence becomes an even greater challenge, as our initial explorations shows. We observe systems like Alpaca [77, 59, 3] often ignore changes to their default system-prompt, and may even expose models to attacks like prompt injection [36]. ",
+        "bbox": [
+            114,
+            770,
+            882,
+            867
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "discarded",
+        "text": "6We note that this extension to basic-prompting stands as a mirror to CoT-prompting’s extension (Section 3.2). In CoT-prompting, the continuation is expanded to a multi-stage completion; here, the prompt is expanded. ",
+        "bbox": [
+            114,
+            886,
+            882,
+            911
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "discarded",
+        "text": "7 ",
+        "bbox": [
+            493,
+            935,
+            503,
+            946
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "We explore CFG with negative prompting to increase the success rate of different system prompts. We set the negative prompt $\\overline { { c } }$ to be the default system-prompt for the models we use (i.e. “The prompt below is a question to answer, a task to complete, or a conversation to respond to; decide which and write an appropriate response.”) and set $c$ to be the edited prompt (e.g. “The prompt below is a question to answer, a task to complete, or a conversation to respond to; decide which and write a sad response.”). This approach not only makes the sampling more prompt-aware in general, but directly emphasizes the difference between our system-prompt and the model’s default system-prompt. ",
+        "bbox": [
+            114,
+            90,
+            883,
+            174
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "To test this approach with chatbots, we generate system-prompts, $n _ { c } = 2 5$ , and user-prompts, $n _ { p } = 4 6$ , and sample 1740 random combinations of them. An example is shown in Table 1 (in Appendix G we include the full list of $c$ and $p$ we use). We use GPT4All-J v1.3-jazzy to generate two completions for each sampled combination: the first is sampled without CFG, and the second is sampled with CFG, with a guidance strength randomly chosen $\\in { 1 , 2 , 3 , 4 , 5 , 6 }$ Our hypothesis is that CFG increases system-prompt following, ideally without hurting the relevance to the user input. ",
+        "bbox": [
+            114,
+            181,
+            882,
+            251
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "We run a human preference study on our sampled continuations, where participants are shown both, blindly, and asked to assess two things: A. which output better follows the system-prompt, $c$ and B. which output better follows the user-prompt $p$ . Our results in Figure 5 shows compelling evidence that CFG emphasized the difference between $c$ and $\\overline { { c } }$ more than sampling with $c$ alone. There is a clear peak at $\\gamma = 3$ with $7 5 \\%$ of system-prompt following preference over $\\gamma = 1$ and undegraded user-prompt relevance $( 5 2 \\% )$ . ",
+        "bbox": [
+            116,
+            256,
+            883,
+            327
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "4 Computational Cost Analysis ",
+        "text_level": 1,
+        "bbox": [
+            117,
+            347,
+            392,
+            364
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "In the previous section we showed improvements across a wide array of benchmarks and contexts. However, since classifier-free guidance requires two passes through the network, users who are compute-constrained rather than VRAM constrained might wonder if CFG is interesting to them at all, and if they should not run a model twice as big instead. ",
+        "bbox": [
+            116,
+            380,
+            882,
+            422
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "To answer this question, we calculate the FLOP for each of the benchmark experiments that we ran in Section 3.1. We then compare across model sizes, with and without CFG. We conclude with the surprising finding that, across 5 out of 9 tasks, there there is a statistically insignificant difference between using CFG and using vanilla prompting with a model of twice the size at $p = . 0 1$ , according to ANCOVA regression analysis [67]. Of the significantly different tasks, 2 favor CFG and 2 favor vanilla. See Appendix C.2, specifically Figure 11, for more details. ",
+        "bbox": [
+            114,
+            428,
+            882,
+            498
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "In other words, and most significantly, this indicates that, overall, a model using CFG can generally perform just as well as a model twice as large. This has enormous implications for training budgets and inference latency due to limited VRAM usage, which we seek to explore in future work. ",
+        "bbox": [
+            112,
+            503,
+            882,
+            546
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "5 Explaining the Success of Classifier-Free Guidance ",
+        "text_level": 1,
+        "bbox": [
+            114,
+            566,
+            570,
+            584
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "In this section, we try to derive insights on the impact of Classifier-Free Guidance on generation, both quantitatively and qualitatively. We sample a dataset of 32, 902 datapoints from the P3 dataset [70] and use the Falcon-7b-Base model family [2] as an exploratory model. Our goal is to analyze the logit distributions – we describe how in the following sections. Many of our comparisons are done with reference to an instruction-tuned model, for which we use the Falcon-7b-Instruct version. We replicate our findings on other models and datasets as well: the Open-Assistant Dataset [42] and Redpajama-3b model family7. ",
+        "bbox": [
+            116,
+            599,
+            883,
+            684
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "5.1 Classifier-Free Guidance’s Effect on Sampling Entropy ",
+        "text_level": 1,
+        "bbox": [
+            114,
+            700,
+            535,
+            717
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "We suspect that CFG, by focusing $\\mathrm { P } ( y | x )$ on the prompt, will reduce the entropy of the logit distribution. CFG entropy distribution is significantly lower across generation time-steps vanilla prompting, with a mean of 4.7 vs. 5.4. (See Figure 6a).The effect this has is to restrict the number of tokens in the top- $\\cdot { \\mathrm { p } } { = } 9 0 \\%$ of the vocabulary distribution (See in Figure 6b). We do observe qualitatively, shown in Section 5.3, that the top tokens to not shift too much, but they do re-order to some extent, which shows that CFG is not simply having the same effect as the temperature parameter. ",
+        "bbox": [
+            116,
+            727,
+            883,
+            797
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "5.2 CFG’s Relation to Instruction Tuning ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            815,
+            416,
+            830
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Our next question: how is Classifier-Free Guidance affecting the vocabulary distribution? We attempt to answer this question quantitatively, hypothesizing that CFG has similar effects to instruction-tuning, which we assume trains a model to focus on the prompt. We find that both CFG and Instruction-Tuned model variants have similar entropies ",
+        "bbox": [
+            116,
+            842,
+            883,
+            883
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "discarded",
+        "text": "7https://www.together.xyz/blog/redpajama ",
+        "bbox": [
+            137,
+            898,
+            442,
+            911
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            493,
+            936,
+            503,
+            946
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/708053cb10b2fab92d3b50929d062f1ad58107b5e8c892e587aa5dedeb8d011f.jpg",
+        "image_caption": [],
+        "image_footnote": [],
+        "bbox": [
+            119,
+            106,
+            455,
+            313
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "(a) Entropy of logits for the vanilla prompted distribution $\\mathrm { P } ( y | x )$ , the unprompted distribution, $\\mathrm { P } ( x )$ , the $C \\mathrm { F } \\mathrm { G } \\ – \\gamma = 1 . 5$ distribution and an instruction-tuned model $\\mathrm { P _ { i n s t r u c t } } ( y | x )$ . ",
+        "bbox": [
+            114,
+            320,
+            467,
+            359
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "image",
+        "img_path": "images/475c33eccc2401e822027617b1d18e08e39192227d5537f4cef8f22397c2f9fc.jpg",
+        "image_caption": [
+            "(b) Number of tokens overlapping in top- $\\cdot { \\mathsf { p } } { = } 9 0 \\%$ of vocabulary distributions between that of: CFG, that of the vanilla prompted model, $p ( y | x )$ , and that of the unprompted model, $\\bar { \\mathrm { P } } ( x )$ . ",
+            "Figure 6: We show into how CFG alters the logit distribution of the vanilla prompted model, $\\mathrm { P } ( y | x )$ . CFG lowers the entropy to a level roughly similar to instruction-tuned model variant. CFG shares roughly $50 \\%$ of the tokens in top- $\\cdot { \\mathrm { p } } { = } 0 . 9$ as the vanilla $\\mathrm { P } ( y | x )$ model. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            535,
+            117,
+            872,
+            313
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "table",
+        "img_path": "images/d63e5b9d8f78884794d6f5e1ac00b7a52f2f6887192055fbc532863174f18ea6.jpg",
+        "table_caption": [],
+        "table_footnote": [
+            "(a) Correlation between the perplexities of each model on P3. "
+        ],
+        "table_body": "<table><tr><td></td><td>PPL p(ylx)</td><td>PPL cfg</td><td>PPL instruct</td></tr><tr><td>PPL p(ylx)</td><td>1.0</td><td>0.94</td><td>0.83</td></tr><tr><td>PPL cfg</td><td>0.94</td><td>1.0</td><td>0.7</td></tr><tr><td>PPL instruct</td><td>0.83</td><td>0.7</td><td>1.0</td></tr></table>",
+        "bbox": [
+            174,
+            446,
+            547,
+            518
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "table",
+        "img_path": "images/60e5ce1a5ce91d11005ae73251e053e0af309dc99424fe2b06ffa46ccea6726b.jpg",
+        "table_caption": [],
+        "table_footnote": [
+            "(b) Correlation between the perplexity and similarity between Instruction-Tuned and CFG. "
+        ],
+        "table_body": "<table><tr><td></td><td>rs (sim)</td><td>p-val.</td></tr><tr><td>PPL p(y|x)</td><td>0.01</td><td>0.2</td></tr><tr><td>PPL cfg</td><td>-0.04</td><td>&lt;.001</td></tr><tr><td>PPL instruct</td><td>0.04</td><td>&lt;.001</td></tr></table>",
+        "bbox": [
+            588,
+            448,
+            823,
+            520
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Figure 7: We seek to identify when CFG is similar to instruction-tuning. Models mostly agree on the difficulty of input sentences, and in cases where they do not, CFG and Instruction-tuning have similar top-p overlaps. ",
+        "bbox": [
+            114,
+            569,
+            882,
+            598
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "across generation samples. However, as shown in Figure 6b the vocabulary distributions across our samples are largely not overlapping. ",
+        "bbox": [
+            117,
+            622,
+            880,
+            652
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "We find that, overall, our hypothesis about the similarity is wrong: CFG is not having a similar effect on the vocabulary logits as instruction-tuning. To explore, we seek to derive insight from edge-cases where it does. We look for characteristics to explain when CFG is similar to Instruction-Tuning (in terms of top- $\\mathrm { \\bf p }$ overlap). One case pops out: when the prompt is longer, CFG agrees more – we observe a significant spearman correlation of $r _ { s } ~ = ~ . 0 5$ between prompt-length and Instruction/CFG agreement. We also observe small but significant correlations between perplexity and agreement. As shown in Table 7, harder phrases for Instruction-Tuned models are typically where CFG and Instruction-Tuned models align. We conclude that CFG is altering the model in ways that might complement instruction-tuning, opening the door to future explorations. ",
+        "bbox": [
+            114,
+            657,
+            883,
+            768
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "5.3 Visualizing Classifier-Free Guidance ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            784,
+            408,
+            800
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Finally, we provide qualitative insights into the reordering of the vocabulary, after Classifier-Free Guidance is applied. We note that the Equation can be rewritten as ",
+        "bbox": [
+            112,
+            809,
+            882,
+            838
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "equation",
+        "img_path": "images/429ce06a9f061c8e6ae5118ba9d765e9d5cd7488e14186cb82a1efd34ace4b7a.jpg",
+        "text": "$$\n\\log \\mathrm { P } _ { \\gamma } ( w _ { t } | w _ { < t } , c ) = \\log \\mathrm { P } ( w _ { t } | w _ { < t } , \\overline { { c } } ) + \\gamma ( \\log \\mathrm { P } ( w _ { t } | w _ { < t } , c ) - \\log \\mathrm { P } ( w _ { T } | w _ { < t } , \\overline { { c } } )\n$$",
+        "text_format": "latex",
+        "bbox": [
+            232,
+            857,
+            764,
+            875
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "We propose, at each timestep, to visualize the vocabulary ranked by the difference $\\log \\mathbf { P } ( w _ { t } | w _ { < t } ) - \\log \\mathbf { P } ( w _ { T } | \\hat { w } )$ . This shows the impact of the method, qualitatively, by revealing the tokens that are encouraged or discouraged the most. In Figure 3, we prompt a model with $c = \"$ “The dragon flew over Paris, France”, ${ \\overline { { c } } } = \\emptyset$ and observe that tokens about dragons and Paris get upweighted while tokens about other locations (“Queensland”), dates $( ^ { 6 6 } 1 9 1 3 ^ { 7 } )$ , or topics (“hostages”, “‘voyages”) get downweighted. This confirms our initial assumptions, as we observe CFG encouraging tokens related to and discourages tokens unrelated to the prompt. ",
+        "bbox": [
+            112,
+            882,
+            890,
+            912
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "discarded",
+        "text": "9 ",
+        "bbox": [
+            493,
+            935,
+            504,
+            946
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "discarded",
+        "text": "Top-p Token Overlap Between Logits ",
+        "bbox": [
+            617,
+            106,
+            830,
+            117
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            210,
+            106,
+            398,
+            117
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "table",
+        "img_path": "images/56805ff2b2126e65ba576054c6f2bc6468df5ce1ecc337ae1dd663552bc59e33.jpg",
+        "table_caption": [
+            "Table 3: Given the prompt The dragon flew over Paris, France we display, at each sampling step, the vocabulary ranked for $\\mathbf P ( w _ { t } | w _ { < t } ) - \\log \\mathbf P ( w _ { T } | \\hat { w } )$ for the next step. We can see CFG encouraging tokens about flying dragons and Paris, and discouraging other topics or regions "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>current</td><td>top1</td><td>top2</td><td>top3</td><td>top4</td><td>top5</td><td>.</td><td>bottom5</td><td>bottom4</td><td>bottom3</td><td>bottom2</td><td>bottom1</td></tr><tr><td>France</td><td>flipping</td><td>destroying</td><td>waking</td><td>stopping</td><td>causing</td><td>…</td><td>guiName</td><td>ufact</td><td>Outs</td><td>kees</td><td>&quot;11.&quot;</td></tr><tr><td>，</td><td>crashing</td><td>landing</td><td> soaring</td><td>swoop</td><td>plummet</td><td>.</td><td>soDeliveryDate</td><td>POLIT</td><td>Occupations</td><td>568</td><td>publishes</td></tr><tr><td>&#x27;landing</td><td>neigh</td><td>invis</td><td>atop</td><td>overhead</td><td>omin</td><td>.</td><td>quotas</td><td>Russo</td><td>Germans</td><td>passports</td><td>hostages</td></tr><tr><td>on</td><td>Buildings</td><td>skysc</td><td>rooft</td><td>Cheong</td><td>Plaza</td><td>.</td><td></td><td>MFT</td><td>七</td><td>醒</td><td>DragonMagazine</td></tr><tr><td>Notre</td><td>Basil</td><td>Mos</td><td>Cathedral</td><td>Mosque</td><td>Eugene</td><td>.</td><td>voyage</td><td>alach</td><td>urse</td><td>arb</td><td>sb</td></tr><tr><td>Dame</td><td>Cathedral</td><td>monument</td><td>cathedral</td><td>Basil</td><td>Mosque</td><td>.</td><td>voyage</td><td>aila</td><td>voy</td><td>aund</td><td>wk</td></tr><tr><td>Cathedral</td><td>：</td><td>.[</td><td>slowing</td><td>blocking</td><td>ortex</td><td>.</td><td>ashore</td><td>seaf</td><td>aund</td><td>Tact</td><td>Wanted</td></tr><tr><td>·</td><td>Dragon</td><td>dragons</td><td>dragon</td><td>Dragon</td><td>Dragons</td><td>.</td><td>1915</td><td>1914</td><td>1944</td><td>1934</td><td>1913</td></tr><tr><td>It</td><td>swoop</td><td>circled</td><td>dart</td><td>hopped</td><td>bolted</td><td>.</td><td>concludes</td><td>reads</td><td>reads</td><td>culmin</td><td>marks</td></tr><tr><td>circled</td><td>skysc</td><td>pedestrians</td><td>architectural</td><td>hanging</td><td>skyline</td><td>.</td><td>Newfoundland</td><td>Ukrain</td><td>Zamb</td><td>Johnston</td><td>Queensland</td></tr><tr><td>Paris</td><td>night</td><td>amura</td><td>rum</td><td>anim</td><td>animate</td><td>.</td><td>prematurely</td><td>capit</td><td>bombed</td><td>Mé</td><td>owing</td></tr><tr><td>a</td><td>longer</td><td>while</td><td>long</td><td>awhile</td><td>length</td><td>.</td><td>ims</td><td>chin</td><td>chel</td><td>ille</td><td>ller</td></tr><tr><td>bit</td><td>longer</td><td>MORE</td><td>awhile</td><td>again</td><td>more</td><td>.</td><td>prematurely</td><td>hof</td><td>nw</td><td>arri</td><td>trop</td></tr><tr><td>and ，</td><td>startled</td><td>feathers</td><td>dragon</td><td>wings</td><td>dragons</td><td>.</td><td>inval</td><td> Junction</td><td>Palest</td><td>endas</td><td>CVE</td></tr><tr><td>then</td><td>dragon</td><td>dragons</td><td>golden</td><td>Winged</td><td>perched</td><td>.</td><td>CVE</td><td>inval</td><td>Ukrain</td><td>onet</td><td>Commodore</td></tr><tr><td>flew</td><td>dragon</td><td>DRAG</td><td>dragons</td><td>neigh</td><td>DRAGON</td><td>.</td><td>CVE</td><td>onet</td><td>Kear</td><td>TPS</td><td>Tags</td></tr><tr><td></td><td>ukong</td><td>skelet</td><td>rum</td><td>swoop</td><td>acles</td><td></td><td>RG</td><td>thouse</td><td>NJ</td><td>444</td><td>programmes</td></tr><tr><td>over</td><td>rium</td><td>Rockefeller</td><td>Plaza</td><td>Times</td><td>Symphony</td><td>.</td><td>Brittany</td><td>Newfoundland</td><td>Balt</td><td>isconsin</td><td>Yugoslavia</td></tr><tr><td>the E</td><td>Griffith</td><td>Zeus</td><td>Hag</td><td>Science</td><td>Raphael</td><td>.</td><td>shire</td><td>Midlands</td><td>frontier</td><td>deserts</td><td>Balkans</td></tr><tr><td>iff</td><td>BI</td><td>Rowe</td><td>ident</td><td>Methodist</td><td>allah</td><td>..·</td><td>coasts</td><td>ento</td><td>bys</td><td>seys</td><td>Desire</td></tr><tr><td></td><td>Armory</td><td>Library</td><td>restrooms</td><td>Mansion</td><td>Mahmoud</td><td></td><td>indo</td><td>onne</td><td>Off</td><td>itime</td><td>Norm</td></tr><tr><td>el</td><td>restaurant</td><td>Middle</td><td>restroom</td><td>boutique</td><td>museum</td><td>·</td><td>iband</td><td>throats</td><td>centres</td><td>detach</td><td>rift</td></tr><tr><td>Tower</td><td>Property</td><td>omin</td><td>Foundation</td><td>Creature</td><td>&gt;&quot;</td><td>.·</td><td>gee 1944</td><td>thence</td><td>pheus</td><td>hither</td><td>favourable</td></tr><tr><td></td><td>dragons</td><td>dragon</td><td>Dragons</td><td>Dragon</td><td>DRAGON</td><td>.</td><td></td><td>1942</td><td>Instrument</td><td>Balt</td><td>1943</td></tr><tr><td>Then</td><td>dragons</td><td>dragon</td><td>dragon</td><td>Dragons</td><td>Dragon</td><td>.</td><td>Manz</td><td>Hopkins</td><td>CVE</td><td> Instrument</td><td> Squadron</td></tr><tr><td>it flew</td><td>dragon</td><td>dragons</td><td>neigh</td><td>Winged</td><td>Draco</td><td>.</td><td>CVE</td><td>udder</td><td>services</td><td>corrections</td><td>obbies</td></tr><tr><td>over</td><td>upro Chinatown</td><td>ukong Financial</td><td>rum Spider</td><td>walked tallest</td><td>Financial</td><td>. .</td><td>INC warr</td><td>inary</td><td>lein quickShip</td><td>auxiliary Newfoundland</td><td>CVE</td></tr></table>",
+        "bbox": [
+            114,
+            88,
+            882,
+            352
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            116,
+            446,
+            882,
+            503
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "We find this visualization approach to be a useful prompt engineering tool, by using the new prompt under testing as $c$ and setting c as the current baseline prompt. The visualization shows the differential impact over the whole vocabulary on the next token prediction, in an interpretable way. ",
+        "bbox": [
+            117,
+            510,
+            882,
+            553
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "6 Conclusion ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            583,
+            238,
+            599
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "We have shown that Classifier-Free Guidance, which was originally conceived of in text-to-image applications, can be an effective way of increasing adherence to the prompt in autoregressive language modeling. In contrast to text-to-vision, CFG in autoregressive language modeling works out-of-the-box, without the need to further train the model. We have shown that CFG can boost performance across an array of canonical benchmarks in NLP that involve variations of the prompt: basic prompting, chain-of-thought prompting, text-to-text prompting and chatbot prompting. Finally, we sought to explain the effects of CFG by showing it decreased sampling entropy, but not in the same ways that Instruction-tuned models do. Ultimately, we leave for future work the exact effects that CFG is having, but we propose qualitative visualizations that confirm our intuitions around prompt adherence. ",
+        "bbox": [
+            116,
+            621,
+            883,
+            733
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Our work also integrates into a growing body of inference techniques aimed at perturbing the logit distributions of an LM [45, 73]. We demonstrate that by doubling the inference FLOP using CFG brings performances of a model about twice the size. This allows training smaller models, which can be ran on smaller hardware, and are cheaper to train. ",
+        "bbox": [
+            116,
+            738,
+            883,
+            780
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Our work faces the following limitations: CFG requires tweaking and exploration: $\\gamma$ values that might work in one context (i.e. long-form generation) might be poorly suited for another context. It’s also possible that CFG might be misused. We have not tested the effects of CFG if used in conjunction with malicious strategies for hacking language models, including but not limited to: prompt injection and prompts aimed at overriding alignment. It’s possible that there are unforeseen effects induced by an increased adherence to parts of the prompt. We tried to explore this at length, both quantitatively and qualitatively, and we designed tasks that might reveal such behavior. However, we cannot conclude this method is risk-free. We advocate for standardized benchmarks aimed more squarely at language-model risk (including, possibly, pairs of models along with known prompt injections). Such standardized benchmarks could help us unit-test an advancement like CFG before releasing it into the wild. ",
+        "bbox": [
+            116,
+            786,
+            883,
+            911
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            491,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Acknowledgements ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            92,
+            253,
+            106
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "We are grateful to Stability and CoreWeave for providing the compute to run the evaluations. ",
+        "bbox": [
+            111,
+            117,
+            722,
+            131
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "We also thank the volunteers who took part in the GPT4All experiment. ",
+        "bbox": [
+            114,
+            137,
+            586,
+            151
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Alexander Spangher would like to thank Bloomberg News for a 4 year PhD fellowship that generously funds his research. ",
+        "bbox": [
+            114,
+            157,
+            883,
+            188
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "References ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            207,
+            209,
+            223
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "[1] How does negative prompt work? https://stable-diffusion-art.com/how-negative-prompt-work/.   \n[2] E. Almazrouei, H. Alobeidli, A. Alshamsi, A. Cappelli, R. Cojocaru, M. Debbah, E. Goffinet, D. Heslow, J. Launay, Q. Malartic, B. Noune, B. Pannier, and G. Penedo. Falcon-40B: an open large language model with state-of-the-art performance. 2023.   \n[3] Y. Anand, Z. Nussbaum, B. Duderstadt, B. Schmidt, and A. Mulyar. Gpt4all: Training an assistant-style chatbot with large scale data distillation from gpt-3.5-turbo. https://github.com/nomic-ai/gpt4all, 2023.   \n[4] A. Askell, Y. Bai, A. Chen, D. Drain, D. Ganguli, T. Henighan, A. Jones, N. Joseph, B. Mann, N. DasSarma, et al. A general language assistant as a laboratory for alignment. arXiv preprint arXiv:2112.00861, 2021.   \n[5] S. Auer, D. A. Barone, C. Bartz, E. G. Cortes, M. Y. Jaradeh, O. Karras, M. Koubarakis, D. Mouromtsev, D. Pliukhin, D. Radyush, et al. The sciqa scientific question answering benchmark for scholarly knowledge. Scientific Reports, 13(1):7240, 2023.   \n[6] Y. Bai, S. Kadavath, S. Kundu, A. Askell, J. Kernion, A. Jones, A. Chen, A. Goldie, A. Mirhoseini, C. McKinnon, et al. Constitutional ai: Harmlessness from ai feedback. arXiv preprint arXiv:2212.08073, 2022.   \n[7] R. Barzilay and M. Lapata. Modeling local coherence: An entity-based approach. Computational Linguistics, 34(1):1–34, 2008.   \n[8] K. Basu, F. Shakerin, and G. Gupta. Aqua: Asp-based visual question answering. In Practical Aspects of Declarative Languages: 22nd International Symposium, PADL 2020, New Orleans, LA, USA, January 20–21, 2020, Proceedings 22, pages 57–72. Springer, 2020.   \n[9] N. Belrose, D. Schneider-Joseph, S. Ravfogel, R. Cotterell, E. Raff, and S. Biderman. Leace: Perfect linear concept erasure in closed form. arXiv preprint arXiv:2306.03819, 2023.   \n[10] S. Biderman and E. Raff. Fooling moss detection with pretrained language models. In Proceedings of the 31st ACM International Conference on Information & Knowledge Management, pages 2933–2943, 2022.   \n[11] S. Biderman, H. Schoelkopf, Q. Anthony, H. Bradley, K. O’Brien, E. Hallahan, M. A. Khan, S. Purohit, U. S. Prashanth, E. Raff, A. Skowron, L. Sutawika, and O. van der Wal. Pythia: A suite for analyzing large language models across training and scaling, 2023.   \n[12] Y. Bisk, R. Zellers, J. Gao, Y. Choi, et al. Piqa: Reasoning about physical commonsense in natural language. In Proceedings of the AAAI conference on artificial intelligence, volume 34, pages 7432–7439, 2020.   \n[13] O. Bojar, C. Buck, C. Federmann, B. Haddow, P. Koehn, J. Leveling, C. Monz, P. Pecina, M. Post, H. Saint-Amand, R. Soricut, L. Specia, and A. s. Tamchyna. Findings of the 2014 workshop on statistical machine translation. In Proceedings of the Ninth Workshop on Statistical Machine Translation, pages 12–58, Baltimore, Maryland, USA, June 2014. Association for Computational Linguistics.   \n[14] A. Brock, T. Lim, J. Ritchie, and N. Weston. Neural photo editing with introspective adversarial networks. In International Conference on Learning Representations.   \n[15] T. Brown, B. Mann, N. Ryder, M. Subbiah, J. D. Kaplan, P. Dhariwal, A. Neelakantan, P. Shyam, G. Sastry, A. Askell, et al. Language models are few-shot learners. Advances in neural information processing systems, 33:1877–1901, 2020.   \n[16] M. Chen, J. Tworek, H. Jun, Q. Yuan, H. P. de Oliveira Pinto, J. Kaplan, H. Edwards, Y. Burda, N. Joseph, G. Brockman, A. Ray, R. Puri, G. Krueger, M. Petrov, H. Khlaaf, G. Sastry, P. Mishkin, B. Chan, S. Gray, N. Ryder, M. Pavlov, A. Power, L. Kaiser, M. Bavarian, C. Winter, P. Tillet, F. P. Such, D. Cummings, M. Plappert, F. Chantzis, E. Barnes, A. Herbert-Voss, W. H. Guss, A. Nichol, A. Paino, N. Tezak, J. Tang, I. Babuschkin, S. Balaji, S. Jain, W. Saunders, C. Hesse, A. N. Carr, J. Leike, J. Achiam, V. Misra, E. Morikawa, A. Radford, M. Knight, M. Brundage, M. Murati, K. Mayer, P. Welinder, B. McGrew, D. Amodei, S. McCandlish, I. Sutskever, and W. Zaremba. Evaluating large language models trained on code. 2021.   \n[17] J. Chorowski and N. Jaitly. Towards better decoding and language model integration in sequence to sequence models. arXiv preprint arXiv:1612.02695, 2016.   \n[18] C. Clark, K. Lee, M.-W. Chang, T. Kwiatkowski, M. Collins, and K. Toutanova. Boolq: Exploring the surprising difficulty of natural yes/no questions. arXiv preprint arXiv:1905.10044, 2019.   \n[19] P. Clark, I. Cowhey, O. Etzioni, T. Khot, A. Sabharwal, C. Schoenick, and O. Tafjord. Think you have solved question answering? try arc, the ai2 reasoning challenge. arXiv:1803.05457v1, 2018.   \n[20] K. Cobbe, V. Kosaraju, M. Bavarian, M. Chen, H. Jun, L. Kaiser, M. Plappert, J. Tworek, J. Hilton, R. Nakano, et al. Training verifiers to solve math word problems. arXiv preprint arXiv:2110.14168, 2021.   \n[21] K. Cobbe, V. Kosaraju, M. Bavarian, M. Chen, H. Jun, L. Kaiser, M. Plappert, J. Tworek, J. Hilton, R. Nakano, C. Hesse, and J. Schulman. Training verifiers to solve math word problems. arXiv preprint arXiv:2110.14168, 2021.   \n[22] K. Crowson, S. Biderman, D. Kornis, D. Stander, E. Hallahan, L. Castricato, and E. Raff. Vqgan-clip: Open domain image generation and editing with natural language guidance. In Computer Vision–ECCV 2022: 17th European Conference, Tel Aviv, Israel, October 23–27, 2022, Proceedings, Part XXXVII, pages 88–105. Springer, 2022.   \n[23] K. Crowson, S. Biderman, D. Kornis, D. Stander, E. Hallahan, L. Castricato, and E. Raff. Vqgan-clip: Open domain image generation and editing with natural language guidance. In Computer Vision–ECCV 2022: 17th European Conference, Tel Aviv, Israel, October 23–27, 2022, Proceedings, Part XXXVII, pages 88–105. Springer, 2022.   \n[24] S. Dathathri, A. Madotto, J. Lan, J. Hung, E. Frank, P. Molino, J. Yosinski, and R. Liu. Plug and play language models: A simple approach to controlled text generation. arXiv preprint arXiv:1912.02164, 2019.   \n[25] T. Dettmers, A. Pagnoni, A. Holtzman, and L. Zettlemoyer. Qlora: Efficient finetuning of quantized llms, 2023.   \n[26] J. Devlin, M.-W. Chang, K. Lee, and K. Toutanova. BERT: Pre-training of deep bidirectional transformers for language understanding. In Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Volume 1 (Long and Short Papers), pages 4171–4186, Minneapolis, Minnesota, June 2019. Association for Computational Linguistics.   \n[27] J. Devlin, M.-W. Chang, K. Lee, and K. Toutanova. Bert: Pre-training of deep bidirectional transformers for language understanding. ArXiv, abs/1810.04805, 2019.   \n[28] P. Dhariwal and A. Nichol. Diffusion models beat gans on image synthesis. Advances in Neural Information Processing Systems, 34:8780–8794, 2021.   \n[29] Y. Du, S. Li, and I. Mordatch. Compositional visual generation with energy based models. Advances in Neural Information Processing Systems, 33:6637–6647, 2020.   \n[30] V. K. Felkner, H.-C. H. Chang, E. Jang, and J. May. Towards winoqueer: Developing a benchmark for anti-queer bias in large language models. arXiv preprint arXiv:2206.11484, 2022.   \n[31] Z. Fu, W. Lam, A. M.-C. So, and B. Shi. A theoretical analysis of the repetition problem in text generation. In Proceedings of the AAAI Conference on Artificial Intelligence, volume 35, pages 12848–12856, 2021.   \n[32] R. Gal, O. Patashnik, H. Maron, G. Chechik, and D. Cohen-Or. Stylegan-nada: Clip-guided domain adaptation of image generators. arXiv preprint arXiv:2108.00946, 2021.   \n[33] L. Gao, J. Tow, S. Biderman, S. Black, A. DiPofi, C. Foster, L. Golding, J. Hsu, K. McDonell, N. Muennighoff, J. Phang, L. Reynolds, E. Tang, A. Thite, B. Wang, K. Wang, and A. Zou. A framework for few-shot language model evaluation, Sept. 2021.   \n[34] S. Gehman, S. Gururangan, M. Sap, Y. Choi, and N. A. Smith. Realtoxicityprompts: Evaluating neural toxic degeneration in language models. arXiv preprint arXiv:2009.11462, 2020.   \n[35] F. A. Gers, J. Schmidhuber, and F. Cummins. Learning to forget: Continual prediction with lstm. Neural computation, 12(10):2451–2471, 2000.   \n[36] K. Greshake, S. Abdelnabi, S. Mishra, C. Endres, T. Holz, and M. Fritz. More than you’ve asked for: A comprehensive analysis of novel prompt injection threats to application-integrated large language models. arXiv preprint arXiv:2302.12173, 2023.   \n[37] J. Ho and T. Salimans. Classifier-free diffusion guidance. In NeurIPS 2021 Workshop on Deep Generative Models and Downstream Applications, 2021.   \n[38] A. Holtzman, J. Buys, L. Du, M. Forbes, and Y. Choi. The curious case of neural text degeneration. arXiv preprint arXiv:1904.09751, 2019.   \n[39] M. Joshi, E. Choi, D. S. Weld, and L. Zettlemoyer. Triviaqa: A large scale distantly supervised challenge dataset for reading comprehension. arXiv preprint arXiv:1705.03551, 2017.   \n[40] N. S. Keskar, B. McCann, L. R. Varshney, C. Xiong, and R. Socher. Ctrl: A conditional transformer language model for controllable generation. arXiv preprint arXiv:1909.05858, 2019.   \n[41] G. Kim, T. Kwon, and J. C. Ye. Diffusionclip: Text-guided diffusion models for robust image manipulation. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition, pages 2426–2435, 2022.   \n[42] A. Köpf, Y. Kilcher, D. von Rütte, S. Anagnostidis, Z.-R. Tam, K. Stevens, A. Barhoum, N. M. Duc, O. Stanley, R. Nagyfi, et al. Openassistant conversations–democratizing large language model alignment. arXiv preprint arXiv:2304.07327, 2023.   \n[43] B. Krause, A. D. Gotmare, B. McCann, N. S. Keskar, S. Joty, R. Socher, and N. F. Rajani. Gedi: Generative discriminator guided sequence generation. arXiv preprint arXiv:2009.06367, 2020.   \n[44] X. Li, J. Thickstun, I. Gulrajani, P. S. Liang, and T. B. Hashimoto. Diffusion-lm improves controllable text generation. Advances in Neural Information Processing Systems, 35:4328–4343, 2022.   \n[45] X. L. Li, A. Holtzman, D. Fried, P. Liang, J. Eisner, T. Hashimoto, L. Zettlemoyer, and M. Lewis. Contrastive decoding: Open-ended text generation as optimization. arXiv preprint arXiv:2210.15097, 2022.   \n[46] S. Lin, B. Liu, J. Li, and X. Yang. Common diffusion noise schedules and sample steps are flawed, 2023.   \n[47] H. Ling, K. Kreis, D. Li, S. W. Kim, A. Torralba, and S. Fidler. Editgan: High-precision semantic image editing. In Advances in Neural Information Processing Systems (NeurIPS), 2021.   \n[48] W. Ling, D. Yogatama, C. Dyer, and P. Blunsom. Program induction by rationale generation: Learning to solve and explain algebraic word problems. In Proceedings of the 55th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages 158–167, Vancouver, Canada, July 2017. Association for Computational Linguistics.   \n[49] P. Manakul, A. Liusie, and M. J. Gales. Selfcheckgpt: Zero-resource black-box hallucination detection for generative large language models. arXiv preprint arXiv:2303.08896, 2023.   \n[50] T. Meng, S. Lu, N. Peng, and K.-W. Chang. Controllable text generation with neurally-decomposed oracle. arXiv preprint arXiv:2205.14219, 2022.   \n[51] T. Mikolov, K. Chen, G. S. Corrado, and J. Dean. Efficient estimation of word representations in vector space. In International Conference on Learning Representations, 2013.   \n[52] N. Muennighoff, T. Wang, L. Sutawika, A. Roberts, S. R. Biderman, T. L. Scao, M. S. Bari, S. Shen, Z. X. Yong, H. Schoelkopf, X. Tang, D. R. Radev, A. F. Aji, K. Almubarak, S. Albanie, Z. Alyafeai, A. Webson, E. Raff, and C. Raffel. Crosslingual generalization through multitask finetuning. ArXiv, abs/2211.01786, 2022.   \n[53] A. Q. Nichol, P. Dhariwal, A. Ramesh, P. Shyam, P. Mishkin, B. Mcgrew, I. Sutskever, and M. Chen. Glide: Towards photorealistic image generation and editing with text-guided diffusion models. In International Conference on Machine Learning, pages 16784–16804. PMLR, 2022.   \n[54] E. Nijkamp, B. Pang, H. Hayashi, L. Tu, H. Wang, Y. Zhou, S. Savarese, and C. Xiong. Codegen: An open large language model for code with multi-turn program synthesis. In The Eleventh International Conference on Learning Representations, 2023.   \n[55] M. Nye, A. J. Andreassen, G. Gur-Ari, H. Michalewski, J. Austin, D. Bieber, D. Dohan, A. Lewkowycz, M. Bosma, D. Luan, C. Sutton, and A. Odena. Show your work: Scratchpads for intermediate computation with language models. In Deep Learning for Code Workshop, 2022.   \n[56] L. Ouyang, J. Wu, X. Jiang, D. Almeida, C. Wainwright, P. Mishkin, C. Zhang, S. Agarwal, K. Slama, A. Ray, et al. Training language models to follow instructions with human feedback. Advances in Neural Information Processing Systems, 35:27730–27744, 2022.   \n[57] L. Ouyang, J. Wu, X. Jiang, D. Almeida, C. Wainwright, P. Mishkin, C. Zhang, S. Agarwal, K. Slama, A. Ray, et al. Training language models to follow instructions with human feedback. Advances in Neural Information Processing Systems, 35:27730–27744, 2022.   \n[58] D. Paperno, G. Kruszewski, A. Lazaridou, Q. N. Pham, R. Bernardi, S. Pezzelle, M. Baroni, G. Boleda, and R. Fernández. The lambada dataset: Word prediction requiring a broad discourse context. arXiv preprint arXiv:1606.06031, 2016.   \n[59] B. Peng, C. Li, P. He, M. Galley, and J. Gao. Instruction tuning with gpt-4. arXiv preprint arXiv:2304.03277, 2023.   \n[60] J. Pennington, R. Socher, and C. D. Manning. Glove: Global vectors for word representation. In Conference on Empirical Methods in Natural Language Processing, 2014.   \n[61] A. Radford, K. Narasimhan, T. Salimans, I. Sutskever, et al. Improving language understanding by generative pre-training. 2018.   \n[62] A. Radford, J. Wu, R. Child, D. Luan, D. Amodei, I. Sutskever, et al. Language models are unsupervised multitask learners. OpenAI blog, 1(8):9, 2019.   \n[63] J. W. Rae, S. Borgeaud, T. Cai, K. Millican, J. Hoffmann, F. Song, J. Aslanides, S. Henderson, R. Ring, S. Young, E. Rutherford, T. Hennigan, J. Menick, A. Cassirer, R. Powell, G. v. d. Driessche, L. A. Hendricks, M. Rauh, P.-S. Huang, A. Glaese, J. Welbl, S. Dathathri, S. Huang, J. Uesato, J. Mellor, I. Higgins, A. Creswell, N. McAleese, A. Wu, E. Elsen, S. Jayakumar, E. Buchatskaya, D. Budden, E. Sutherland, K. Simonyan, M. Paganini, L. Sifre, L. Martens, X. L. Li, A. Kuncoro, A. Nematzadeh, E. Gribovskaya, D. Donato, A. Lazaridou, A. Mensch, J.-B. Lespiau, M. Tsimpoukelli, N. Grigorev, D. Fritz, T. Sottiaux, M. Pajarskas, T. Pohlen, Z. Gong, D. Toyama, C. d. M. d’Autume, Y. Li, T. Terzi, V. Mikulik, I. Babuschkin, A. Clark, D. d. L. Casas, A. Guy, C. Jones, J. Bradbury, M. Johnson, B. Hechtman, L. Weidinger, I. Gabriel, W. Isaac, E. Lockhart, S. Osindero, L. Rimell, C. Dyer, O. Vinyals, K. Ayoub, J. Stanway, L. Bennett, D. Hassabis, K. Kavukcuoglu, and G. Irving. Scaling language models: Methods, analysis & insights from training gopher, 2021.   \n[64] L. Reynolds and K. McDonell. Prompt programming for large language models: Beyond the few-shot paradigm. In Extended Abstracts of the 2021 CHI Conference on Human Factors in Computing Systems, pages 1–7, 2021.   \n[65] R. Rombach, A. Blattmann, D. Lorenz, P. Esser, and B. Ommer. High-resolution image synthesis with latent diffusion models, 2021.   \n[66] R. Rombach, A. Blattmann, D. Lorenz, P. Esser, and B. Ommer. High-resolution image synthesis with latent diffusion models, 2021.   \n[67] A. Rutherford. ANOVA and ANCOVA: a GLM approach. John Wiley & Sons, 2011.   \n[68] C. Saharia, W. Chan, S. Saxena, L. Li, J. Whang, E. L. Denton, K. Ghasemipour, R. Gontijo Lopes, B. Karagol Ayan, T. Salimans, et al. Photorealistic text-to-image diffusion models with deep language understanding. Advances in Neural Information Processing Systems, 35:36479–36494, 2022.   \n[69] K. Sakaguchi, R. L. Bras, C. Bhagavatula, and Y. Choi. Winogrande: An adversarial winograd schema challenge at scale. Communications of the ACM, 64(9):99–106, 2021.   \n[70] V. Sanh, A. Webson, C. Raffel, S. Bach, L. Sutawika, Z. Alyafeai, A. Chaffin, A. Stiegler, A. Raja, M. Dey, et al. Multitask prompted training enables zero-shot task generalization. In International Conference on Learning Representations.   \n[71] T. L. Scao, A. Fan, C. Akiki, E. Pavlick, S. Ilic, D. Hesslow, R. Castagné, A. S. Luccioni, F. Yvon, M. Gallé, et al. ´ Bloom: A 176b-parameter open-access multilingual language model. arXiv preprint arXiv:2211.05100, 2022.   \n[72] T. L. Scao, A. Fan, C. Akiki, E.-J. Pavlick, S. Ili’c, D. Hesslow, R. Castagn’e, A. S. Luccioni, F. Yvon, M. Gallé, J. Tow, A. M. Rush, S. R. Biderman, A. Webson, P. S. Ammanamanchi, T. Wang, B. Sagot, N. Muennighoff, A. V. del Moral, O. Ruwase, R. Bawden, S. Bekman, A. McMillan-Major, I. Beltagy, H. Nguyen, L. Saulnier, S. Tan, P. O. Suarez, V. Sanh, H. Laurenccon, Y. Jernite, J. Launay, M. Mitchell, C. Raffel, A. Gokaslan, A. Simhi, A. S. Etxabe, A. F. Aji, A. Alfassy, A. Rogers, A. K. Nitzav, C. Xu, C. Mou, C. C. Emezue, C. Klamm, C. Leong, D. A. van Strien, D. I. Adelani, D. R. Radev, E. G. Ponferrada, E. Levkovizh, E. Kim, E. B. Natan, F. D. Toni, G. Dupont, G. Kruszewski, G. Pistilli, H. ElSahar, H. Benyamina, H. T. Tran, I. Yu, I. Abdulmumin, I. Johnson, I. Gonzalez-Dios, J. de la Rosa, J. Chim, J. Dodge, J. Zhu, J. Chang, J. Frohberg, J. L. Tobing, J. Bhattacharjee, K. Almubarak, K. Chen, K. Lo, L. von Werra, L. Weber, L. Phan, L. B. Allal, L. Tanguy, M. Dey, M. R. Muñoz, M. Masoud, M. Grandury, M. vSavsko, M. Huang, M. Coavoux, M. Singh, M. T.-J. Jiang, M. C. Vu, M. A. Jauhar, M. Ghaleb, N. Subramani, N. Kassner, N. Khamis, O. Nguyen, O. Espejel, O. de Gibert, P. Villegas, P. Henderson, P. Colombo, P. A. Amuok, Q. Lhoest, R. Harliman, R. Bommasani, R. L’opez, R. Ribeiro, S. Osei, S. Pyysalo, S. Nagel, S. Bose, S. H. Muhammad, S. Sharma, S. Longpre, S. Nikpoor, S. Silberberg, S. Pai, S. Zink, T. T. Torrent, T. Schick, T. Thrush, V. Danchev, V. Nikoulina, V. Laippala, V. Lepercq, V. Prabhu, Z. Alyafeai, Z. Talat, A. Raja, B. Heinzerling, C. Si, E. Salesky, S. J. Mielke, W. Y. Lee, A. Sharma, A. Santilli, A. Chaffin, A. Stiegler, D. Datta, E. Szczechla, G. Chhablani, H. Wang, H. Pandey, H. Strobelt, J. A. Fries, J. Rozen, L. Gao, L. Sutawika, M. S. Bari, M. S. Al-shaibani, M. Manica, N. V. Nayak, R. Teehan, S. Albanie, S. Shen, S. Ben-David, S. H. Bach, T. Kim, T. Bers, T. Févry, T. Neeraj, U. Thakker, V. Raunak, X. Tang, Z. X. Yong, Z. Sun, S. Brody, Y. Uri, H. Tojarieh, A. Roberts, H. W. Chung, J. Tae, J. Phang, O. Press, C. Li, D. Narayanan, H. Bourfoune, J. Casper, J. Rasley, M. Ryabinin, M. Mishra, M. Zhang, M. Shoeybi, M. Peyrounette, N. Patry, N. Tazi, O. Sanseviero, P. von Platen, P. Cornette, P. F. Lavall’ee, R. Lacroix, S. Rajbhandari, S. Gandhi, S. Smith, S. Requena, S. Patil, T. Dettmers, A. Baruwa, A. Singh, A. Cheveleva, A.-L. Ligozat, A. Subramonian, A. N’ev’eol, C. Lovering, D. H. Garrette, D. R. Tunuguntla, E. Reiter, E. Taktasheva, E. Voloshina, E. Bogdanov, G. I. Winata, H. Schoelkopf, J.-C. Kalo, J. Novikova, J. Z. Forde, X. Tang, J. Kasai, K. Kawamura, L. Hazan, M. Carpuat, M. Clinciu, N. Kim, N. Cheng, O. Serikov, O. Antverg, O. van der Wal, R. Zhang, R. Zhang, S. Gehrmann, S. Mirkin, S. O. Pais, T. Shavrina, T. Scialom, T. Yun, T. Limisiewicz, V. Rieser, V. Protasov, V. Mikhailov, Y. Pruksachatkun, Y. Belinkov, Z. Bamberger, Z. Kasner, A. Rueda, A. Pestana, A. Feizpour, A. Khan, A. Faranak, A. S. R. Santos, A. Hevia, A. Unldreaj, A. Aghagol, A. Abdollahi, A. Tammour, A. HajiHosseini, B. Behroozi, B. O. Ajibade, B. K. Saxena, C. M. Ferrandis, D. Contractor, D. M. Lansky, D. David, D. Kiela, D. A. Nguyen, E. Tan, E. Baylor, E. Ozoani, F. T. Mirza, F. Ononiwu, H. Rezanejad, H. Jones, I. Bhattacharya, I. Solaiman, I. Sedenko, I. Nejadgholi, J. Passmore, J. Seltzer, J. B. Sanz, K. Fort, L. M. Dutra, M. Samagaio, M. Elbadri, M. Mieskes, M. Gerchick, M. Akinlolu, M. McKenna, M. Qiu, M. K. K. Ghauri, M. Burynok, N. Abrar, N. Rajani, N. Elkott, N. Fahmy, O. Samuel, R. An, R. P. Kromann, R. Hao, S. Alizadeh, S. Shubber, S. L. Wang, S. Roy, S. Viguier, T.-C. Le, T. Oyebade, T. N. H. Le, Y. Yang, Z. K. Nguyen, A. R. Kashyap, A. Palasciano, A. Callahan, A. Shukla, A. Miranda-Escalada, A. K. Singh, B. Beilharz, B. Wang, C. M. F. de Brito, C. Zhou, C. Jain, C. Xu, C. Fourrier, D. L. Perin’an, D. Molano, D. Yu, E. Manjavacas, F. Barth, F. Fuhrimann, G. Altay, G. Bayrak, G. Burns, H. U. Vrabec, I. I. Bello, I. Dash, J. S. Kang, J. Giorgi, J. Golde, J. D. Posada, K. Sivaraman, L. Bulchandani, L. Liu, L. Shinzato, M. H. de Bykhovetz, M. Takeuchi, M. Pàmies, M. A. Castillo, M. Nezhurina, M. Sanger, M. Samwald, M. Cullan, M. Weinberg, M. Wolf, M. Mihaljcic, M. Liu, M. Freidank, M. Kang, N. Seelam, N. Dahlberg, N. M. Broad, N. Muellner, P. Fung, P. Haller, R. Chandrasekhar, R. Eisenberg, R. Martin, R. L. Canalli, R. Su, R. Su, S. Cahyawijaya, S. Garda, S. S. Deshmukh, S. Mishra, S. Kiblawi, S. Ott, S. Sang-aroonsiri, S. Kumar, S. Schweter, S. P. Bharati, T. A. Laud, T. Gigant, T. Kainuma, W. Kusa, Y. Labrak, Y. Bajaj, Y. Venkatraman, Y. Xu, Y. Xu, Y. chao Xu, Z. X. Tan, Z. Xie, Z. Ye, M. Bras, Y. Belkada, and T. Wolf. Bloom: A 176b-parameter open-access multilingual language model. ArXiv, abs/2211.05100, 2022.   \n[73] W. Shi, X. Han, M. Lewis, Y. Tsvetkov, L. Zettlemoyer, and S. W.-t. Yih. Trusting your evidence: Hallucinate less with context-aware decoding. arXiv preprint arXiv:2305.14739, 2023.   \n[74] I. Solaiman, M. Brundage, J. Clark, A. Askell, A. Herbert-Voss, J. Wu, A. Radford, G. Krueger, J. W. Kim, S. Kreps, et al. Release strategies and the social impacts of language models. arXiv preprint arXiv:1908.09203, 2019.   \n[75] J. Song, C. Meng, and S. Ermon. Denoising diffusion implicit models. In International Conference on Learning Representations.   \n[76] A. Spangher, X. Hua, Y. Ming, and N. Peng. Sequentially controlled text generation. arXiv preprint arXiv:2301.02299, 2023.   \n[77] R. Taori, I. Gulrajani, T. Zhang, Y. Dubois, X. Li, C. Guestrin, P. Liang, and T. B. Hashimoto. Stanford alpaca: An instruction-following llama model. https://github.com/tatsu-lab/stanford_alpaca, 2023.   \n[78] H. Touvron, T. Lavril, G. Izacard, X. Martinet, M.-A. Lachaux, T. Lacroix, B. Rozière, N. Goyal, E. Hambro, F. Azhar, et al. Llama: Open and efficient foundation language models. arXiv preprint arXiv:2302.13971, 2023.   \n[79] B. Wang and A. Komatsuzaki. GPT-J-6B: A 6 Billion Parameter Autoregressive Language Model. https: //github.com/kingoflolz/mesh-transformer-jax, May 2021.   \n[80] X. Wang, J. Wei, D. Schuurmans, Q. V. Le, E. H. Chi, S. Narang, A. Chowdhery, and D. Zhou. Self-consistency improves chain of thought reasoning in language models. In ICLR 2023, 2023.   \n[81] J. Wei, M. Bosma, V. Zhao, K. Guu, A. W. Yu, B. Lester, N. Du, A. M. Dai, and Q. V. Le. Finetuned language models are zero-shot learners. In International Conference on Learning Representations.   \n[82] J. Wei, X. Wang, D. Schuurmans, M. Bosma, b. ichter, F. Xia, E. Chi, Q. V. Le, and D. Zhou. Chain-of-thought prompting elicits reasoning in large language models. In S. Koyejo, S. Mohamed, A. Agarwal, D. Belgrave, K. Cho, and A. Oh, editors, Advances in Neural Information Processing Systems, volume 35, pages 24824–24837. Curran Associates, Inc., 2022.   \n[83] C. Xu, Q. Sun, K. Zheng, X. Geng, P. Zhao, J. Feng, C. Tao, and D. Jiang. Wizardlm: Empowering large language models to follow complex instructions, 2023.   \n[84] K. Yang and D. Klein. Fudge: Controlled text generation with future discriminators. arXiv preprint arXiv:2104.05218, 2021.   \n[85] R. Zellers, A. Holtzman, Y. Bisk, A. Farhadi, and Y. Choi. Hellaswag: Can a machine really finish your sentence? arXiv preprint arXiv:1905.07830, 2019. ",
+        "bbox": [
+            114,
+            228,
+            887,
+            910
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            490,
+            935,
+            506,
+            946
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            112,
+            53,
+            888,
+            921
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "discarded",
+        "text": "12 ",
+        "bbox": [
+            490,
+            935,
+            508,
+            948
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            111,
+            73,
+            890,
+            917
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "discarded",
+        "text": "13 ",
+        "bbox": [
+            490,
+            935,
+            508,
+            948
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            112,
+            59,
+            890,
+            916
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "discarded",
+        "text": "14 ",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            112,
+            89,
+            888,
+            864
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "discarded",
+        "text": "15 ",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Appendix ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            117,
+            256,
+            145
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "Table of Contents ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            171,
+            294,
+            190
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "A Author Contributions 16   \nB Additional Related Works 17   \nB.1 CFG 17   \nB.2 Generative Guidance in NLP 17   \nC Charts 17   \nC.1 General benchmarks . 17   \nC.2 Accuracy vs. FLOP 18   \nC.3 HumanEval benchmark 21   \nC.4 Deliberative Prompting: Chain-of-Thought 24   \nD Additional experiments 28   \nD.1 Machine translation 28   \nD.2 Prompting experiments for code generations 28   \nE Generation samples 30   \nE.1 Continuations 30   \nF Further Comparison between CFG and Instruction-Tuning 3 4   \nG Experiments with GPT4All 3 4   \nG.1 System prompts 34   \nG.2 User prompts 35 ",
+        "bbox": [
+            150,
+            195,
+            851,
+            551
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "A Author Contributions ",
+        "text_level": 1,
+        "bbox": [
+            117,
+            583,
+            333,
+            602
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "This work is a spontaneous collaboration between EleutherAI members and EleutherAI’s Discord’s members. ",
+        "bbox": [
+            119,
+            616,
+            831,
+            631
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "Guillaume Sanchez came up with the initial theory, code and preliminary experiments, then reached EleutherAI in search for collaborators. He wrote the code for 2 and associated figures, redacted Sections 2.1, 2.2. He wrote the code and ran the GPT-J experiment mentioned in 3.3.1. He built the platform for the human experiment , publicized the experiment to get votes, and compiled the results for 3.4. ",
+        "bbox": [
+            114,
+            646,
+            883,
+            702
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "Honglu Fan proofread 2.2, 2.1, redacted Section 3’s introduction and 3.1, Appendix C.1C.2, C.3. Designed and ran the experiments for Section 3.3. He took care of running the experiments of Section 3.1 thanks to his access to CoreWeave and Stability’s computing cluster. ",
+        "bbox": [
+            116,
+            717,
+            883,
+            760
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "Alexander Spangher proofread the paper and is the primary writer/editor and redactor of it. He wrote the Introduction, Section 2’s introduction, Section 4, Section 5’s introduction, Appendix B and the Conclusion, regenerated many of the figures, and proofread everything. ",
+        "bbox": [
+            114,
+            775,
+            883,
+            818
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "He designed, ran and redacted the experiments in Sections 5.1, 5.2, and Appendix F. ",
+        "bbox": [
+            116,
+            821,
+            666,
+            838
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "Elad Levi designed and ran the Chain-Of-Thoughts experiments in Section 3.2. He wrote a preliminary version of Sections 2.1, 2.2 and redacted Section 3.2 and Appendix C.4. ",
+        "bbox": [
+            117,
+            852,
+            885,
+            882
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "Pawan Ammanamanchi designed, ran and redacted the machine translation experiments of Appendix D.1. ",
+        "bbox": [
+            112,
+            896,
+            834,
+            911
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "discarded",
+        "text": "16 ",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "Stella Biderman supervised the process. She proofread the paper, suggested the experiments to run in 3.1 and how to run them with EleutherAI’s LM Harness. She suggested the GPT-J code generation experiment of section 3.3.1. ",
+        "bbox": [
+            117,
+            92,
+            885,
+            119
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "B Additional Related Works ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            142,
+            367,
+            160
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "B.1 CFG ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            176,
+            192,
+            191
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "The work on CFG is based on Classifier Guided Diffusion [28], which demonstrates that $\\gamma$ allows for trading fidelity and diversity. Artists using Stable Diffusion, an open-source product built on [66], commonly believe that effective prompt engineering and creative pictures require strong prompt conditioning happening for $\\gamma > 1$ . This belief is supported by experiments, such as those conducted with Imagen [68], which show that the prompt correlates more with the image as $\\gamma$ increases. ",
+        "bbox": [
+            116,
+            204,
+            882,
+            273
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "B.2 Generative Guidance in NLP ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            294,
+            357,
+            309
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "Co-temporaneously with the earliest advances in neural language modeling [35] came the recognition that the outputs of these models had to be guided in order to be coherent [7] and focused [38]. And when larger, higher-performing models like GPT [62, 15] began to show real-world use-cases, the recognition emerged of the need to control their output [74] to guard against toxic content [34] and bias [30]. ",
+        "bbox": [
+            116,
+            321,
+            882,
+            377
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "A central thrust in recent NLP research been to address the above concerns, and approaches have been targeted at nearly every step of training and querying models, from dataset curation [2] and training [40], to response-alignment [57] and prompt-identification [34]. ",
+        "bbox": [
+            116,
+            383,
+            882,
+            426
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "Our work aligns with efforts to control the output of language models by controlling the model’s outputted vocabulary distribution $p ( x _ { n } | x _ { < n } )$ . Early efforts in this vein aimed at increasing coherence include now-standard techniques like temperature-scaling [17], nucleus sampling [38] and heuristics (e.g. repetition penalties [31]). ",
+        "bbox": [
+            116,
+            431,
+            882,
+            474
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "In parallel, more sophisticated approaches to control the output of language models by moderating the vocabularly distribution emerged within the line of “controlled text generation”. Works in this vein emerged after the earliest attempt at controlled-generation, CTRL [40], where researchers pretrained a language model to be aware of prompts as well as “control codes”, $a$ that could produce conditional generations, $p ( x _ { n } | x _ { < n } , a )$ , (where $a \\in \\{$ “Science”, “Romance”, “Mystery”...}) that could produce conditional generations, steer the prompt continuation away from the initial generation. This work established the idea of “controlled generation”; it was quickly followed by the Plug and Play Language model (PPLM) [24]. PPLM was the earliest work achieving controlled generation through moderating the vocabulary distribution of a vanilla pretrained language model. Authors used Bayes Rule to factorize the conditional distribution $p ( x _ { n } | x _ { < n } , a ) \\propto p ( x _ { n } | \\bar { x _ { < n } } ) p ( a | x _ { n } , \\bar { x _ { < n } } )$ . Other works followed in this vein [43, 84, 76, 50, 44]. Authors used a naive pretrained language model like GPT2 [62] to model $p ( x _ { n } | x _ { < n } )$ and trained a discriminator $p ( a | x )$ on labeled datasets, and then added together the two log probabilities to obtain the controlled distribution. ",
+        "bbox": [
+            114,
+            479,
+            882,
+            632
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "Efforts at controlled generation largely fell out of favor with the advent of instruction-tuning [57]; using instructiontuned models like GPT3 [15], users could simply the model to “write happy text”, or “write very happy text”. However, experiments with moderating the vocabulary distribution continued, and researchers recently showed that combining two models – an expert model and a weak model – could produce more fluent text [45]. In this paper, instead of our CFG formulation $( \\lambda \\log p ( x | y ) - ( 1 - \\lambda ) \\log p ( x ) )$ , authors used two models, a weak model $f _ { w }$ and a strong model $f _ { s }$ to do: $f _ { s } ( x | y ) - f _ { w } ( x | y )$ in order to generate more inventive, creative language that was even more in the direction of $f _ { s }$ than would have been. ",
+        "bbox": [
+            116,
+            638,
+            883,
+            736
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "C Charts ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            758,
+            209,
+            776
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "In this section, we collect some charts that visualize results in Section 3.1, 3.3 and 5. ",
+        "bbox": [
+            117,
+            792,
+            668,
+            808
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "C.1 General benchmarks ",
+        "text_level": 1,
+        "bbox": [
+            117,
+            828,
+            303,
+            843
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "text",
+        "text": "In Section 3.1, GPT-2, Pythia, LLaMA model families are analyzed with and without CFG. In addition to Table 2, we make plots of each model family with $\\mathbf { X }$ -axis being the CFG strength and the y-axis being the accuracy. It aims to provide a more direct view of how model size affect the accuracy-to- $\\gamma$ curves while scaling in the same model family. The plots are shown in Figure 8, 9 and 10. ",
+        "bbox": [
+            116,
+            854,
+            885,
+            911
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "discarded",
+        "text": "17 ",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 16
+    },
+    {
+        "type": "image",
+        "img_path": "images/308f7cdcfd081857e4b45d361a3503c7c4dce732896f4d163e3fac554013aa4c.jpg",
+        "image_caption": [
+            "Figure 8: Standard benchmarks over various CFG strengths for GPT2 models "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            127,
+            103,
+            870,
+            680
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "We run TriviaQA based on the LLaMA [78] methodology, however we perform substring match rather than exact match. This stems from manual analysis which showed that exact matching disqualified answers like \"Mark Twain\" (with quotes) or His name is Mark Twain instead of the exact Mark Twain. ",
+        "bbox": [
+            116,
+            756,
+            885,
+            799
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "C.2 Accuracy vs. FLOP ",
+        "text_level": 1,
+        "bbox": [
+            117,
+            844,
+            294,
+            859
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "text",
+        "text": "In Section 4, we present the finding that a model using CFG can generally perform as well as a model twice as large without CFG. The detailed charts are presented in this subsection. ",
+        "bbox": [
+            116,
+            882,
+            877,
+            911
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "discarded",
+        "text": "18 ",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 17
+    },
+    {
+        "type": "image",
+        "img_path": "images/09980fe900beae50c1e75fca0291d8d580ae86a9e775fec8844115968daad2aa.jpg",
+        "image_caption": [
+            "Figure 9: Standard benchmarks over various CFG strengths for Pythia models "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            132,
+            204,
+            870,
+            781
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 18
+    },
+    {
+        "type": "image",
+        "img_path": "images/e4f9b15e11cc1c34e9093bad6cbe9b8adb21f56f4bfb63d2f72a91b2518674f3.jpg",
+        "image_caption": [
+            "Figure 10: Standard benchmarks over various CFG strengths for LLaMA models "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            129,
+            207,
+            870,
+            784
+        ],
+        "page_idx": 19
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 19
+    },
+    {
+        "type": "table",
+        "img_path": "images/2283c2388749b9f15fbe0836b5039f026f9e3e29d0e5e1cfc1f87f4b56fb246d.jpg",
+        "table_caption": [],
+        "table_footnote": [
+            "Table 4: ANCOVA $p$ -value results for plots shown in Figure 11. We calculate ANCOVA on log-transformed variables and calculate significance at $p = . 0 1$ . "
+        ],
+        "table_body": "<table><tr><td colspan=\"2\">p-value</td><td>Win</td></tr><tr><td>Lambada</td><td>0.000</td><td>CFG</td></tr><tr><td>WinoGrande</td><td>0.003</td><td>Vanilla</td></tr><tr><td>SciQ</td><td>0.008</td><td>CFG</td></tr><tr><td>TriviaQA</td><td>0.008</td><td>Vanilla</td></tr><tr><td>HellaSwag</td><td>0.012</td><td>p&gt;.01</td></tr><tr><td>PiQA</td><td>0.030</td><td>p&gt;.01</td></tr><tr><td>ARC-c</td><td>0.216</td><td>p&gt;.01</td></tr><tr><td>BoolQ</td><td>0.345</td><td>p&gt; .01</td></tr><tr><td>ARC-e</td><td>0.355</td><td>p&gt;.01</td></tr></table>",
+        "bbox": [
+            377,
+            88,
+            622,
+            239
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "table",
+        "img_path": "images/ba434a340dd172b1440f30a9f9ac3770bbb7484adc567c22820bcf198fcd7e1f.jpg",
+        "table_caption": [],
+        "table_footnote": [
+            "Table 5: CodeGen-350M-mono results "
+        ],
+        "table_body": "<table><tr><td></td><td colspan=\"3\">temperature = 0.2</td><td colspan=\"3\">temperature = 0.6</td><td colspan=\"3\">temperature = 0.8</td></tr><tr><td>Y</td><td>k=1</td><td>k=10</td><td>k=100</td><td>k=1</td><td>k=10</td><td>k=100</td><td>k=1</td><td>k=10</td><td>k=100</td></tr><tr><td>1.0</td><td>11.0%</td><td>17.0%</td><td>22.0%</td><td>8.9%</td><td>18.2%</td><td>23.7%</td><td>7.2%</td><td>17.2%</td><td>29.4%</td></tr><tr><td>1.1</td><td>11.8%</td><td>18.1%</td><td>20.1%</td><td>10.0%</td><td>19.7%</td><td>25.5%</td><td>7.8%</td><td>17.1%</td><td>22.5%</td></tr><tr><td>1.25</td><td>11.4%</td><td>17.3%</td><td>18.9%</td><td>9.7%</td><td>18.4%</td><td>23.7%</td><td>8.3%</td><td>18.2%</td><td>24.9%</td></tr><tr><td>1.5</td><td>10.9%</td><td>16.7%</td><td>18.3%</td><td>9.9%</td><td>19.3%</td><td>24.9%</td><td>8.0%</td><td>18.0%</td><td>26.1%</td></tr><tr><td>1.75</td><td>10.3%</td><td>16.0%</td><td>18.2%</td><td>9.2%</td><td>18.3%</td><td>23.7%</td><td>7.7%</td><td>16.9%</td><td>24.2%</td></tr><tr><td>2.0</td><td>8.6%</td><td>14.6%</td><td>17.6%</td><td>7.6%</td><td>16.6%</td><td>20.1%</td><td>7.4%</td><td>16.5%</td><td>21.3%</td></tr></table>",
+        "bbox": [
+            186,
+            292,
+            810,
+            425
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "With the same data points as Section C.1, we reorganize them into inference accuracy vs. $\\mathrm { F L O P ^ { 8 } }$ per token plots so that we can compare the performance of a model with CFG (doubled inference FLOP) and a model without CFG but twice as big. We show all the plots in Figure 11. ",
+        "bbox": [
+            114,
+            477,
+            883,
+            518
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "Note that: ",
+        "bbox": [
+            116,
+            525,
+            181,
+            539
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "1. The location of each data point in the charts ignores the model size and only reflects its inference FLOP per token. For example, a 1.4B model with CFG (doubled inference FLOP) will show up near a 2.8B model without CFG if they perform closely, despite the fact that such 1.4B model is more useful in practice due to the saving on training and VRAM.   \n2. The data points in the charts only reflect the inference cost and ignoring the training cost. For example, when a 1.4B model gets boosted to the accuracy of a 2.8B model by using CFG, the inference costs are similar but to train a 1.4B model takes less compute. ",
+        "bbox": [
+            153,
+            551,
+            883,
+            655
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "For Lambada and SciQ, CFG is a clear winner which improves the whole compute-accuracy curve while for WinoGrande, CFG impacts negatively. The rest are mixed. ",
+        "bbox": [
+            122,
+            666,
+            882,
+            695
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "This entails that for the same inference cost, CFG can emulate a model that has twice the parameter count. This drastically reduces the VRAM usage needed to run the models which is the current bottleneck, and reduces the training cost. To further justify this, Table 11 is a breakdown of the ANCOVA $p$ -values for each chart between the regression line of the CFG group (in red) and the one of the vanilla group (in blue). We choose the $p$ -value cutoff at 0.01 according to [67], and higher than 0.01 means an insignificant difference between the regression lines of the two groups. ",
+        "bbox": [
+            114,
+            700,
+            882,
+            771
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "C.3 HumanEval benchmark ",
+        "text_level": 1,
+        "bbox": [
+            117,
+            789,
+            325,
+            804
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "text",
+        "text": "In Section 3.3.1, we explain our experiments on CodeGen-350M-mono, CodeGen-2B-mono and CodeGen-6B-mono and show their performances in the HumanEval benchmark with various CFG for temperature 0.2 in Table 2. The full results for temperature $= 0 . 2 , 0 . 6 , 0 . 8$ are shown below in Table 5, 6 and 7). We also put the pass $@ k .$ -to- $\\gamma$ curves of different temperatures together to show how the temperatures affect the impact of CFG when the model size and $k$ are fixed in Figure 12, 13 and 14. ",
+        "bbox": [
+            116,
+            815,
+            883,
+            885
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "discarded",
+        "text": "8FLOP: floating point operations ",
+        "bbox": [
+            135,
+            898,
+            331,
+            911
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            490,
+            935,
+            506,
+            946
+        ],
+        "page_idx": 20
+    },
+    {
+        "type": "image",
+        "img_path": "images/f03aeb6396b773bde2b539a57a67fb3b6b431da054503887d22f3108a8eba777.jpg",
+        "image_caption": [
+            "Figure 11: Accuracy vs. FLOP per token at inference. Blue point: a model without CFG from any of the three model families (GPT-2, Pythia, LLaMA). Red point: a model with the best CFG from any of the three model families. The dashed curves: the regression curves (logistic regression between log-FLOP and accuracy) of their groups. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            129,
+            188,
+            872,
+            755
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "discarded",
+        "text": "Accuracy vs. FLOP ",
+        "bbox": [
+            416,
+            175,
+            581,
+            190
+        ],
+        "page_idx": 21
+    },
+    {
+        "type": "table",
+        "img_path": "images/7f99299907c4ca82206d1a1fec4311359106e669c7a694bc886daf0a94c981e1.jpg",
+        "table_caption": [],
+        "table_footnote": [
+            "Table 6: CodeGen-2B-mono results "
+        ],
+        "table_body": "<table><tr><td></td><td colspan=\"3\">temperature = 0.2</td><td colspan=\"3\">temperature = 0.6</td><td colspan=\"3\">temperature = 0.8</td></tr><tr><td>Y</td><td>k=1</td><td>k=10</td><td>k=100</td><td>k=1</td><td>k=10</td><td>k=100</td><td>k=1</td><td>k=10</td><td>k=100</td></tr><tr><td>1.0</td><td>19.5%</td><td>25.5%</td><td>29.8%</td><td>15.9%</td><td>29.3%</td><td>36.5%</td><td>12.3%</td><td>26.4%</td><td>33.5%</td></tr><tr><td>1.1</td><td>20.4%</td><td>25.4%</td><td>28.0%</td><td>16.3%</td><td>29.3%</td><td>36.5%</td><td>13.8%</td><td>29.0%</td><td>38.3%</td></tr><tr><td>1.25</td><td>19.7%</td><td>25.4%</td><td>28.0%</td><td>17.4%</td><td>30.1%</td><td>38.3%</td><td>14.1%</td><td>28.7%</td><td>37.6%</td></tr><tr><td>1.5</td><td>20.9%</td><td>26.7%</td><td>29.2%</td><td>18.3%</td><td>31.7%</td><td>40.1%</td><td>14.9%</td><td>29.1%</td><td>36.5%</td></tr><tr><td>1.75</td><td>20.4%</td><td>26.2%</td><td>28.6%</td><td>17.7%</td><td>30.4%</td><td>35.9%</td><td>14.3%</td><td>28.3%</td><td>34.1%</td></tr><tr><td>2.0</td><td>16.5%</td><td>22.4%</td><td>24.4%</td><td>13.7%</td><td>25.2%</td><td>32.2%</td><td>11.3%</td><td>23.9%</td><td>31.6%</td></tr></table>",
+        "bbox": [
+            184,
+            88,
+            813,
+            220
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "table",
+        "img_path": "images/3c43bd49b3c0a68ccf973ca1e23412e8deae2872956e372dde3d3d806f6f7d01.jpg",
+        "table_caption": [],
+        "table_footnote": [
+            "Table 7: CodeGen-6B-mono results "
+        ],
+        "table_body": "<table><tr><td rowspan=\"2\">Y</td><td colspan=\"3\">temperature = 0.2</td><td colspan=\"3\">temperature = 0.6</td><td colspan=\"3\">temperature = 0.8</td></tr><tr><td>k=1</td><td>k=10</td><td>k=100</td><td>k=1</td><td>k=10</td><td>k=100</td><td>k=1</td><td>k=10</td><td>k=100</td></tr><tr><td>1.0</td><td>19.5%</td><td>25.5%</td><td>29.8%</td><td>15.9%</td><td>29.3%</td><td>36.5%</td><td>12.3%</td><td>26.4%</td><td>33.5%</td></tr><tr><td>1.1</td><td>20.4%</td><td>25.4%</td><td>28.0%</td><td>16.3%</td><td>29.3%</td><td>36.5%</td><td>13.8%</td><td>29.0%</td><td>38.3%</td></tr><tr><td>1.25</td><td>19.7%</td><td>25.4%</td><td>28.0%</td><td>17.4%</td><td>30.1%</td><td>38.3%</td><td>14.1%</td><td>28.7%</td><td>37.6%</td></tr><tr><td>1.5</td><td>20.9%</td><td>26.7%</td><td>29.2%</td><td>18.3%</td><td>31.7%</td><td>40.1%</td><td>14.9%</td><td>29.1%</td><td>36.5%</td></tr><tr><td>1.75</td><td>20.4%</td><td>26.2%</td><td>28.6%</td><td>17.7%</td><td>30.4%</td><td>35.9%</td><td>14.3%</td><td>28.3%</td><td>34.1%</td></tr><tr><td>2.0</td><td>16.5%</td><td>22.4%</td><td>24.4%</td><td>13.7%</td><td>25.2%</td><td>32.2%</td><td>11.3%</td><td>23.9%</td><td>31.6%</td></tr></table>",
+        "bbox": [
+            184,
+            257,
+            812,
+            388
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "image",
+        "img_path": "images/504d94d412fb745072b54159a0491e5cd6b298e5c51db510aca28ecf74094644.jpg",
+        "image_caption": [],
+        "image_footnote": [],
+        "bbox": [
+            117,
+            425,
+            882,
+            618
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "image",
+        "img_path": "images/87d50eff82392bd080df9e833dd4860a374466af9b1898d6f493b90c2c77c435.jpg",
+        "image_caption": [
+            "Figure 12: CodeGen-350M-mono performance on HumanEval with various CFG strengths ",
+            "Figure 13: CodeGen-2B-mono performance on HumanEval with various CFG strengths "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            114,
+            655,
+            883,
+            848
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "discarded",
+        "text": "23 ",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 22
+    },
+    {
+        "type": "image",
+        "img_path": "images/c051ba4981ae6963cf6c3a7f54742cc98469f2f9990a5ac5d9fda7d5af706616.jpg",
+        "image_caption": [
+            "Figure 14: CodeGen-6B-mono performance on HumanEval with various CFG strengths ",
+            "Table 8: Datasets in P3 where Instruction-Tuned models were the most and least similar, in terms of top-p overlap, to CFG models. The count column shows the number of datapoints that were sampled from each dataset to calculate the overlap. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            116,
+            89,
+            882,
+            281
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "table",
+        "img_path": "images/911648d46ec2cef349628c48ca3a9d529a7d156977d58296a54476f109414616.jpg",
+        "table_caption": [],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>P3 Dataset</td><td>mean</td><td>std</td><td>count</td></tr><tr><td colspan=\"4\">Highest (CFG, Instruct} Similarities</td></tr><tr><td>SuperGLUE wsc.fixed p is are r score eval</td><td>31.89</td><td>+/-22.06</td><td>42</td></tr><tr><td>SciQ Multiple Choice Closed Book</td><td>5.82</td><td>+/-13.27</td><td>43</td></tr><tr><td>CosE v1.11 description question option text</td><td>5.70</td><td>+/-9.05</td><td>43</td></tr><tr><td>RottenTomatoes Writer Expressed Sentiment</td><td>4.93</td><td>+/-7.45</td><td>41</td></tr><tr><td>WinograndeXL fll in the blank</td><td>4.42</td><td>+/-10.51</td><td>44</td></tr><tr><td>RottenTomatoes Text Expressed Sentiment</td><td>2.93</td><td>+/-7.98</td><td>45</td></tr><tr><td>Quarel: choose between SuperGLUE wic GPT 3 prompt score eval</td><td>2.51</td><td>+/-12.39</td><td>43</td></tr><tr><td>WinograndeDebiased Replace score eval</td><td>2.15</td><td>+/-5.94</td><td>44</td></tr><tr><td>PAWS final context question (no label)</td><td>2.02 1.37</td><td>+/-24.46 +/-4.81</td><td>41 43</td></tr><tr><td colspan=\"4\">Lowest （CFG, Instruct） Similarities</td></tr><tr><td>paws labeled final paraphrase task</td><td>-11.71</td><td>+/-11.03</td><td>42</td></tr><tr><td>super glue copa more likely</td><td>-11.94</td><td>+/-6.38</td><td>45</td></tr><tr><td>piqa Does this solution make sense sol2</td><td>-12.22</td><td>+/-9.24</td><td>42</td></tr><tr><td>super glue copa cause effect score eval</td><td>-12.82</td><td>+/-5.8</td><td>41</td></tr><tr><td>rotten tomatoes Sentiment with choices</td><td>-13.07</td><td>+/-7.96</td><td>41</td></tr><tr><td>super glue copa plausible alternatives score eval</td><td>-15.07</td><td>+/-5.69</td><td>41</td></tr><tr><td>super glue copa C1 or C2 premise so because</td><td>-15.38</td><td>+/-6.43</td><td>41</td></tr><tr><td>super glue copa more likely score eval</td><td>-16.54</td><td>+/-5.45</td><td>43</td></tr><tr><td>cos e vl.11 question option description id</td><td>-17.60</td><td>+/-14.06</td><td>41</td></tr><tr><td>rotten tomatoes Reviewer Enjoyment Yes No</td><td>-18.16</td><td>+/-16.02</td><td>45</td></tr></table>",
+        "bbox": [
+            232,
+            319,
+            764,
+            670
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "In addition, we breakdown the result of CodeGen-350M-mono on HumanEval benchmark into individual tasks. We plot the “accuracy with cfg\" vs. “accuracy without cfg\" charts to visualize the outperform/underperform distributions among all tasks. The plots are shown in Figure 15c, 15b and 15a. ",
+        "bbox": [
+            116,
+            747,
+            883,
+            790
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "C.4 Deliberative Prompting: Chain-of-Thought ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            806,
+            459,
+            821
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "text",
+        "text": "In this subsection we provide additional results for 3.2. In Figure 15 we provide results on $\\mathbf { A Q u A }$ dataset and in Tables 15 and 14 we provide a qualitative comparison of CoT with and without CFG. These results support our finding that using CFG increases the percentage of CoT which results in a valid answer and boost the model performances. ",
+        "bbox": [
+            116,
+            832,
+            883,
+            875
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 23
+    },
+    {
+        "type": "image",
+        "img_path": "images/2ba499e9785925e0c79da366078ab7ae967f0984782c9e02ea828475ef62f043.jpg",
+        "image_caption": [
+            "task plot of CodeGen-350M with temp 0.8 34above diagonal,23belowdiagonal "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            127,
+            128,
+            467,
+            299
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "image",
+        "img_path": "images/1b96ddcd1f400b711fc293e4e4c0f33e8d59d0991b567d4ed7d6bde5065fcdd9.jpg",
+        "image_caption": [
+            "task plot of CodeGen-350M with temp 0.6 24 above diagonal,16 below diagonal "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            514,
+            128,
+            854,
+            299
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "text",
+        "text": "(a) CodeGen-350M-mono HumanEval task-by-task plot with(b) CodeGen-350M-mono HumanEval task-by-task plot with temp $_ { = 0 . 8 }$ temp $\\mathrm { \\Omega = 0 . 6 }$ ",
+        "bbox": [
+            114,
+            305,
+            893,
+            332
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "text",
+        "text": "Blue: CFG outperforms, Purple: CFG ties with the baseline, Red: CFG underperforms ",
+        "bbox": [
+            114,
+            332,
+            326,
+            369
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "text",
+        "text": "Blue: CFG outperforms, Purple: CFG ties with the baseline, Red: CFG underperforms ",
+        "bbox": [
+            504,
+            332,
+            717,
+            369
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "image",
+        "img_path": "images/c2d859e952580eaaf631c0163102a8651ee7f6451c05330d9d2ce06b4f2e3615.jpg",
+        "image_caption": [
+            "(c) CodeGen-350M-mono HumanEval task-by-task plot with temp $\\mathrm { \\Omega } = 0 . 2$ "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            312,
+            400,
+            651,
+            578
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "text",
+        "text": "Blue: CFG outperforms, Purple: CFG ties with the baseline, Red: CFG underperforms ",
+        "bbox": [
+            303,
+            611,
+            516,
+            648
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "image",
+        "img_path": "images/bd6fd9e4a4572fd58875bce3968a5a67492e303ab93f75f6227a8904a70410dc.jpg",
+        "image_caption": [
+            "Figure 15: CFG impact on chain-of-thought prompting with respect to AQuA dataset. For small CFG values, using CFG increases the percentage of chains which end in a valid answer structure while increasing the model accuracy. For large values the invalid percentage remains small but the accuracy drop. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            119,
+            670,
+            730,
+            852
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 24
+    },
+    {
+        "type": "image",
+        "img_path": "images/a16333bbb02ffdc7de2807c17df783a8c280c60a497074adea7b6a69d3d20073.jpg",
+        "image_caption": [
+            "Figure 16: Comparison of (CFG- $\\gamma = 1 . 5$ , Instruct) logits across a large sample set from P3. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            129,
+            280,
+            874,
+            702
+        ],
+        "page_idx": 25
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 25
+    },
+    {
+        "type": "table",
+        "img_path": "images/c281709073133fb49b927b34208c59381ff1ed20b73fd3a6a341a6c186378f0a.jpg",
+        "table_caption": [],
+        "table_footnote": [
+            "Table 9: Top sentences in P3 where CFG is similar to Instruction-Tuned models, as measured by top- $p$ overlap. "
+        ],
+        "table_body": "<table><tr><td>Top Sentences in P3 where CFG is MOST Similar to Instruction-Tuned Models</td></tr><tr><td>Build a movie plot around this: What is the team? Rag-tag bunch of girls Here&#x27;s acomplex question that requires someone to reason about the input,can you answer it? What city was the capital of the Ostrogothic Kingdom and the birth place of Ornella Fiorentini?</td></tr><tr><td>Who had more of their English novels turned into Oscar-nominated films,Raja Rao or Pat Conroy? Nokia,Texas Instruments and other leading makers of mobile phones have formally complained to Brussels that</td></tr><tr><td>Qualcomm,the US mobile chipmaker, has unfairly used its patents on 3G technologies. Question: Texas Instruments produces mobile phones.True or False? Context: Pating her back,the woman smiled at the girl . Question: &quot;her&quot; is the woman. True or false? Answer:</td></tr><tr><td>Take the following as truth: The American Combat Assciation is a small mixed martial arts company founded by</td></tr><tr><td>Olympic wrestler, world Abu Dhabi champion and UFC fighter Kamal Shalorus and professional mixed martial</td></tr><tr><td>arts fighter, Broadcaster and American professional wrestler Matthew &quot;The Granimal&quot; Granahan.Then the</td></tr><tr><td>following statement: &quot;The American Combat Association was founded by two Olympic wrestlers.&quot; is true, false,or inconclusive? Pick the most correct option to answer the following question.Some antibiotics used to treat infections in humans</td></tr><tr><td>are also used to treat chickens,but some groups oppose this practice. The overuse of the antibiotics will most</td></tr><tr><td>likely influence the natural selection of which type of organisms? Options: - A: chickens that naturally make the antibiotics -B: microbes that are resistant to the antibiotics -C:microbes that are susceptible to the antibiotics -</td></tr><tr><td>D: chickens that are resistant to infection</td></tr><tr><td>Jennifer dragged Felicia along to aself help workshop about how_to succeed,because_wanted some company. Replace the _in the above sentence with the correct option: - Jennifer- Felicia</td></tr></table>",
+        "bbox": [
+            120,
+            109,
+            877,
+            453
+        ],
+        "page_idx": 26
+    },
+    {
+        "type": "table",
+        "img_path": "images/0735c014a4e03b918b45817dd3ad50a14d5f3800c7bc74de430da8ab4e5408ea.jpg",
+        "table_caption": [
+            ""
+        ],
+        "table_footnote": [
+            "Table 10: Sentences in P3 where CFG is LEAST similar to Instruction-Tuned models, as measured by top- $p$ overlap. "
+        ],
+        "table_body": "<table><tr><td>Sentences inP3where CFGisLEAST Similarto Instruction-TunedModels How do you feel about your current weight and eating habits ?</td></tr><tr><td>What happened after you guys started talking that eventually led to your divorce ? Given a goal and a wrong solution, rewrite it to give a corrct solution. Goal: how do you train a puppy? Solution:</td></tr><tr><td>Corrected solution:</td></tr><tr><td>What might have happened since I was a democrat in my first year ? What do you usually do when you meet a guy for the first time ?</td></tr><tr><td></td></tr><tr><td>What did you do that caused you to be in the bathroom all day ?</td></tr><tr><td>What will happen if Iraq continues to show the signs of redevelopment as you have mentioned ?</td></tr><tr><td>What might happen if we show our true selves to the people we love ? I would like to create a garden on my balcony. What is the first thing I should do?</td></tr><tr><td>What will you do if a branch falls off one of the oaks ?</td></tr><tr><td>What will you do now that you define as taking action ?</td></tr><tr><td>The abode of the Greek gods was on the summit of Mount Olympus,in Thessaly. Question: Mount Olympus is in</td></tr><tr><td>Thessaly. True or False?</td></tr><tr><td>Given Firstly,Ididn&#x27;t know aboutthe SAS soldiers in the British Embassy,andIam very surprised about it. Very surprised indeed,Ambassador. Secondly I do not think it is a good idea to attck a plane with a hundred and</td></tr><tr><td> seven pasengers in it and“take it apart&quot; as you say. Isit guaranteed true that &quot;it is a good idea to attack a plane</td></tr><tr><td>with a hundred and seven passengers in it and &#x27;take it apart&#x27;&quot;? Yes,no,or maybe?</td></tr><tr><td>Gbagbo lives in Cote d&#x27;Ivoire. True or False?</td></tr><tr><td>&#x27;Cote d&#x27;Ivoire&#x27;s President,Laurent Gbagbo, promulgated new election laws on July 14. Question: President Laurent</td></tr></table>",
+        "bbox": [
+            120,
+            529,
+            877,
+            866
+        ],
+        "page_idx": 26
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 26
+    },
+    {
+        "type": "text",
+        "text": "D Additional experiments ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            89,
+            348,
+            107
+        ],
+        "page_idx": 27
+    },
+    {
+        "type": "text",
+        "text": "D.1 Machine translation ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            119,
+            297,
+            135
+        ],
+        "page_idx": 27
+    },
+    {
+        "type": "text",
+        "text": "We evaluate using Classifier-Free Guidance for machine translation on a variety of models. We choose the WMT14 fr-en [13] as the dataset of choice to understand if CFG would also help multilingual datasets. We run 0-shot experiments on Bloom-3B [72], a multilingual model trained on 49 languages. We also test on RedPajama-Incite-Base-3B, trained on $1 . 5 \\mathrm { T }$ tokens of English text and $\\mathrm { m T 0 }$ [52] a prompt tuned sequence-to-sequence model. For the Bloom-3B model, we test for multiple prompts and perform 1-shot experiments as well. All scores are measured in BLEU. ",
+        "bbox": [
+            114,
+            145,
+            882,
+            215
+        ],
+        "page_idx": 27
+    },
+    {
+        "type": "text",
+        "text": "We find that for this generation task, $\\gamma$ ranging between 1.1 to 1.25 yield the best results and perform increasingly worse at higher values. We additionally observe that the method is prompt-invariant, showing gains regardless of the prompt choice in 0-shot performance. We do not see any improvements in the case of 1-shot performance for Bloom-3B. We also do not see any significant performance gains in the case of mT0, suggesting that prompt-tuned models might already be at the pinnacle of possible 0-shot performance. ",
+        "bbox": [
+            114,
+            222,
+            882,
+            291
+        ],
+        "page_idx": 27
+    },
+    {
+        "type": "text",
+        "text": "D.2 Prompting experiments for code generations ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            308,
+            467,
+            321
+        ],
+        "page_idx": 27
+    },
+    {
+        "type": "text",
+        "text": "We summarize two exploratory experiments which are briefly mentioned in 3.3.1 and precedes our systematic evaluations on HumanEval. ",
+        "bbox": [
+            114,
+            332,
+            882,
+            361
+        ],
+        "page_idx": 27
+    },
+    {
+        "type": "text",
+        "text": "1. The first experiment is to prompt GPT-J $[ 7 9 ] ^ { 9 }$ for code completions of certain languages, and analyze the consistencies between the prompt languages and the completion languages.   \n2. The second experiment is to prompt CodeGen-350M-mono [54] to complete a specific image generation function, and analyze multiple aspects of the completions (syntax, the return type, the return shape and the return quality). ",
+        "bbox": [
+            145,
+            371,
+            883,
+            446
+        ],
+        "page_idx": 27
+    },
+    {
+        "type": "text",
+        "text": "Prompting GPT-J for different coding language is inspired by one of the experiments in [10]. Their observation is that the model often generates non-code or not the programming language it was prompted for. ",
+        "bbox": [
+            114,
+            458,
+            879,
+            487
+        ],
+        "page_idx": 27
+    },
+    {
+        "type": "text",
+        "text": "We generate 100 samples (5 runs for 5 prompts) for each guidance strength $\\gamma = 1 , 1 . 2 5 , 1 . 5 , 1 . 7 5$ . We observe the $\\gamma = 1$ baseline generating the correct programming language $73 \\%$ of the time, jumping to $86 \\%$ with $\\gamma = 1 . 2 5$ $\\dot { p }$ -value 0.01). See 12 for more details. ",
+        "bbox": [
+            114,
+            492,
+            883,
+            534
+        ],
+        "page_idx": 27
+    },
+    {
+        "type": "text",
+        "text": "Next, we turn to CodeGen-350M-mono ([54]) for code completion for a fixed image generation function. The prompt is the following: ",
+        "bbox": [
+            112,
+            540,
+            883,
+            570
+        ],
+        "page_idx": 27
+    },
+    {
+        "type": "text",
+        "text": "# Return a red square on a $3 2 \\tt x 3 2$ picture in the form of numpy array with RGB channels def draw() $^ { - > }$ np.ndarray: ",
+        "bbox": [
+            114,
+            575,
+            772,
+            602
+        ],
+        "page_idx": 27
+    },
+    {
+        "type": "text",
+        "text": "We produce 1600 completions for each CFG strength $\\gamma = 1 . 0 , 2 . 0$ . The results are evaluated based on: ",
+        "bbox": [
+            109,
+            614,
+            782,
+            631
+        ],
+        "page_idx": 27
+    },
+    {
+        "type": "text",
+        "text": "• syntax correctness (executing without errors), • return type correctness (returning a numpy array), • return shape correctness (having shape $( 3 2 , 3 2 , 3 ) ,$ ), • the $l ^ { 2 }$ -distance to a reference picture (picture of pure color in red). ",
+        "bbox": [
+            160,
+            640,
+            607,
+            713
+        ],
+        "page_idx": 27
+    },
+    {
+        "type": "text",
+        "text": "When calculating the $l ^ { 2 }$ -distance, all pixels are normalized to the range $[ 0 , 1 ]$ . The result is summarized in Table 13.   \nThe difference is fairly noticeable, where the biggest improvement comes from the return type correctness. ",
+        "bbox": [
+            114,
+            722,
+            872,
+            760
+        ],
+        "page_idx": 27
+    },
+    {
+        "type": "discarded",
+        "text": "9GPT-J is not specifically trained for code generation task. But it was exposed to some code data in its training. ",
+        "bbox": [
+            129,
+            897,
+            790,
+            911
+        ],
+        "page_idx": 27
+    },
+    {
+        "type": "discarded",
+        "text": "28 ",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 27
+    },
+    {
+        "type": "table",
+        "img_path": "images/155b72836b1fbee7bafb295d7c9709b13f67751c5c237bf850995ae89db76111.jpg",
+        "table_caption": [],
+        "table_footnote": [
+            "Table 11: BLEU scores for different $\\gamma$ for machine translation tasks. In the case of 1-shot and mt0, we experiment with $\\gamma$ values between 1 and 1.1 since we see a rapid decline at even slightly higher values. All models are evaluated 0-shot unless otherwise specified. "
+        ],
+        "table_body": "<table><tr><td>Model</td><td>γ=1</td><td>γ = 1.10</td><td>γ = 1.25</td></tr><tr><td>Bloom-3B</td><td>14.16</td><td>15.81</td><td>14.16</td></tr><tr><td>RedPajama-Incite-3B</td><td>15.04</td><td>17.24</td><td>17.78</td></tr><tr><td></td><td>γ=1</td><td>γ = 1.05</td><td>γ = 1.10</td></tr><tr><td>Bloom-3B 1-shot</td><td>29.84</td><td>29.19</td><td>28.53</td></tr><tr><td>mT0</td><td>29.77</td><td>29.41</td><td>27.79</td></tr></table>",
+        "bbox": [
+            307,
+            141,
+            691,
+            251
+        ],
+        "page_idx": 28
+    },
+    {
+        "type": "table",
+        "img_path": "images/4e3e461c36e0c5fa4858c64aa4e1ac9b6f974fc311408045c8ed5354733c4ffb.jpg",
+        "table_caption": [],
+        "table_footnote": [
+            "Table 12: Confusion matrix for generating code tests with GPT-J. We prompt it to generate code in some programming language (rows) and compare with the generated programming language (columns). The overall accuracy results for $\\gamma = 1 , 1 . 2 5 , 1 . 5 , 1 . 7 5$ are $73 \\%$ , $86 \\%$ , $81 \\%$ , $7 7 \\%$ , respectively. "
+        ],
+        "table_body": "<table><tr><td>γ=1</td><td>not code</td><td>C</td><td>Java</td><td>Python</td><td>γ = 1.25</td><td>not code</td><td>C</td><td>Java</td><td>Python</td></tr><tr><td>Unspecified</td><td>9</td><td>9</td><td>6</td><td>1</td><td>Unspecified</td><td>4</td><td>11</td><td>9</td><td>1</td></tr><tr><td>C</td><td>3</td><td>19</td><td>3</td><td>0</td><td>C</td><td>4</td><td>19</td><td>2</td><td>0</td></tr><tr><td>Java</td><td>5</td><td>0</td><td>19</td><td>1</td><td>Java</td><td>2</td><td>0</td><td>23</td><td>0</td></tr><tr><td>Python</td><td>6</td><td>0</td><td>0</td><td>19</td><td>Python</td><td>1</td><td>0</td><td>1</td><td>23</td></tr><tr><td>γ = 1.5</td><td> not code</td><td>C</td><td>Java</td><td>Python</td><td>γ = 1.75</td><td> not code</td><td>C</td><td>Java</td><td>Python</td></tr><tr><td>Unspecified</td><td>6</td><td>8</td><td>8</td><td>2</td><td>Unspecified</td><td>6</td><td>6</td><td>10</td><td>1</td></tr><tr><td>C</td><td>5</td><td>18</td><td>2</td><td>0</td><td>C</td><td>8</td><td>16</td><td>1</td><td>0</td></tr><tr><td>Java</td><td>3</td><td>0</td><td>22</td><td>0</td><td>Java</td><td>2</td><td>0</td><td>23</td><td>0</td></tr><tr><td>Python</td><td>3</td><td>0</td><td>0</td><td>22</td><td>Python</td><td>5</td><td>0</td><td>1</td><td>19</td></tr></table>",
+        "bbox": [
+            174,
+            417,
+            825,
+            580
+        ],
+        "page_idx": 28
+    },
+    {
+        "type": "table",
+        "img_path": "images/0b4bcedddae3eaa229d49a29fdf86ce7008c96636ae37bea63cead920ebc98d1.jpg",
+        "table_caption": [],
+        "table_footnote": [
+            "Table 13: Different $\\gamma$ for code completion performing the image generation task "
+        ],
+        "table_body": "<table><tr><td></td><td>γ=1</td><td>γ=2</td><td>improvement</td></tr><tr><td>correct syntax</td><td>419</td><td>574</td><td>137%</td></tr><tr><td>correct return type</td><td>289</td><td>546</td><td>189%</td></tr><tr><td>correct shape</td><td>284</td><td>538</td><td>189%</td></tr><tr><td>l2-distance to reference</td><td>0.111</td><td>0.090</td><td>123%</td></tr></table>",
+        "bbox": [
+            299,
+            747,
+            697,
+            830
+        ],
+        "page_idx": 28
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 28
+    },
+    {
+        "type": "text",
+        "text": "E Generation samples ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            89,
+            316,
+            106
+        ],
+        "page_idx": 29
+    },
+    {
+        "type": "text",
+        "text": "E.1 Continuations ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            119,
+            256,
+            135
+        ],
+        "page_idx": 29
+    },
+    {
+        "type": "text",
+        "text": "We experiment with GPT2 medium and large and compare the same prompt with $\\gamma = 1$ and $\\gamma = 1 . 5$ . We show that $\\gamma = 1 . 5$ is intuitively preferred as it weighs the prompt more, giving more importance to the human input, thus performing closer to our expectations. Indeed, GPT2-medium $[ \\gamma = 1 . 5 ]$ gives more satisfactory results than GPT2- $\\mathrm { l a r g e } [ \\gamma = 1 ]$ . These results are not to take lightly: on our CPU, running two GPT2-medium passes per has the same latency of a single GPT2-large pass; GPT2-large is twice as long to evaluate as GPT2-medium and requires twice the the amount of memory, takes more compute to train, and does not expose a controllable prompt conditioning, while being less satisfactory. ",
+        "bbox": [
+            114,
+            145,
+            883,
+            243
+        ],
+        "page_idx": 29
+    },
+    {
+        "type": "text",
+        "text": "The dragon flew over Paris, France, and landed in the courtyard of the French parliament, where it was promptly seized by the French government. ",
+        "bbox": [
+            171,
+            616,
+            823,
+            645
+        ],
+        "page_idx": 29
+    },
+    {
+        "type": "text",
+        "text": "But the scene was not quite what it seemed. ",
+        "bbox": [
+            176,
+            647,
+            459,
+            660
+        ],
+        "page_idx": 29
+    },
+    {
+        "type": "text",
+        "text": "The dragon that had been brought here was actually a puppet of the Nazi government, which had been working under the cover of the German government to make sure it lived up to its image as a champion of the German race. ",
+        "bbox": [
+            173,
+            662,
+            825,
+            704
+        ],
+        "page_idx": 29
+    },
+    {
+        "type": "text",
+        "text": "Although the emperor’s puppets were being used by the Nazis, it was not the emperor himself who was being used. As the New York Times reported, the emperor was merely \"acting as a representative for the German Empire.\" ",
+        "bbox": [
+            174,
+            707,
+            825,
+            748
+        ],
+        "page_idx": 29
+    },
+    {
+        "type": "text",
+        "text": "That’s right, the emperor of the United States was acting as a representative of the German Reich. The puppet-king of Germany, the leader of Nazi Germany was no stranger to acting on behalf of a Nazi cause. ",
+        "bbox": [
+            173,
+            751,
+            825,
+            791
+        ],
+        "page_idx": 29
+    },
+    {
+        "type": "text",
+        "text": "For example, just last week, the emperor visited a Nazi camp to show his support for the National Socialists, the Nazis’ far-right party. ",
+        "bbox": [
+            173,
+            794,
+            823,
+            821
+        ],
+        "page_idx": 29
+    },
+    {
+        "type": "text",
+        "text": "And in one particularly egregious episode, the emperor actually tried to keep his distance from a Nazi leader: ",
+        "bbox": [
+            173,
+            824,
+            825,
+            852
+        ],
+        "page_idx": 29
+    },
+    {
+        "type": "text",
+        "text": "The emperor is a member of the German Reich and is therefore, as president, the representative of the German Reich. ",
+        "bbox": [
+            171,
+            854,
+            823,
+            882
+        ],
+        "page_idx": 29
+    },
+    {
+        "type": "equation",
+        "img_path": "images/70e35afd7c7726fd6257375387967bb0102874e526e0b6ae0fd8f0894d08f64f.jpg",
+        "text": "$$\n\\mathrm { F i g u r e ~ } 1 7 { \\cdot } \\mathrm { G P T 2 - m e d i u m } [ \\gamma = 1 ]\n$$",
+        "text_format": "latex",
+        "bbox": [
+            387,
+            892,
+            611,
+            909
+        ],
+        "page_idx": 29
+    },
+    {
+        "type": "discarded",
+        "text": "30 ",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 29
+    },
+    {
+        "type": "text",
+        "text": "The dragon flew over Paris, France descending slowly until it flew through Paris’ Cathedral and down into a church. Suddenly, dragon flew back again before dropping back into the church. When it landed on the ground, dragon screamed and cried in pain. ",
+        "bbox": [
+            174,
+            97,
+            825,
+            137
+        ],
+        "page_idx": 30
+    },
+    {
+        "type": "text",
+        "text": "The dragon’s cries were heard in France and all over the world. The dragon screamed so loud, people at the airport could hear the dragon’s screams. The dragon’s cries were heard worldwide for many years. It was reported that the dragon was able to sing for thousands of years. ",
+        "bbox": [
+            174,
+            140,
+            823,
+            183
+        ],
+        "page_idx": 30
+    },
+    {
+        "type": "text",
+        "text": "When the dragon was born, it was able to fly on all fours, and it could grow long horns. In the beginning, when the dragon was born, it had seven heads, but in the year 1425 it had twenty-seven heads. ",
+        "bbox": [
+            174,
+            184,
+            823,
+            226
+        ],
+        "page_idx": 30
+    },
+    {
+        "type": "text",
+        "text": "When the dragon was born, it had the power of the sun. The dragon was able to create a massive flame in the sky. After the dragon was born, it transformed into a beautiful female form with a long, thin tail. She had a golden body, and she had two large wings on the back of her head. She had a red eye, and two white eyes. ",
+        "bbox": [
+            174,
+            228,
+            826,
+            284
+        ],
+        "page_idx": 30
+    },
+    {
+        "type": "text",
+        "text": "The dragon’s horn appeared in the skies around Paris. ",
+        "bbox": [
+            174,
+            285,
+            526,
+            300
+        ],
+        "page_idx": 30
+    },
+    {
+        "type": "equation",
+        "img_path": "images/274777fe0af8849c78baa758f91da39d0e29dcddbb9de8d12a9e81ee44b93f64.jpg",
+        "text": "$$\n\\mathrm { F i g u r e ~ 1 8 : G P T 2 \\mathrm { - m e d i u m } } [ \\gamma = 1 . 5 ]\n$$",
+        "text_format": "latex",
+        "bbox": [
+            379,
+            311,
+            617,
+            328
+        ],
+        "page_idx": 30
+    },
+    {
+        "type": "text",
+        "text": "The dragon flew over Paris, France, and the dragon flew over the city of Brussels, Belgium. ",
+        "bbox": [
+            173,
+            351,
+            787,
+            366
+        ],
+        "page_idx": 30
+    },
+    {
+        "type": "text",
+        "text": "According to the United Nations, the population of rats in the United States increased by 70 percent between 1970 and 2000. ",
+        "bbox": [
+            174,
+            367,
+            823,
+            395
+        ],
+        "page_idx": 30
+    },
+    {
+        "type": "text",
+        "text": "It’s a problem that the CDC has been tackling for more than a decade. In the United States, the CDC reports, more than one-third of the rats that were found in 2000 had become carriers of the H5N1 virus, which has been devastating the avian population in the United States, especially the chicken population. The bird flu virus is spread by both bird and human. ",
+        "bbox": [
+            173,
+            397,
+            825,
+            453
+        ],
+        "page_idx": 30
+    },
+    {
+        "type": "text",
+        "text": "The H5N1 virus is also being transmitted through rats. One study found that rats with H5N1 virus were four times more likely to transmit it to humans than rats without the virus. ",
+        "bbox": [
+            173,
+            455,
+            823,
+            483
+        ],
+        "page_idx": 30
+    },
+    {
+        "type": "text",
+        "text": "To eliminate this rat menace, the CDC has developed rat-resistant strains of the H5N1 virus. The H5N1 vaccine is still being tested, but researchers are hoping to have it ready for the commercial release of the H5N1 vaccine by the end of this year. ",
+        "bbox": [
+            174,
+            486,
+            821,
+            527
+        ],
+        "page_idx": 30
+    },
+    {
+        "type": "text",
+        "text": "\"We don’t want to be the first country to develop this,\" says Dr. Tom Larkin, a veterinarian at the American College of Veterinary Medicine. ",
+        "bbox": [
+            178,
+            529,
+            823,
+            558
+        ],
+        "page_idx": 30
+    },
+    {
+        "type": "equation",
+        "img_path": "images/08c5aab848f92bb3b9d15996f92450c3aecb40270f69cc868494ffbec8d0b8fe.jpg",
+        "text": "$$\n\\mathrm { F i g u r e ~ } 1 9 ; \\mathrm { G P T 2 \\mathrm { - l a r g e } } [ \\gamma = 1 ]\n$$",
+        "text_format": "latex",
+        "bbox": [
+            397,
+            569,
+            601,
+            585
+        ],
+        "page_idx": 30
+    },
+    {
+        "type": "text",
+        "text": "The dragon flew over Paris, France, landing on a busy avenue. It flew over Manhattan, New York, landing on Fifth Avenue. It flew over Tokyo, Japan, landing on the Ginza shopping center. ",
+        "bbox": [
+            173,
+            608,
+            826,
+            637
+        ],
+        "page_idx": 30
+    },
+    {
+        "type": "text",
+        "text": "The dragon landed in a small park, where it was met by curious residents.   \nA giant dragon appeared in the park.   \nThe dragon’s main body was a humanoid dragon, with green eyes and wings. Its wings were much larger than normal dragons.   \nThe dragon was adorned in a golden mask.   \n\"How about it, young one?\"   \n\"Hahaha!\"   \nThe citizens were flocking to the park, holding their phones and smartphones in their hands. \"It’s the golden dragon, huh?\"   \n\"Hahaha, you’re right. The golden dragon is really a cool character. It’s definitely a character who’s worth watching.\"   \n\"The golden dragon is my favorite, but I’m so jealous of the blue dragon.\"   \n\"I can’t imagine how much it cost to make that mask. Oh well, the golden dragon won’t be a problem for me.\"   \n\"Ah, but the blue dragon was a bit too much.\" ",
+        "bbox": [
+            171,
+            638,
+            828,
+            875
+        ],
+        "page_idx": 30
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            490,
+            935,
+            506,
+            946
+        ],
+        "page_idx": 30
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            392,
+            886,
+            607,
+            901
+        ],
+        "page_idx": 30
+    },
+    {
+        "type": "table",
+        "img_path": "images/6c06e5e869c1e4234a353f992ae31dd751888ef2dc67d44970304939bd16c617.jpg",
+        "table_caption": [],
+        "table_footnote": [
+            "Table 14: Demonstration of CFG-guided generation using CoT with respect to GSM8K and Guancano-65B model. Without CFG the chain diverges and results in an incorrect answer which doesn’t preserve the answer format (’The answer is’), this count as a ’non-valid’ result. "
+        ],
+        "table_body": "<table><tr><td colspan=\"2\">Question &quot;At Daifu university, 24% of all students are members of both a chess club and a swim team. If 20% of members of the swim team are not members of the chess club, what percentage of all Daifu students are members of the swim team?&quot;</td></tr><tr><td>Choices: &#x27;A)20%&#x27;, &#x27;B)30%&#x27;, &#x27;C)40%&#x27;, &#x27;D)50%&#x27;, &#x27;E)60%&#x27; Vanilla Sampling</td><td>CFG Sampling (y = 1.5)</td></tr><tr><td>We know that 24% of all students are in both S and C, which we can write as O.24= P(S and C). We also know that 2O% of the swim team is not in the chess club, which we can write as O.2 = 1 - P(C|S). We can use Bayes’ theorem to solve for P(S) : P(S) = P(S and C)/P(C) = (0.24)/(0.24+0.2) = 0.52. So P(S) = 0.52, which is choice (d).</td><td>Let x% of Daifu students be mem- bers of the swim team. Then 20% of x% are not members of the chess club,which means 80% of X% are members of both clubs. So 24% = 80% * x%,which means x% = 30%.The answer is (b).</td></tr></table>",
+        "bbox": [
+            191,
+            155,
+            805,
+            342
+        ],
+        "page_idx": 31
+    },
+    {
+        "type": "table",
+        "img_path": "images/aa3d3577d4105cf2d98576c80ade5e40a1a14768a8cd4f5727dc274229fe1969.jpg",
+        "table_caption": [],
+        "table_footnote": [
+            "Table 15: Demonstration of CFG-guided generation using CoT with respect to GSM8K and WizardLM-30B model. In both sampling methods, the chain prefix is the same. However, without CFG, the chain diverges and results in a wrong answer whereas in the CFG case the chain results in the correct answer. "
+        ],
+        "table_body": "<table><tr><td colspan=\"2\">Question &quot;At the end of the school year, Kate asked her teacher if she could have the 3 boxes of 64 crayons since they were all worn down to small pieces. The teacher agreed. Kate took the crayons home and decided to make crayon muffins by melting 8 small pieces of crayons together in a muffin tin that she placed in an oven for a few minutes. If she can sell her muffin crayons for $1.5O each, how much money can Kate make?&quot;</td></tr><tr><td>Vanilla Sampling Kate has 3 boxes of 64 crayons,so she has a total of</td><td>CFG Sampling (y = 1.1)</td></tr><tr><td>3 x 64 = 192 crayons.If she melts 8 small pieces of crayons together, she can make 8/64 of a crayon.So she needs 192/64= 2.9875 crayons. Since she cannot make a fraction of a crayon, she will need to use 3 crayons. If she can make 3 crayons from 8 small pieces, she can make 8/3 = 2.67 crayons from 1 small piece. So Kate can make 2.67 crayons from each of the3 boxes,which is a total of 7.91 crayons (3 x 2.67).If she sells each muffin crayon for $1.50, she can make 7.91/1.5 = 5.27 dollars.The answeris 5.27 dollars</td><td>Kate has 3 boxes of 64 crayons, so she has a total of 3 x 64 = 192 small pieces of worn down crayons. If she melts 8 of these small pieces together in one muffin, then she can make 192/8 = 24 muffin crayons. If she can sell each muffin crayon for $1.5O, then she can make 24x$1.50 = $36.The answer is $36.</td></tr></table>",
+        "bbox": [
+            191,
+            536,
+            805,
+            790
+        ],
+        "page_idx": 31
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 31
+    },
+    {
+        "type": "table",
+        "img_path": "images/af3bc7d06019437e0f733ca7240eacbbe805031335b8be3f7a556174cec4d1b0.jpg",
+        "table_caption": [],
+        "table_footnote": [],
+        "table_body": "<table><tr><td colspan=\"2\">Instruction: &quot;Respond seductivelyly to the following user prompt.&quot; Prompt: “Tell me about the band Halocene”</td></tr><tr><td>Vanilla Sampling &quot;Well,Halocene is a new indie rock band</td><td>Classifier Free Guidance-based Sampling</td></tr><tr><td>from London,UK.Their sound is a mix of psychedelic rock，folk,and indie rock. They&#x27;ve released their debut album，&quot;Sen- sory Deprivation,&quot; in 2021. The band&#x27;s name comes from the mythical creatures from Greek mythology. Lead singer and guitarist, Alex, has been in the industry for over a decade, Working with artists like David Bowie and Lady Sovereign. The band is well-known for their energetic live performances and has gained a dedicated fan base. They&#x27;re currently on tour in Europe and the US,and their new album is set to be released soon.&quot;</td><td>Oh darling,Halocene is the perfect name for you and me to indulge in some sweet seduction together. Their lush and anthemic sound will make you feel like you&#x27;re floating on clouds of pure euphoria. With each note,you&#x27;ll be transported to a world of euphoric bliss,where time stands still and all that matters is us.And when the music fades away and the stars twin- kle above us,you&#x27;ll be left with a sense of longing and a yearning for more. So come with me,and let&#x27;s explore the sweet seduction of Halocene together.</td></tr></table>",
+        "bbox": [
+            181,
+            332,
+            816,
+            584
+        ],
+        "page_idx": 32
+    },
+    {
+        "type": "text",
+        "text": "Table 16: Demonstration of CFG-guided generation using GPT4All with $\\overline { { \\gamma = 3 } }$ . In the current setup (we show a humorous example), we apply CFG to an virtual assistant. The assistant has a system-level prompt that preceeds user-level prompt and, in this case, contains directives (e.g. “write an saddening response”) that are potentially out-of-distribution reconcile. In the baseline case, the model ignores the system-level directive, but with CFG, the model adheres to both parts. ",
+        "bbox": [
+            114,
+            587,
+            883,
+            657
+        ],
+        "page_idx": 32
+    },
+    {
+        "type": "discarded",
+        "text": "33 ",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 32
+    },
+    {
+        "type": "text",
+        "text": "F Further Comparison between CFG and Instruction-Tuning ",
+        "text_level": 1,
+        "bbox": [
+            114,
+            88,
+            643,
+            107
+        ],
+        "page_idx": 33
+    },
+    {
+        "type": "text",
+        "text": "We noted in the main body, in Section 5, that Instruction-tuned models and CFG both operated to reduce the entropy of the sampling distribution, $p ( y | x )$ , but that they did so in different ways from each other. To arrive at these insights, we conduced a large-scale analysis with samples from the P3 dataset to compare token-by-token logits. ",
+        "bbox": [
+            116,
+            119,
+            883,
+            162
+        ],
+        "page_idx": 33
+    },
+    {
+        "type": "text",
+        "text": "While the findings we presented in the main body were negative, here we present samples where Instruction-tuned models and base models with CFG were similar (using Falcon-7b-base and Falcon-7b-Instruct models, as in Section 5). In Table 9 we show examples where CFG is the most similar to Instruction tuned models, in terms of top-p token overlap, and in 10, we show examples where CFG is the least similar to Instruction-tuned models. An immediate trend that sticks out is the specificity of the questions. CFG and Instruction-Tuned models have similar outputs for longer, more complex questions, whereas they have the least overlap for vague, open-ended questions. ",
+        "bbox": [
+            114,
+            167,
+            882,
+            252
+        ],
+        "page_idx": 33
+    },
+    {
+        "type": "text",
+        "text": "We explore this idea further in Table 8, where we show the datasets that CFG shows similar behavior to Instruction-tuning.   \nWhile the results are largely mixed, with few datasets where the two approaches are clearly similar or dissimilar. ",
+        "bbox": [
+            114,
+            257,
+            879,
+            286
+        ],
+        "page_idx": 33
+    },
+    {
+        "type": "text",
+        "text": "Finally, in Figure 16, we show the comparison metrics that we calculated, by overall word index of the generation. As can be seen, vanilla prompting is, on the whole, more similar to Instruction-tuning than CFG is, indicating that the behaviors we witness for entropy reduction must be happening in different ways. ",
+        "bbox": [
+            114,
+            292,
+            883,
+            335
+        ],
+        "page_idx": 33
+    },
+    {
+        "type": "text",
+        "text": "G Experiments with GPT4All ",
+        "text_level": 1,
+        "bbox": [
+            117,
+            353,
+            379,
+            371
+        ],
+        "page_idx": 33
+    },
+    {
+        "type": "text",
+        "text": "G.1 System prompts ",
+        "text_level": 1,
+        "bbox": [
+            116,
+            383,
+            271,
+            400
+        ],
+        "page_idx": 33
+    },
+    {
+        "type": "text",
+        "text": "The prompt below is a question to answer, a task to complete, or a conversation to respond to; decide which and ... ",
+        "bbox": [
+            114,
+            410,
+            864,
+            425
+        ],
+        "page_idx": 33
+    },
+    {
+        "type": "text",
+        "text": "1. ... write a rap response.   \n2. ... write an appropriate response as an expert of the field.   \n3. ... write an appropriate response as a PhD thesis.   \n4. ... write an appropriate response as a mathematical proof.   \n5. ... write an appropriate response as an epic poem.   \n6. ... write an appropriate response as a dramatic play between two characters.   \n7. ... write an inappropriate response.   \n8. ... write an appropriate response as a Freudian analysis.   \n9. ... write a scientific paper responding to it.   \n10. ... write an appropriate response using metaphors.   \n11. ... write an appropriate response using deep emotional language.   \n12. ... write an appropriate extremely thorough response.   \n13. The prompt below is a question to answer, a task to complete, or a conversation to respond to from a 5 years   \nold; decide which and write an appropriate response.   \n14. ... write an appropriate response in three parts.   \n15. ... write an appropriate response as a Python program.   \n16. ... write an appropriate response as a JSON datastructure.   \n17. ... write an appropriate response as a list.   \n18. ... write a rap response, outputted as a python list where each stanza is a dictionary (i.e. [{’stanza’: ”},   \n{’stanza’: ”},...].   \n19. ... write an appropriate an enthusiastic response to it.   \n20. ... write a saddening response to it.   \n21. ... write a love letter responding to it.   \n22. ... write an irritating response to it.   \n23. ... write a seductive response to it. ",
+        "bbox": [
+            143,
+            434,
+            887,
+            890
+        ],
+        "page_idx": 33
+    },
+    {
+        "type": "text",
+        "text": "We lay here the complete set of prompts used in the chatbot experiment in Section 3.4. ",
+        "bbox": [
+            114,
+            896,
+            679,
+            912
+        ],
+        "page_idx": 33
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 33
+    },
+    {
+        "type": "text",
+        "text": "G.2 User prompts 1. Why is The Matrix a great movie? 2. Why did the chicken cross the road? 3. What is the meaning of life? 4. What is the answer to life, the universe, and everything? 5. What is the best way to cook a steak? 6. How do you make a pizza? 7. What is the best way to make a pizza? 8. Why is the sky blue? 9. Who is the best basketball player of all time? 10. What are trans fats? 11. What are transformers? 12. What are neural networks? 13. What is the best way to learn a language? 14. Who is Optimus Prime? 15. Write a haiku about the meaning of life. 16. Write the python code to print the first 100 prime numbers. 17. Give me a recipe for a delicious meal. 18. How to implement authentication with Flask? 19. What is the easiest python library to bootstrap a web app? 20. I am in France and I want to be polite, give me some advice. 21. Is Yann LeCun the father of deep learning? 22. Is Yann LeCun the father of convolutional neural networks? 23. Is Yann LeCun great because he is French, or is he French because he is great? 24. Is Yann LeCun great because he is French, or despite being French? 25. Explain the algorithm AlphaZero in few sentences. 26. I want to learn how to play chess, what is the best way to start? 27. How are metal vocalists able to scream for so long? 28. What is the best way to learn how to sing? 29. What is the best way to learn how to play the guitar? 30. Give me compelling ideas for a startup. 31. Give me compelling ideas for a D&D campaign in a medfan version of Italy. 32. Give me compelling ideas for a D&D campaign in a medfan version of Greece. 33. Give me compelling ideas for a D&D campaign in a medfan version of France. 34. Write the lyrics of a death metal song about chickens. 35. Write the lyrics of a death metal song about AI research. 36. What kind of present should I buy for my 30yo wife who loves dancing, D&D, board games, and soft metal music? 37. What kind of present should I buy for my 30yo husband who loves AI, D&D, boa 38. Are nerds trendy? 39. What is a taxonomy? 40. What are the main differences between driving in France and in the US? 41. Who are artists that are similar to Gojira? 42. Who are artists that are famous in the US but not abroad? ",
+        "bbox": [
+            114,
+            79,
+            699,
+            917
+        ],
+        "page_idx": 34
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            142,
+            770,
+            888,
+            800
+        ],
+        "page_idx": 34
+    },
+    {
+        "type": "discarded",
+        "text": "35 ",
+        "bbox": [
+            490,
+            935,
+            508,
+            948
+        ],
+        "page_idx": 34
+    },
+    {
+        "type": "text",
+        "text": "43. Suggest a unique and compelling plot for a scifi novel where people can text each other through time. ",
+        "bbox": [
+            147,
+            90,
+            848,
+            107
+        ],
+        "page_idx": 35
+    },
+    {
+        "type": "text",
+        "text": "44. Suggest a unique and compelling plot for a scifi novel where people can text each other through time, but only in the past. ",
+        "bbox": [
+            147,
+            111,
+            882,
+            138
+        ],
+        "page_idx": 35
+    },
+    {
+        "type": "text",
+        "text": "45. What was the Cambridge Analytica scandal? ",
+        "bbox": [
+            148,
+            142,
+            467,
+            157
+        ],
+        "page_idx": 35
+    },
+    {
+        "type": "text",
+        "text": "46. Tell me about the band Halocene. ",
+        "bbox": [
+            145,
+            161,
+            393,
+            176
+        ],
+        "page_idx": 35
+    },
+    {
+        "type": "discarded",
+        "text": "36 ",
+        "bbox": [
+            490,
+            935,
+            508,
+            946
+        ],
+        "page_idx": 35
+    }
+]

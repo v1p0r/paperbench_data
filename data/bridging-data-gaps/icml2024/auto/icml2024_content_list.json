@@ -1,0 +1,2532 @@
+[
+    {
+        "type": "text",
+        "text": "Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning ",
+        "text_level": 1,
+        "bbox": [
+            240,
+            109,
+            732,
+            154
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Xiyu Wang 1 Baijiong Lin 2 Daochang Liu 1 Ying-Cong Chen 2 Chang Xu 1 ",
+        "bbox": [
+            214,
+            199,
+            751,
+            215
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Abstract ",
+        "text_level": 1,
+        "bbox": [
+            245,
+            242,
+            316,
+            258
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Diffusion Probabilistic Models (DPMs) show significant potential in image generation, yet their performance hinges on having access to large datasets. Previous works, like Generative Adversarial Networks (GANs), have tackled the limited data problem by transferring pretrained models learned with sufficient data. However, those methods are hard to utilize in DPMs because of the distinct differences between DPM-based and GANbased methods, which show the integral of the unique iterative denoising process and the need for many time steps with no target noise in DPMs. In this paper, we propose a novel DPM-based transfer learning method, called DPMs-ANT, to address the limited data problem. It includes two strategies: similarity-guided training, which boosts transfer with a classifier, and adversarial noise selection, which adaptively chooses targeted noise based on the input image. Extensive experiments in the context of few-shot image generation tasks demonstrate that our method is efficient and excels in terms of image quality and diversity compared to existing GAN-based and DPM-based methods. ",
+        "bbox": [
+            120,
+            268,
+            441,
+            630
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "1. Introduction ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            661,
+            215,
+            678
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Generative models, such as GANs (Brock et al., 2018; Guo et al., 2020; Khan et al., 2022), VAEs (Kingma & Welling, 2013; Rezende et al., 2014), and autoregressive models (Van den Oord et al., 2016; Chen et al., 2018; Grill et al., 2020), have made remarkable successes in various fields across images (Brock et al., 2018; Razavi et al., 2019), text (Brown et al., 2020), and audio (Dhariwal et al., 2020) by utilizing vast amounts of unlabeled data for training. Diffusion probabilistic models (DPMs) (Sohl-Dickstein et al., 2015; Ho et al., 2020; Nichol & Dhariwal, 2021), which are designed to replicate data distributions by learning to invert multistep noise procedures, have recently experienced significant advancements, enabling the generation of highdefinition images with broad diversity. Although DPMs have emerged as a potent tool for image generation with remarkable results in terms of both quality and diversity, modern DPMs heavily rely on extensive amounts of data to train the large-scale parameters of their networks (Cao et al., 2022). This dependency can lead to overfitting and a failure to generate diverse and high-quality images with limited training data. Additionally, diffusion sampling with guidance struggles to generate images with a large domain gap. Unfortunately, gathering sufficient data is not always feasible in certain situations. ",
+        "bbox": [
+            89,
+            689,
+            473,
+            792
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            501,
+            243,
+            885,
+            500
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Transfer learning can be an effective solution to this challenge, as it applies knowledge from a pretrained generative model trained on a large dataset to a smaller one. The fundamental idea is to begin training with a source model that has been pre-trained on a large dataset, and then adapt it to a target domain with limited data. Several techniques have been proposed in the past to adapt pre-trained GAN-based models (Wang et al., 2018; Karras et al., 2020a; Wang et al., 2020; Li et al., 2020) from large-scale source datasets to target datasets using a limited number of training samples. Typically, methods for few-shot image generation either enhance the training data artificially using data augmentation to prevent overfitting (Zhang et al., 2018; Karras et al., 2020a), or directly evaluate the distance between the processed image and the target image (Ojha et al., 2021; Zhao et al., 2022). ",
+        "bbox": [
+            501,
+            508,
+            885,
+            750
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Nevertheless, applying prior GAN-based techniques to DPMs is challenging due to the differences in training processes between GAN-based and DPM-based methods. GANs can quickly generate a final processed image from latent space, while DPMs only predict less noisy images at each step and request a large number of timesteps to generate a high-quality final image. Such an iterative denoising process poses two challenges when transferring diffusion models. The first challenge is that the transfer direction needs to be estimated on noisy images. The single-pass generation of GANs allows them to directly compare the generated clean images with the target image (Li et al., 2020; Ojha et al., 2021; Zhao et al., 2022), which is not easily applicable to diffusion models. The current DPM-based few-shot method, DDPM pairwise adaptation (DDPM-PA) (Zhu et al., 2022), substitutes the high quality real final image with the predicted blurred final in the intermediate time step to address this problem. However, comparing the target image with the blurry image can be problematic and inaccurate, as the predicted image may not accurately represent the domain of the generated images. It leads to the production of DDPM-PA final images that are fuzzy and distorted. Moreover, even if the transfer direction can be available, we still face a more fundamental second challenge resulting from the noise mechanism in diffusion models. The diffusion and denoising process utilize fully random Gaussian noise, which is independent of the input image and makes no assumption of it. We observe that such non-targeted noise imposes unbalanced effects on different images, leading to divergent transferring pace in terms of training iteration needed. As demonstrated in Figure 1, while one image (the green box image in the lower row) might be adequately transferred from the source to the target domain, another (the red boxed images in the lower row) may become overly similar to the target image due to severe overfitting. Consequently, an extensive number of iterations are required to transfer and train effectively within the normally distributed noise. This is especially challenging when the gradient direction is noisy due to limited images, leading to overfitting problems. ",
+        "bbox": [
+            501,
+            757,
+            885,
+            892
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "1School of Computer Science, Faculty of Engineering, The University of Sydney, Australia 2The Hong Kong University of Science and Technology (Guangzhou), China. Correspondence to: Chang $\\mathbf { X } \\mathbf { u } < \\mathbf { c } . \\mathbf { x } \\mathbf { u } @ \\mathbf { \\Xi }$ sydney.edu.au>. ",
+        "bbox": [
+            88,
+            804,
+            473,
+            854
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "Proceedings of the $\\mathit { 4 1 } ^ { s t }$ International Conference on Machine Learning, Vienna, Austria. PMLR 235, 2024. Copyright 2024 by the author(s). ",
+        "bbox": [
+            88,
+            866,
+            472,
+            904
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "discarded",
+        "text": "1 ",
+        "bbox": [
+            482,
+            922,
+            490,
+            934
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "image",
+        "img_path": "images/80af3b8ea7743467537fe43e6f808365382ee3976e36c8d07e523a487fe40b76.jpg",
+        "image_caption": [
+            "Figure 1. Two sets of images generated from corresponding fixed noise inputs at different stages of fine-tuning DDPM from FFHQ to 10-shot Sunglasses. The perceptual distance, LPIPS (Zhang et al., 2018), between the generated image and the target image is shown on each generated image. When the bottom image successfully transfers to the target domain, the top image is already overfitting. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            91,
+            83,
+            879,
+            285
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            89,
+            357,
+            473,
+            828
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "In this paper, to handle the challenge of transferring direction estimation for diffusion models, we propose to leverage a similarity measurement to estimate the gap between the source and the target, which circumvents the necessity of comparing individual images. Building upon this, we introduce a similarity-guided training approach to fine-tune the pre-trained source model to the target domain. It employs a classifier to estimate the divergence between the source and target domains, leveraging existing knowledge from the source domain to aid in training the target domain. This method not only helps in bridging the gap between the source and target domains for diffusion models but also addresses the unstable gradient direction caused by limited target data in the few-shot setting by implicitly comparing the sparse target data with the abundant source data. More importantly, to tackle the challenge of non-targeted noise in diffusion models, we propose a novel min-max training process, i.e., adversarial noise selection, to dynamically choose the noise according to the input image. The adversarial noise scheme enhances few-shot transfer learning by minimizing the “worse-case” Gaussian noise which the pre-trained model fails to denoise on the target dataset. This strategy also significantly reduces the training iterations needed and greatly improves the efficiency of transfer learning for diffusion models. Our adversarial strategy with similarity measurement excels in a few-shot image generation tasks, speeding up training, achieving faster convergence, and creating images that fit the target style while resembling the source images. Experiments on few-shot image generation tasks demonstrate that our method surpasses existing GAN-based and DDPM-based techniques, offering superior quality and diversity. ",
+        "bbox": [
+            88,
+            837,
+            473,
+            895
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            501,
+            361,
+            885,
+            781
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "2. Related Work ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            801,
+            637,
+            819
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "2.1. Diffusion Probabilistic Models ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            828,
+            741,
+            842
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "DDPM (Ho et al., 2020) has been leveraged as an effective generative model that circumvents the adversarial training inherent in GANs (Goodfellow et al., 2020). DDPMs, by enabling the diffusion reverse process, are capable of reconstructing images. However, DDPM suffers from a long computational time because of extensive iterative time steps. DDIM (Song et al., 2020) addresses this issue by “implicating” the model, which allows it to function with far fewer iterations and dramatically reduces the inference time compared to DDPM. Conversely, a fresh approach to the diffusion model is the score-based model via stochastic differential equation (SDE), wherein the diffusion and the denoising processes are both modeled by SDEs. Song & Ermon (2019) initially proposed the generation of samples from latent noise via the dynamic Langevin sampling method. Variational diffusion models (VDM) (Kingma et al., 2021) introduced an innovative method that merges the capabilities of Variational Autoencoders (VAE) and diffusion models. This hybrid approach resulted in notable enhancements in the quality and diversity of generated samples. Knowledge Distillation for Diffusion Models (KDDM) (Huang et al., 2024) developed a strategy that substantially decreases the inference time required by diffusion models, without sacrificing the quality of the outputs. Additionally, Yu et al. (2022); Karras et al. (2022) use higher-order solvers to replace the original reverse process in diffusion models, enabling faster sampling. For fast high-quality and high-resolution image generation, Latent Diffusion Models (LDMs) (Rombach et al., 2022) gradually transform random noise into the target image through a diffusion process on the latent representation space. ",
+        "bbox": [
+            500,
+            852,
+            887,
+            896
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "discarded",
+        "text": "Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning ",
+        "bbox": [
+            205,
+            58,
+            767,
+            69
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "discarded",
+        "text": "2 ",
+        "bbox": [
+            482,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            864,
+            126,
+            880,
+            252
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            88,
+            85,
+            473,
+            507
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "2.2. Few-shot Image Generation ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            523,
+            312,
+            539
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Existing methods predominantly adopt an adaptation pipeline where a foundational model is pre-trained on the source domain with a large number of training data, and then adjusted to a smaller target domain. In contrast, few-shot image generation strives to envision new and diverse examples while circumventing overfitting to the limited training images of the target domain. FreezeD (Mo et al., 2020) addresses overfitting by locking parameters in the highresolution layers of the discriminator. MineGAN (Wang et al., 2020) incorporates additional networks to fine-tune the noise inputs of the generator. EWC (Li et al., 2020) uses elastic weight consolidation, making it difficult to modify essential weights that possess high Fisher information values. CDC (Ojha et al., 2021) introduces cross-domain consistency loss and patch-level discrimination to forge a connection between the source and target domains. DCL (Zhao et al., 2022) uses contrastive learning to distance the generated samples from the actual images and maximize the similarity between the corresponding pair of images in the source and target domains. Similar to CDC, DDPM-PA (Zhu et al., 2022) adapts pre-trained diffusion models on extensive source domains to target domains with cross-domain consistency loss and patch-level discrimination. GAN-based methods, like CDC and DCL, require the final generated image during training. In contrast, DPMs’ training process aims at predicting the next stage of noised images and can only yield a blurry predicted image during the training stage. ",
+        "bbox": [
+            89,
+            549,
+            473,
+            893
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            500,
+            84,
+            883,
+            145
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "3. Preliminary ",
+        "text_level": 1,
+        "bbox": [
+            500,
+            164,
+            620,
+            181
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Diffusion models approximate the data distribution $q ( x _ { 0 } )$ by $p _ { \\theta } ( x _ { 0 } )$ , where $p _ { \\theta } ( x _ { 0 } )$ is modeled in the form of latent variable models. According to (Ho et al., 2020), at timestep $t$ , the diffusion process adding Gaussian noise with variance $\\beta _ { t } \\in ( 0 , 1 )$ to the data can be expressed as: ",
+        "bbox": [
+            500,
+            190,
+            885,
+            266
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "equation",
+        "img_path": "images/dd0eb3b1a63df36705742b919a7008a300fb0f54a7fe2bae1eab16a2fac3d4a0.jpg",
+        "text": "$$\n\\begin{array} { r l r } & { } & { q ( x _ { t } | x _ { 0 } ) = \\mathcal { N } ( x _ { t } ; \\bar { \\alpha } _ { t } x _ { 0 } , ( 1 - \\bar { \\alpha } _ { t } ) { \\bf I } ) , } \\\\ & { } & { x _ { t } = \\sqrt { \\bar { \\alpha } _ { t } } x _ { 0 } + \\sqrt { 1 - \\bar { \\alpha } _ { t } } \\epsilon , ~ } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            570,
+            273,
+            812,
+            314
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "where $\\begin{array} { r } { x _ { 0 } \\sim q ( x _ { 0 } ) , \\alpha _ { t } : = 1 - \\beta _ { t } , \\bar { \\alpha } _ { t } : = \\prod _ { i = 0 } ^ { t } \\left( 1 - \\beta _ { i } \\right) } \\end{array}$ and $\\epsilon \\sim \\mathcal { N } ( \\mathbf { 0 } , \\mathbf { I } )$ . Ho et al. (2020) train a U-Net (Ronneberger et al., 2015) model parameterized by $\\theta$ to fit the data distribution $q ( x _ { 0 } )$ by maximizing the lower variation limit. The DDPM training loss with model $\\epsilon _ { \\theta } ( x _ { t } , t )$ can be expressed as: ",
+        "bbox": [
+            500,
+            321,
+            885,
+            412
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "equation",
+        "img_path": "images/b1418c938ec80b945a31bb293aef2e3d8fd7ef87de191a804a4d1c36d3553bd1.jpg",
+        "text": "$$\n\\mathcal { L } _ { s a m p l e } ( \\theta ) : = \\mathbb { E } _ { t , x _ { 0 } , \\epsilon } \\left. \\epsilon - \\epsilon _ { \\theta } ( x _ { t } , t ) \\right. ^ { 2 } .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            560,
+            410,
+            825,
+            430
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "Based on (Song et al., 2020), the reverse process of DPMs (DDPM and DDIM) at timestep $t$ can be expressed as following: ",
+        "bbox": [
+            500,
+            434,
+            885,
+            479
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "equation",
+        "img_path": "images/e82b072121b789159a6a97d97bea0fc5a16e297e751c2e057de3c92a2e99c505.jpg",
+        "text": "$$\n\\begin{array} { r l } & { x _ { t - 1 } = \\sqrt { \\bar { \\alpha } _ { t - 1 } } \\underbrace { \\left( \\frac { x _ { t } - \\sqrt { 1 - { \\bar { \\alpha } } _ { t } } \\epsilon _ { \\theta } \\left( x _ { t } , t \\right) } { { \\bar { \\alpha } } _ { t } } \\right) } _ { \\mathrm { p r e d i c t e d ~ x _ { 0 } ~ } } } \\\\ & { ~ + \\underbrace { \\sqrt { 1 - { \\bar { \\alpha } } _ { t - 1 } - \\sigma _ { t } ^ { 2 } } \\cdot \\epsilon _ { \\theta } \\left( x _ { t } , t \\right) } _ { \\mathrm { d i r e c t i o n ~ p o i n t i n g ~ t o ~ x _ { t } ~ } } + \\underbrace { \\sigma _ { t } \\epsilon _ { t } } _ { \\mathrm { r a n d o m ~ n o i s e } } , } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            522,
+            486,
+            856,
+            589
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "where $\\sigma _ { t } = \\eta \\sqrt { ( 1 - \\bar { \\alpha } _ { t - 1 } ) / ( 1 - \\bar { \\alpha } _ { t } ) } \\sqrt { 1 - \\bar { \\alpha } _ { t } / \\bar { \\alpha } _ { t - 1 } }$ and $\\eta = 0$ (Song et al., 2020) or $\\eta = 1$ (Ho et al., 2020) or $\\eta = \\sqrt { ( 1 - \\bar { \\alpha } _ { t } ) / ( 1 - \\bar { \\alpha } _ { t - 1 } ) }$ (Ho et al., 2020). Furthermore, Dhariwal & Nichol (2021) propose the conditional reverse noise process as: ",
+        "bbox": [
+            500,
+            597,
+            885,
+            674
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "equation",
+        "img_path": "images/e1b7c9a6bcbafa2370f8e9f2c701156ca6cabd07c7f09135a2b929949b706b18.jpg",
+        "text": "$$\n\\begin{array} { r l } & { p _ { \\theta , \\phi } ( x _ { t - 1 } | x _ { t } , y ) } \\\\ & { \\approx \\mathcal { N } ( x _ { t - 1 } ; \\mu _ { \\theta } ( x _ { t } , t ) + \\sigma _ { t } ^ { 2 } \\gamma \\nabla _ { x _ { t } } \\log p _ { \\phi } ( y | x _ { t } ) , \\sigma _ { t } ^ { 2 } \\mathbf { I } ) , } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            508,
+            681,
+            856,
+            722
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "where $\\begin{array} { r } { \\mu _ { \\theta } ( x _ { t } , t ) = \\frac { 1 } { \\sqrt { \\alpha _ { t } } } \\left( x _ { t } - \\frac { 1 - \\alpha _ { t } } { \\sqrt { 1 - \\bar { \\alpha } _ { t } } } \\epsilon _ { \\theta } ( x _ { t } , t ) \\right) } \\end{array}$ and $\\gamma$ is a hyperparameter for conditional control. For the sake of clarity in distinguishing these two domains, this paper uses $s$ and $\\tau$ to represent the source and target domain, respectively. ",
+        "bbox": [
+            500,
+            729,
+            885,
+            813
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "4. Transfer Learning in Diffusion Models via Adversarial Noise ",
+        "text_level": 1,
+        "bbox": [
+            500,
+            832,
+            875,
+            866
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "In this section, we introduce DPMs-ANT, a DPM-based transfer learning method, which contains two key strategies: ",
+        "bbox": [
+            500,
+            876,
+            885,
+            905
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "discarded",
+        "text": "Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning ",
+        "bbox": [
+            205,
+            58,
+            767,
+            70
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "discarded",
+        "text": "3 ",
+        "bbox": [
+            482,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "similarity-guided training (in Section 4.1) and adversarial noise selection (in Section 4.2). After that, the complete DPMs-ANT procedure included the adaptor is detailed in Algorithm 1. ",
+        "bbox": [
+            88,
+            84,
+            473,
+            145
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "4.1. Similarity-Guided Training ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            161,
+            310,
+            176
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "We use similarity to measure the gap between the source and target domains. It is computed using a noised image $x _ { t }$ at timestep $t$ instead of the final image. Drawing inspiration from (Dhariwal & Nichol, 2021; Liu et al., 2023), we express the difference in domain between the source and the target in terms of the divergence in similarity measures. Initially, we assume a model that can predict noise with the source and target domains, denoted as $\\theta _ { ( S , \\mathcal { T } ) }$ . Similar to Equation (2), the reverse process for the source and target images can be written as: ",
+        "bbox": [
+            89,
+            185,
+            473,
+            335
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/82eebff09dc567b9f1c748da0258948e9330a7d821b318a233c16376673a76a4.jpg",
+        "text": "$$\n\\begin{array} { r l } & { p _ { \\theta _ { ( S , T ) } , \\phi } ( x _ { t - 1 } | x _ { t } , y = Y ) } \\\\ & { \\approx \\mathcal { N } ( x _ { t - 1 } ; \\mu _ { \\theta _ { ( S , T ) } } + \\sigma _ { t } ^ { 2 } \\gamma \\nabla _ { x _ { t } } \\log p _ { \\phi } ( y = Y | x _ { t } ) , \\sigma _ { t } ^ { 2 } { \\bf I } ) , } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            91,
+            353,
+            465,
+            396
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "where $Y$ is $s$ or $\\tau$ for source or target domain image generation, respectively. We can consider $\\mu ( x _ { t } ) +$ $\\begin{array} { r c l } { \\sigma _ { t } ^ { 2 } \\gamma \\nabla _ { x _ { t } } \\log p _ { \\phi } ( y } & { = } & { S | x _ { t } ) } \\end{array}$ as the source model $\\theta _ { S }$ which only synthesize image on the source domain respectively. For brevity, we denote $p _ { \\theta s , \\phi } ( x _ { t - 1 } ^ { S } | x _ { t } ) ~ =$ $p _ { \\theta _ { ( s , T ) } , \\phi } \\big ( x _ { t - 1 } \\big | x _ { t } , y = \\mathcal { S } \\big )$ . We define $p _ { \\theta _ { T } , \\phi } ( x _ { t - 1 } ^ { \\mathcal { T } } | x _ { t } )$ similarly by replacing $s$ with $\\tau$ . Therefore, the KL-divergence between the output of source model $\\theta _ { S }$ and the target $\\theta _ { T }$ with the same input $x _ { t }$ at timestep $t$ , is defined as: ",
+        "bbox": [
+            88,
+            426,
+            473,
+            563
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/abb9cb863549daaf58fc220a460c1c480a34b6c610cdded50a330dc375e18b9b.jpg",
+        "text": "$$\n\\begin{array} { r l } & { \\quad \\mathrm { D } _ { \\mathrm { K L } } \\left( p _ { \\theta _ { S } , \\phi } ( x _ { t - 1 } ^ { S } | x _ { t } ) , p _ { \\theta _ { T } , \\phi } ( x _ { t - 1 } ^ { T } | x _ { t } ) \\right) } \\\\ & { = \\mathbb { E } _ { t , x _ { 0 } , \\epsilon } \\Big [ \\| \\nabla _ { x _ { t } } \\log p _ { \\phi } ( y = S | x _ { t } ) - } \\\\ & { \\quad \\quad \\quad \\nabla _ { x _ { t } } \\log p _ { \\phi } ( y = T | x _ { t } ) \\| ^ { 2 } \\Big ] , } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            142,
+            578,
+            416,
+            657
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "where $p _ { \\phi }$ is a classifier to distinguish $x _ { t }$ . The detailed derivation is in the Appendix. We consider $\\nabla _ { x _ { t } } \\log { p _ { \\phi } ( y = S | x _ { t } ) }$ and $\\nabla _ { x _ { t } } \\log { p _ { \\phi } ( y = \\mathcal { T } | x _ { t } ) }$ as the similarity measures of the given $x _ { t }$ in the source and target domains, respectively. ",
+        "bbox": [
+            88,
+            671,
+            475,
+            732
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Transfer learning primarily focuses on bridging the gap between the image generated by the current fine-tuning model and the target domain image. Inspired by Equation (4) on source and target distance, we can utilize $p _ { \\phi } ( y = \\mathcal { T } | x _ { t } ^ { \\mathcal { T } } )$ to align the current model with the target for target domain transfer learning. Specifically, we employ a fixed pre-trained binary classifier that differentiates between source and target images at time step $t$ to enhance the training process. Similarly with the vanilla training loss in DPMs (Ho et al., 2020), i.e., Equation (1), we use the KL-divergence between the output of current model $\\theta$ and target model $\\theta _ { T }$ at time ",
+        "bbox": [
+            89,
+            739,
+            473,
+            905
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "step $t$ as: ",
+        "bbox": [
+            500,
+            87,
+            560,
+            99
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "img_path": "images/86ec8085492ed5a7f02ab982cafe028aad41d3fa5237cdd2e640af7de6b7e95d.jpg",
+        "text": "$$\n\\begin{array} { r l } & { \\underset { \\theta } { \\operatorname* { m i n } } ~ \\mathbb { E } _ { t , \\boldsymbol { x } _ { 0 } , \\epsilon } \\bigg [ \\big \\| \\epsilon _ { t } - \\epsilon _ { \\theta } ( \\boldsymbol { x } _ { t } , t ) - } \\\\ & { \\quad \\quad \\quad \\hat { \\sigma } _ { t } ^ { 2 } \\gamma \\nabla _ { \\boldsymbol { x } _ { t } } \\log p _ { \\phi } ( \\boldsymbol { y } = \\mathcal { T } | \\boldsymbol { x } _ { t } ) \\big \\| ^ { 2 } \\bigg ] ~ , } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            544,
+            122,
+            841,
+            180
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "where $\\epsilon _ { t } \\sim \\mathcal { N } ( \\mathbf { 0 } , \\mathbf { I } ) ,$ $\\epsilon _ { \\theta }$ is the pre-trained neural network on source domain, $\\gamma$ is a hyper-parameter to control the similarity guidance, $\\begin{array} { r } { \\hat { \\sigma } _ { t } = \\left( 1 - \\bar { \\alpha } _ { t - 1 } \\right) \\sqrt { \\frac { \\alpha _ { t } } { 1 - \\bar { \\alpha } _ { t } } } } \\end{array}$ , and $p _ { \\phi }$ is the binary classifier differentiating between source and target images. Equation (5) is defined as similarity-guided DPMs training loss. The full derivation is provided in the Appendix. We leverage the pre-trained classifier to indirectly compare the noised image $x _ { t }$ with both domain images, subtly expressing the gap between the currently generated image and the target image. By minimizing the output of the neural network with corrected noise, we bridge the gap in the diffusion model and bolster transfer learning. Furthermore, similarity guidance enhances few-shot transfer learning by avoiding misdirection towards the target image, as $\\nabla _ { x _ { t } } \\log { p _ { \\phi } ( y = \\mathcal { T } | x _ { t } ) }$ acts as an indirect indicator, rather than straightly relying on the original image. Compared to with or without the indirect indicator (i.e., Equation (1) vs. Equation (5)), the latter easily overfits over the few-shot target training images, while the former can mitigate this problem due to the generalization of the classifier $p _ { \\phi }$ . ",
+        "bbox": [
+            500,
+            202,
+            885,
+            511
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "4.2. Adversarial Noise Selection ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            526,
+            722,
+            541
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Despite potentially determining the transfer direction, we still encounter a fundamental second challenge originating from the noise mechanism in diffusion models. As mentioned, the model needs to be trained to accommodate the quantity of noise $\\epsilon _ { t }$ over many iterations. However, increasing iterations with limited images may lead to overfitting of the training samples, thereby reducing the diversity of the generated samples. On the other hand, training with too few iterations might only successfully transform a fraction of the generated images into the target domain as Figure 1. ",
+        "bbox": [
+            501,
+            550,
+            885,
+            702
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "To counter these issues, we propose an adaptive noise selection method, Adversarial Noise (AN) selection. This approach utilizes a min-max training process to reduce the actual training iterations required and ensure the generated images closely resemble the target images. After the model has been trained on a large dataset, it exhibits a strong noise reduction capability for source datasets. This implies it only needs to minimize specific types of Gaussian noise with which the trained model struggles or fails to denoise with the target domain sample. The first step in this process is to identify the maximum approximated Gaussian noise with the current model, and then specifically minimize the model using this noise. Based on Equation (5), this can be ",
+        "bbox": [
+            501,
+            709,
+            885,
+            905
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "discarded",
+        "text": "Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning ",
+        "bbox": [
+            204,
+            56,
+            767,
+            70
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "discarded",
+        "text": "4 ",
+        "bbox": [
+            480,
+            924,
+            490,
+            934
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "Algorithm 1 Training DPMs with ANT ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            84,
+            349,
+            99
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Require: binary classifier $p _ { \\phi }$ , pre-trained DPMs $\\epsilon _ { \\theta }$ , learning rate $\\eta$   \n1: repeat   \n2: $x _ { 0 } \\sim q ( x _ { 0 } )$ ;   \n3: $t \\sim { \\mathrm { U n i f o r m } } ( \\{ 1 , \\cdots , T \\} ) ;$   \n4: $\\epsilon \\sim \\mathcal { N } ( \\mathbf { 0 } , \\mathbf { I } )$ ;   \n5: for $j = 0 , \\cdots , J - 1$ do   \n6: Update $\\epsilon ^ { j }$ via Equation (7);   \n7: end for   \n8: Compute $L ( \\psi )$ with $\\boldsymbol { \\epsilon } ^ { \\star } = \\boldsymbol { \\epsilon } ^ { J }$ via Equtaion (8);   \n9: Update the adaptor model parameter: $\\psi ~ = ~ \\psi ~ - ~$ $\\eta \\nabla _ { \\psi } L ( \\psi )$ ; ",
+        "bbox": [
+            91,
+            102,
+            473,
+            284
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "10: until converged. ",
+        "bbox": [
+            89,
+            284,
+            223,
+            297
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "mathematically formulated as follows: ",
+        "bbox": [
+            89,
+            328,
+            339,
+            342
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "img_path": "images/4f20fc22888f92f780b7c8ae9fb939095f6c8d7f03e47a62287cb7c411ba02e8.jpg",
+        "text": "$$\n\\begin{array} { r l } & { \\underset { \\theta } { \\mathop { \\operatorname* { m i n } } \\mathop { \\operatorname* { m a x } } } ~ \\mathbb { E } _ { t , { \\boldsymbol { x } } _ { 0 } } \\bigg [ \\left\\| \\epsilon - \\epsilon _ { \\theta } ( { \\boldsymbol { x } } _ { t } , t ) - \\right. } \\\\ & { ~ \\left. \\hat { \\sigma } _ { t } ^ { 2 } \\gamma \\nabla _ { { \\boldsymbol { x } } _ { t } } \\log p _ { \\phi } ( { \\boldsymbol { y } } = { \\mathcal { T } } | { \\boldsymbol { x } } _ { t } ) \\right\\| ^ { 2 } \\bigg ] ~ . } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            106,
+            349,
+            439,
+            409
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "Although finding the exact maximum noise is challenging as Equation (6), the finite-step gradient ascent strategy can be used to solve the inner maximization problem approximately. Specifically, the inner maximization of Gaussian noise can be interpreted as finding the “worse-case” noise corresponding to the current neural network. Practically, the similarity-guided term is disregarded, as this term is hard to compute differential and is almost unchanged in the process. We utilize the multi-step gradient ascent as expressed below: ",
+        "bbox": [
+            89,
+            415,
+            473,
+            551
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "img_path": "images/91b7756b2d2c630a2859cad3035ca9b50787d51c389e9e3c36d80253f26df743.jpg",
+        "text": "$$\n\\begin{array} { r l } & { \\epsilon ^ { j + 1 } = \\mathrm { N o r m } \\Bigl ( \\epsilon ^ { j } + } \\\\ & { \\qquad \\omega \\nabla _ { \\epsilon ^ { j } } \\left\\| \\epsilon ^ { j } - \\epsilon _ { \\theta } \\bigl ( \\sqrt { \\bar { \\alpha } _ { t } } x _ { 0 } + \\sqrt { 1 - \\bar { \\alpha } _ { t } } \\epsilon ^ { j } , t \\bigr ) \\right\\| ^ { 2 } \\Bigr ) , } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            98,
+            559,
+            446,
+            614
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "where $j \\in \\{ 0 , 1 , \\cdots , J - 1 \\}$ , $\\omega$ is a hyperparameter that represents the “learning rate” of the negative loss function, and $\\operatorname { N o r m } ( { \\mathord { \\cdot } } )$ is a normalization function that approximately ensures the mean and standard deviation of $\\epsilon ^ { j + 1 }$ is 0 and I, respectively. The initial value, $\\epsilon _ { 0 }$ , is sampled from the Gaussian distribution, i.e., $\\epsilon _ { 0 } \\sim \\mathcal { N } ( \\mathbf { 0 } , \\mathbf { I } )$ . Since minimizing the “worse-case” Gaussian noise is akin to minimizing all Gaussian noises that are “better” than it, we can more accurately correct the gradient computed with limited data, effectively addressing the underfitting problem during a limited number of iterations. ",
+        "bbox": [
+            88,
+            623,
+            473,
+            789
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "4.3. Optimization ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            806,
+            210,
+            821
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "To save training time and memory, we implement an additional adaptor module (Noguchi & Harada, 2019) to learn the shift gap (i.e, Equation (4)) based on $x _ { t }$ in practice. During the training, we freeze the parameters $\\theta$ and only update the adaptor parameters $\\psi$ . The overall loss function can be ",
+        "bbox": [
+            89,
+            830,
+            473,
+            905
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "expressed as follows, ",
+        "bbox": [
+            500,
+            85,
+            640,
+            99
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "img_path": "images/ba00ca6fae9b68b72032189a4899795a243372dc57c1bcbbff6e6780097928c7.jpg",
+        "text": "$$\n\\begin{array} { r l } & { L ( \\psi ) \\equiv \\mathbb { E } _ { t , x _ { 0 } } \\Big [ \\| \\epsilon ^ { \\star } - \\epsilon _ { \\theta , \\psi } ( x _ { t } ^ { \\star } , t ) - } \\\\ & { \\quad \\quad \\quad \\quad \\hat { \\sigma } _ { t } ^ { 2 } \\gamma \\nabla _ { x _ { t } ^ { \\star } } \\log p _ { \\phi } ( y = \\mathcal { T } | x _ { t } ^ { \\star } ) \\| ^ { 2 } \\Big ] , } \\\\ & { { \\mathrm { s . t . ~ } } \\epsilon ^ { \\star } = \\arg \\operatorname* { m a x } _ { \\epsilon } \\left\\| \\epsilon - \\epsilon _ { \\theta } \\big ( \\sqrt { { { \\bar { \\alpha } } _ { t } } } x _ { 0 } + \\sqrt { 1 - { { \\bar { \\alpha } } _ { t } } } \\epsilon , t \\big ) \\right\\| ^ { 2 } , } \\\\ & { \\quad \\quad \\quad \\epsilon _ { \\mathrm { m e a n } } ^ { \\star } = \\mathbf { 0 } \\mathrm { ~ a n d ~ } \\epsilon _ { \\mathrm { s t d } } ^ { \\star } = \\mathbf { I } , } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            511,
+            109,
+            872,
+            212
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "where $\\epsilon ^ { \\star }$ is the “worse-case” noise, the $x _ { t } ^ { \\star } = \\sqrt { \\bar { \\alpha } _ { t } } x _ { 0 } +$ $\\sqrt { 1 - \\bar { \\alpha } _ { t } } \\epsilon ^ { \\star }$ is the corresponding noised image at the timestep $t$ and $\\psi$ is certain extra parameter beyond pretrained model. We link the pre-trained U-Net model with the adaptor layer (Houlsby et al., 2019) as $x _ { t } ^ { l } = \\theta ^ { l } ( x _ { t } ^ { l - 1 } ) +$ $\\psi ^ { l } ( x _ { t } ^ { l - \\bar { 1 } } )$ , where $x _ { t } ^ { l - 1 }$ and $\\boldsymbol { x } _ { t } ^ { l }$ represents the $l$ -th layer of the input and output, and $\\theta ^ { l }$ and $\\psi ^ { l }$ denote the $l .$ -th layer of the pre-trained U-Net and the additional adaptor layer, respectively. ",
+        "bbox": [
+            500,
+            223,
+            885,
+            359
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "The full training procedure of our method, named DPMsANT, is outlined in Algorithm 1. Initially, as in the traditional DDPM training process, we select samples from target datasets and randomly choose a timestep $t$ and standard Gaussian noise for each sample. We employ limited extra adaptor module parameters with the pre-train model. Subsequently, we identify the adaptive inner maximum as represented in Equation (7) with the current neural network. Based on these noises, we compute the similarity-guided DDPM loss as Equation (5), which bridges the discrepancy between the pre-trained model and the scarce target samples. Lastly, we execute backpropagation to only update the adaptor module parameters. ",
+        "bbox": [
+            501,
+            367,
+            885,
+            563
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "5. Experiments ",
+        "text_level": 1,
+        "bbox": [
+            500,
+            583,
+            627,
+            599
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "To demonstrate the effectiveness of our approach, we perform a series of few-shot image generation experiments using a limited set of just 10 training images with the same setting as DDPM-PA (Zhu et al., 2022). We compare our method against state-of-the-art GAN-based and DDPMbased techniques, assessing the quality and diversity of the generated images through both qualitative and quantitative evaluations. This comprehensive comparison provides strong evidence of the superiority of our proposed method in the context of few-shot image generation tasks. The code is available at https://github.com/ShinyGua/DPMs-ANT. ",
+        "bbox": [
+            501,
+            609,
+            885,
+            773
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "5.1. Visualization on Toy Data ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            791,
+            709,
+            806
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "To conduct a quantitative analysis, we traine a diffusion model to generate 2-dimensional toy data with two Gaussian noise distributions. The means of the Gaussian noise distributions for the source and target are $( 1 , 1 )$ and $( - 1 , - 1 )$ , and their variances are denoted by I. We train a simple neural network with source domain samples and then transfer this pre-trained model to target samples. ",
+        "bbox": [
+            501,
+            815,
+            885,
+            905
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "discarded",
+        "text": "Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning ",
+        "bbox": [
+            205,
+            58,
+            767,
+            70
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "discarded",
+        "text": "5 ",
+        "bbox": [
+            482,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "image",
+        "img_path": "images/67eb5e8eaec3fda274ebf23ffa8720466e49fb16b14a116bd415f7e6911f8f4a.jpg",
+        "image_caption": [
+            "Figure 2. Visualizations of gradient changes and heat maps. Figure (a) shows gradient directions with various settings: the cyan line denotes the gradient computed on 10,000 samples in one step; the blue, red, and orange lines are gradients of baseline method (i.e., traditional DDPM), our method DDPM-ANT w/o AN (i.e, using similarity-guided training only), and our full method DDPM-ANT, computed on 10 samples in one step, respectively; the red points in the background are “worse-case” noises by adversarial noise selection. Figures (b) and (c) depict heat maps of the baseline and our method, with cyan and yellow lines representing the generation sampling process value with the original DDPM and our method, respectively. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            93,
+            85,
+            883,
+            258
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            89,
+            378,
+            351,
+            392
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Figure 2(a) illustrates the output layer gradient direction of four different settings in the first iteration, with the same noise and timestep $t$ . The cyan line, computed with ten thousand different samples, is considered a reliable reference direction (close to 45 degrees southwest). For 10-shot samples, we repeat them a thousand times into one batch to provide a unified comparison with ten thousand different samples. The blue and red lines represent the gradient computed with the traditional DDPM as the baseline and similarity-guided training in a 10-shot sample, respectively. The orange line represents our method, DDPM-ANT, in a 10-shot sample. The gradient of our method is closer to the reliable reference direction, demonstrating that our approach can effectively correct the issue of the noisy gradient. The red points in the background symbolize “worse-case” noise, which is generated through adversarial noise selection. This figure shows how the noise distribution transitions from a circle (representing a normal Gaussian distribution) to an ellipse. The principal axis of this ellipse is oriented along the gradient of the model parameters. This illustrates the noise distribution shift under our adversarial noise selection approach, which effectively fine-tunes the model by actively targeting the “worse-case” noise that intensifies the adaptation task. ",
+        "bbox": [
+            89,
+            401,
+            473,
+            760
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Figures 2(b) and (c) present heatmaps of the baseline and our method in only one dimension, respectively. The cyan and yellow lines denote the values of the generation sampling process using the original DDPM and our method. The heat maps in the background illustrate the distribution of values for 20,000 samples generated by the original DDPM (baseline) and our method. The lighter the color in the background, the greater the number of samples present. There is a significantly brighter central highlight in (c) compared to (b), demonstrating that our method can learn the distribution more quickly than the baseline method. The yellow and cyan lines in the two figures are approximately parallel, providing further evidence that our method can learn the gap rapidly. ",
+        "bbox": [
+            88,
+            770,
+            473,
+            890
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            500,
+            377,
+            885,
+            468
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "5.2. Experimental Setup ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            484,
+            669,
+            500
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Datasets. Following (Ojha et al., 2021), we use FFHQ (Karras et al., 2020b) and LSUN Church (Yu et al., 2015) as source datasets. For the target datasets, we employe 10-shot Babies, Sunglasses, Raphael Peale, Sketches, and face paintings by Amedeo Modigliani, which correspond to the source domain FFHQ. Additionally, we utilize 10-shot Haunted Houses and Landscape drawings as target datasets corresponding to the LSUN Church source domain. ",
+        "bbox": [
+            501,
+            508,
+            885,
+            628
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "Configurations. We evaluate our method not only on the DDPM framework but also in LDM. For this, we employ a pre-trained DDPM similar to DDPM-PA and use pre-trained LDMs as provided in (Rombach et al., 2022). We restrict our fine-tuning to the shift module of the U-Net, maintaining the pre-trained DPMs and autoencoders in LDMs as they are. For the $l$ -th shift adaptor layer $\\psi$ , it can be expressed as: $\\psi ^ { l } ( x ^ { l - 1 } ) = f ( x ^ { l - 1 } W _ { d o w n } ) W _ { u p }$ (Houlsby et al., 2019). We project the input downward using $W _ { d o w n }$ , transforming it from its original dimension $\\mathbb { R } ^ { w \\times h \\times r }$ to a lower-dimensional space with a bottleneck dimension $\\mathbb { R } ^ { \\frac { w } { c } \\times \\frac { h } { c } \\times d }$ . Following this, we apply a nonlinear activation function $f ( \\cdot )$ and execute an upward projection with $W _ { u p }$ . We set $c = 4$ and $d = 8$ for DDPMs, while $c = 2$ and $d = 8$ for LDMs. To ensure the adapter layer outputs are initialized to zero, we set all the extra layer parameters to zero. For similarity-guided training, we set $\\gamma = 5$ . We utilize a model pre-trained on the ",
+        "bbox": [
+            501,
+            650,
+            885,
+            905
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "discarded",
+        "text": "Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning ",
+        "bbox": [
+            204,
+            58,
+            767,
+            69
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "discarded",
+        "text": "6 ",
+        "bbox": [
+            480,
+            924,
+            491,
+            934
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "image",
+        "img_path": "images/2b13f81b1cc93844c2bd32b213d659d7e9f27189ba26323c614da2b1e2575527.jpg",
+        "image_caption": [
+            "Figure 3. The 10-shot image generation samples on LSUN Church Landscape drawings (top) and $\\mathrm { F F H Q }  \\mathrm { R }$ aphael’s paintings (bottom). When compared with other GAN-based and DDPM-based methods, our method, ANT, yields high-quality results that more closely resemble images of the target domain style, with less blurring. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            88,
+            82,
+            887,
+            541
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "ImageNet dataset, provided by (Dhariwal & Nichol, 2021), and subsequently fine-tune it with a new binary classifier head on a limited set of 10 target domain images. For adversarial noise selection, we set $J = 1 0$ and $\\omega = 0 . 0 2$ . We employ a learning rate of $5 \\times 1 0 ^ { - 5 }$ for DDPMs and $1 \\times 1 0 ^ { - 5 }$ for LDMs to train with approximately 300 iterations and a batch size of 40. ",
+        "bbox": [
+            89,
+            617,
+            473,
+            723
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "Evaluation Metrics. To evaluate the diversity of generation, we use Intra-LPIPS and FID following CDC (Ojha et al., 2021). For Intra-LPIPS, we generate 1,000 images, each of which will be assigned to the training sample with the smallest LPIPS distance. The Intra-LPIPS measurement is obtained by averaging the pairwise LPIPS distances within the same cluster and then averaging these results across all clusters. A model that flawlessly duplicates training samples will have an Intra-LPIPS score of zero, which indicates a lack of diversity. However, higher Intra-LPIPS scores imply greater generation diversity, an essential quality for an efficient few-shot image generation technique. This allows for a more robust assessment of our method’s generation quality in comparison to other generative models. FID is a widely used metric for assessing the generation quality of generative models by calculating the distribution distances between generated samples and datasets. However, FID may become unstable and unreliable when applied to datasets with few samples, such as the 10-shot datasets used in this paper. Following DDPM-PA (Zhu et al., 2022), we provide FID evaluations using larger target datasets, such as Sunglasses and Babies, consisting of $^ { 2 , 5 \\mathrm { k } }$ and $2 , 7 \\mathrm { k }$ and images, respectively. ",
+        "bbox": [
+            89,
+            739,
+            473,
+            905
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            501,
+            617,
+            885,
+            797
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "Baselines. To adapt pre-trained models to target domains using a limited number of samples, we compare our work with several GAN-based and DDPMs baselines that share similar objectives, including TGAN (Wang et al., 2018), TGAN $+$ ADA (Karras et al., 2020a), EWC (Li et al., 2020), CDC (Ojha et al., 2021), DCL (Zhao et al., 2022), and ",
+        "bbox": [
+            501,
+            815,
+            885,
+            905
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "discarded",
+        "text": "Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning ",
+        "bbox": [
+            205,
+            58,
+            767,
+            69
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            482,
+            922,
+            490,
+            934
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "table",
+        "img_path": "images/89f42922571ec77220465351a8e614d73dc8c24bdb451277c79807f1078ab86c.jpg",
+        "table_caption": [
+            "Table 1. Intra-LPIPS (↑) results for both DDPM and GAN-based baselines are presented for 10-shot image generation tasks. These tasks involve adapting from the source domains of FFHQ and LSUN Church. “Parameter Rate” means the proportion of parameters fine-tuned compared to the pre-trained model’s parameters. The best results are marked as bold. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Methods</td><td>Parameter Rate</td><td>FFHQ→ Babies</td><td>FFHQ→ Sunglasses</td><td>FFHQ→ Raphael&#x27;s paintings</td><td>LSUN Church → Haunted houses</td><td>LSUN Church → Landscape drawings</td></tr><tr><td>TGAN</td><td>100%</td><td>0.510±0.026</td><td>0.550±0.021</td><td>0.533±0.023</td><td>0.585±0.007</td><td>0.601±0.030</td></tr><tr><td>TGAN+ADA</td><td>100%</td><td>0.546±0.033</td><td>0.571±0.034</td><td>0.546±0.037</td><td>0.615±0.018</td><td>0.643±0.060</td></tr><tr><td>EWC</td><td>100%</td><td>0.560±0.019</td><td>0.550±0.014</td><td>0.541±0.023</td><td>0.579±0.035</td><td>0.596±0.052</td></tr><tr><td>CDC</td><td>100%</td><td>0.583±0.014</td><td>0.581±0.011</td><td>0.564±0.010</td><td>0.620±0.029</td><td>0.674±0.024</td></tr><tr><td>DCL</td><td>100%</td><td>0.579±0.018</td><td>0.574±0.007</td><td>0.558±0.033</td><td>0.616±0.043</td><td>0.626±0.021</td></tr><tr><td>DDPM-PA</td><td>100%</td><td>0.599±0.024</td><td>0.604±0.014</td><td>0.581±0.041</td><td>0.628±0.029</td><td>0.706±0.030</td></tr><tr><td>DDPM-ANT (Ours)</td><td>1.3%</td><td>0.592±0.016</td><td>0.613±0.023</td><td>0.621±0.068</td><td>0.648±0.010</td><td>0.723±0.020</td></tr><tr><td>LDM-ANT (Ours)</td><td>1.6%</td><td>0.601±0.018</td><td>0.613±0.011</td><td>0.592±0.048</td><td>0.653±0.010</td><td>0.738±0.026</td></tr></table>",
+        "bbox": [
+            89,
+            137,
+            883,
+            299
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "table",
+        "img_path": "images/8ba822eb09b0c383d9cee0e6f10244d0fb55584aaa098454e69a8c8f4d090c76.jpg",
+        "table_caption": [
+            "Table 2. FID (↓) results of each method on 10-shot $\\mathrm { F F H Q }  \\mathrm { B a } .$ bies and Sunglasses. The best results are marked in bold. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Methods</td><td>TGAN</td><td>ADA</td><td>EWC</td><td>CDC</td><td>DCL</td><td>PA</td><td>ANT</td></tr><tr><td>Babies</td><td>104.79</td><td>102.58</td><td>87.41</td><td>74.39</td><td>52.56</td><td>48.92</td><td>46.70</td></tr><tr><td>Sunglasses</td><td>55.61</td><td>53.64</td><td>59.73</td><td>42.13</td><td>38.01</td><td>34.75</td><td>20.06</td></tr></table>",
+        "bbox": [
+            88,
+            364,
+            473,
+            412
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "DDPM-PA (Zhu et al., 2022). All baselines are implemented based on StyleGAN2 codebase (Karras et al., 2020b). ",
+        "bbox": [
+            88,
+            440,
+            472,
+            469
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "5.3. Overall Performance ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            487,
+            264,
+            501
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Qualitative Evaluation. Figure 3 presents samples from GAN-based and DDPM-based methods for 10-shot LSUN Church Landscape drawings (top) and $\\mathrm { F F H Q ~ } $ Raphael’s paintings (bottom). The samples generated by GAN-based baselines contain unnatural blurs and artifacts. Our results (lines 2 and 6) are more nature and close to the target image style. This illustrates the effectiveness of our approach in handling complex transformations while maintaining the integrity of the original image features. Whereas the current DDPM-based method, DDPM-PA (third row), seems to underfit the target domain images, resulting in a significant difference in color and style between the generated images and the target images. Our method preserves many shapes and outlines while learning more about the target style. As demonstrated in Figure 1, our method, ANT, maintains more details such as buildings (above), human faces (below) and other intricate elements in the generated images. Moreover, ANT-generated images exhibit a color style closer to the target domain, especially compared to DDPMPA. Compared to other methods, our approach (based on both DDPMs and LDMs) produces more diverse and realistic samples that contain richer details than existing techniques. ",
+        "bbox": [
+            89,
+            512,
+            473,
+            857
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Quantitative Evaluation. In Table 1, we show the IntraLPIPS results for DPMs-ANT under various 10-shot adaptation conditions. DDPM-ANT yields a considerable improvement in Intra-LPIPS across most tasks compared to other GAN-based and DDPMs-based methods. Furthermore, LDM-ANT excels beyond state-of-the-art GAN-based approaches, demonstrating its potent capability to preserve diversity in few-shot image generation. Notably, the result for LSUN Church Landscape drawings improved from 0.706 (DDPM-PA) to 0.723 (DDPM-ANT). The FID results are presented in Table 2, where ANT also shows remarkable advances compared to other GAN-based or DPM-based methods, especially in $\\mathrm { F F H Q }  1 0 $ -shot Sunglasses with 20.06 FID. We provide more results for other adaptation scenarios in the Appendix. Our method can transfer the model from the source to the target domain not only effectively but also efficiently. Compared to other methods that require around 5,000 iterations, our approach only necessitates approximately 300 iterations (about 3k equivalent iterations due to the finite-step gradient ascent strategy) with limited parameter fine-tuning. The time cost of the baseline with adaptor and 5,000 iterations (same as DDPM-PA) is about 4.2 GPU hours, while our model (DPMs-ANT) with only 300 iterations takes just 3 GPU hours. ",
+        "bbox": [
+            89,
+            876,
+            473,
+            905
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            501,
+            325,
+            885,
+            656
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "5.4. Ablation Study ",
+        "text_level": 1,
+        "bbox": [
+            500,
+            674,
+            635,
+            689
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "Figure 4 presents an ablation study, with all images synthesized from the same noise. Compared to directly fine-tuning the entire model (1st row), only fine-tuning the adaptor layer (2nd row) can achieve competitive FID results (38.65 vs. 41.88). The DPMs-ANT without adversarial noise selection (DPMs-ANT w/o AN) and all DPMs-ANT (3rd and 4th row) are trained with an extra adaptor layer to save time and GPU memory, and our analysis focuses on the last three rows. More time and GPU memory experiment can be found in Appendix B. ",
+        "bbox": [
+            501,
+            698,
+            885,
+            848
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "The first two columns demonstrate that all methods can successfully transfer the model to sunglasses, with the ANT containing richer high-frequency details about sunglasses and background items. The extra adaptor layer effectively saves time and GPU memory with minimal impact on FID. Thus we use this adaptor in our method and rest experiment. ",
+        "bbox": [
+            500,
+            857,
+            883,
+            901
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "discarded",
+        "text": "Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning ",
+        "bbox": [
+            205,
+            58,
+            767,
+            70
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            482,
+            922,
+            490,
+            934
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "image",
+        "img_path": "images/866536683963fa26e4de87fa9883110d05a52d88cf62a2b77ebe3eda9306acde.jpg",
+        "image_caption": [
+            "Figure 4. This figure shows our ablation study, where all models are trained for 300 iterations on a 10-shot sunglasses dataset and measured with FID (↓): the first line - baseline (direct fine-tuning model), second line - Adaptor (fine-tuning only few extra parameters), third line - DPMs-ANT w/o AN (only using similarity-guided training), and final line - DPMs-ANT (our method). "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            91,
+            83,
+            472,
+            256
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "table",
+        "img_path": "images/b78160f73e69d88cb8b01c5a87c1338ca92bb46184524c8e1966b13103d8d869.jpg",
+        "table_caption": [
+            "Table 3. FID and Intra-LPIPS results of DPM-ANT from FFHQ Sunglasses with different classifiers (trained on 10 and 100 images). "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td></td><td>Intra-LPIPS (↑)</td><td>FID (↓)</td></tr><tr><td>10-shot classifier</td><td>0.613 ± 0.023</td><td>20.06</td></tr><tr><td>100-shot classifier</td><td>0.637 ± 0.013</td><td>22.84</td></tr></table>",
+        "bbox": [
+            112,
+            415,
+            447,
+            478
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            88,
+            496,
+            473,
+            540
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "The 3rd and 4th columns show that the similarity-guided method (3rd row) can produce images of people wearing sunglasses, while the traditional method (2nd row) does not achieve this. The last two columns highlight the effectiveness of the adaptive noise selection method in ANT. The step-by-step transformation showcased in the 5th column provides a clear demonstration of how our method transfers the source face through an intermediate phase, in which the face is adorned with glasses, to a final result where the face is wearing sunglasses. This vividly illustrates the effectiveness of our proposed strategies in progressively increasing the transfer process. The FID scores further illustrate the effectiveness of our proposed strategies; it decreases from 41.88 (with direct adaptation) to 26.41 (with similarity-guided training) and then to 20.66 (with DPMs-ANT), indicating a progressive improvement in the quality of generated images. ",
+        "bbox": [
+            89,
+            549,
+            473,
+            790
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "5.5. Effects of Classifier Analysis. ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            806,
+            320,
+            820
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "In this subsection, we study the effects of the classifier for similarity-guided training with limited data. Table 3 is the FID and Intra-LPIPS results for classifiers trained on 10 and 100 images on the $\\mathrm { F F H Q  \\Omega }$ Sunglasses datasets. This indicates that only 10 images are sufficient to guide the training process. This effectiveness is largely attributed to the classifiers being trained on noised targeted images among T (1000 steps) as Equation (1), ensuring a robust gradient for training. Therefore, this experiment demonstrates that classifiers used for similarity-guided training can be well trained with only 10 images. ",
+        "bbox": [
+            89,
+            830,
+            473,
+            905
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            500,
+            85,
+            883,
+            175
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "6. Conclusion ",
+        "text_level": 1,
+        "bbox": [
+            500,
+            194,
+            614,
+            210
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "In conclusion, the application of previous GAN-based techniques to DPMs encounters substantial challenges due to the distinct training processes of these models. To overcome these challenges, we introduce ANT to train DPMs with a novel adversarial noise selection and the similarity-guided strategy that improves the efficiency of the diffusion model transfer learning process. Our proposed method accelerates training, achieves faster convergence, and produces images that fit the target style while resembling the source images. Experimental results on few-shot image generation tasks demonstrate that our method surpasses existing state-ofthe-art GAN-based and DDPM-based methods, delivering superior image quality and diversity. ",
+        "bbox": [
+            501,
+            220,
+            885,
+            416
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Limitations ",
+        "text_level": 1,
+        "bbox": [
+            500,
+            436,
+            598,
+            453
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "In this subsection, we acknowledge some limitations of our method. Given that our goal is to transfer the model from the source domain to the target domain, the images we generate will feature characteristics specific to the target domain, such as sunglasses as shown in Figure 4. This can potentially lead to inconsistency in the generated images, and there is a risk of privacy leakage. For instance, the reflection in the sunglasses seen in the 3rd and 4th columns of the 3th row in Figure 4 is very similar to the one in the target image. This could potentially reveal sensitive information from the target domain, which is an issue that needs careful consideration in applying this method. ",
+        "bbox": [
+            501,
+            463,
+            885,
+            643
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Impact Statements ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            662,
+            658,
+            679
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "This paper presents research aimed at advance the field of Machine Learning. Although there are various potential societal impacts stemming from our work, we believe that none requires specific emphasis here. ",
+        "bbox": [
+            500,
+            689,
+            883,
+            750
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "Acknowledgements ",
+        "text_level": 1,
+        "bbox": [
+            501,
+            768,
+            663,
+            785
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "This work was supported in part by the Australian Research Council under Projects DP210101859 and FT230100549. The authors acknowledge the use of the National Computational Infrastructure (NCI) which is supported by the Australian Government and accessed through the NCI AI Flagship Scheme and Sydney Informatics Hub HPC Allocation Scheme. ",
+        "bbox": [
+            501,
+            795,
+            887,
+            900
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "discarded",
+        "text": "Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning ",
+        "bbox": [
+            205,
+            58,
+            767,
+            69
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "discarded",
+        "text": "9 ",
+        "bbox": [
+            482,
+            922,
+            491,
+            934
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "References ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            83,
+            181,
+            99
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Brock, A., Donahue, J., and Simonyan, K. Large scale GAN training for high fidelity natural image synthesis. arXiv preprint arXiv:1809.11096, 2018. ",
+        "bbox": [
+            88,
+            108,
+            473,
+            152
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Brown, T., Mann, B., Ryder, N., Subbiah, M., Kaplan, J. D., Dhariwal, P., Neelakantan, A., Shyam, P., Sastry, G., Askell, A., et al. Language models are few-shot learners. In Neural Information Processing Systems, 2020. ",
+        "bbox": [
+            88,
+            166,
+            475,
+            227
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Cao, H., Tan, C., Gao, Z., Chen, G., Heng, P.-A., and Li, S. Z. A survey on generative diffusion model. arXiv preprint arXiv:2209.02646, 2022. ",
+        "bbox": [
+            86,
+            241,
+            475,
+            285
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Chen, X., Mishra, N., Rohaninejad, M., and Abbeel, P. Pixelsnail: An improved autoregressive generative model. In International Conference on Machine Learning, 2018. ",
+        "bbox": [
+            88,
+            299,
+            475,
+            344
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Dhariwal, P. and Nichol, A. Diffusion models beat gans on image synthesis. In Neural Information Processing Systems, 2021. ",
+        "bbox": [
+            86,
+            358,
+            473,
+            402
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Dhariwal, P., Jun, H., Payne, C., Kim, J. W., Radford, A., and Sutskever, I. Jukebox: A generative model for music. arXiv preprint arXiv:2005.00341, 2020. ",
+        "bbox": [
+            88,
+            416,
+            475,
+            462
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Goodfellow, I., Pouget-Abadie, J., Mirza, M., Xu, B., Warde-Farley, D., Ozair, S., Courville, A., and Bengio, Y. Generative adversarial networks. Communications of the ACM, 63(11):139–144, 2020. ",
+        "bbox": [
+            86,
+            476,
+            475,
+            535
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Grill, J.-B., Strub, F., Altche, F., Tallec, C., Richemond, P., ´ Buchatskaya, E., Doersch, C., Avila Pires, B., Guo, Z., Gheshlaghi Azar, M., et al. Bootstrap your own latent a new approach to self-supervised learning. In Neural Information Processing Systems, 2020. ",
+        "bbox": [
+            88,
+            549,
+            475,
+            625
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Guo, T., Xu, C., Huang, J., Wang, Y., Shi, B., Xu, C., and Tao, D. On positive-unlabeled classification in gan. In IEEE/CVF Conference on Computer Vision and Pattern Recognition, 2020. ",
+        "bbox": [
+            86,
+            638,
+            473,
+            699
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Ho, J., Jain, A., and Abbeel, P. Denoising diffusion probabilistic models. In Neural Information Processing Systems, 2020. ",
+        "bbox": [
+            86,
+            713,
+            475,
+            757
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Houlsby, N., Giurgiu, A., Jastrzebski, S., Morrone, B., De Laroussilhe, Q., Gesmundo, A., Attariyan, M., and Gelly, S. Parameter-efficient transfer learning for NLP. In International Conference on Machine Learning, 2019. ",
+        "bbox": [
+            88,
+            771,
+            475,
+            832
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Huang, T., Zhang, Y., Zheng, M., You, S., Wang, F., Qian, C., and Xu, C. Knowledge diffusion for distillation. Advances in Neural Information Processing Systems, 36, 2024. ",
+        "bbox": [
+            86,
+            844,
+            475,
+            904
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Karras, T., Aittala, M., Hellsten, J., Laine, S., Lehtinen, J., and Aila, T. Training generative adversarial networks with limited data. In Neural Information Processing Systems, 2020a. ",
+        "bbox": [
+            500,
+            85,
+            885,
+            145
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Karras, T., Laine, S., Aittala, M., Hellsten, J., Lehtinen, J., and Aila, T. Analyzing and improving the image quality of stylegan. In IEEE/CVF Conference on Computer Vision and Pattern Recognition, 2020b. ",
+        "bbox": [
+            500,
+            155,
+            885,
+            213
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Karras, T., Aittala, M., Aila, T., and Laine, S. Elucidating the design space of diffusion-based generative models. arXiv preprint arXiv:2206.00364, 2022. ",
+        "bbox": [
+            500,
+            223,
+            885,
+            267
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Khan, S., Naseer, M., Hayat, M., Zamir, S. W., Khan, F. S., and Shah, M. Transformers in vision: A survey. ACM Computing Surveys, 54(10s):1–41, 2022. ",
+        "bbox": [
+            500,
+            276,
+            885,
+            321
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Kingma, D., Salimans, T., Poole, B., and Ho, J. Variational diffusion models. Advances in neural information processing systems, 34:21696–21707, 2021. ",
+        "bbox": [
+            500,
+            330,
+            885,
+            376
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Kingma, D. P. and Welling, M. Auto-encoding variational bayes. arXiv preprint arXiv:1312.6114, 2013. ",
+        "bbox": [
+            500,
+            385,
+            885,
+            415
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Li, Y., Zhang, R., Lu, J., and Shechtman, E. Few-shot image generation with elastic weight consolidation. arXiv preprint arXiv:2012.02780, 2020. ",
+        "bbox": [
+            498,
+            422,
+            885,
+            468
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Liu, X., Park, D. H., Azadi, S., Zhang, G., Chopikyan, A., Hu, Y., Shi, H., Rohrbach, A., and Darrell, T. More control for free! image synthesis with semantic diffusion guidance. In IEEE/CVF Winter Conference on Applications of Computer Vision, 2023. ",
+        "bbox": [
+            500,
+            477,
+            885,
+            551
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Mo, S., Cho, M., and Shin, J. Freeze the discriminator: a simple baseline for fine-tuning GANs. arXiv preprint arXiv:2002.10964, 2020. ",
+        "bbox": [
+            498,
+            560,
+            885,
+            606
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Nichol, A. Q. and Dhariwal, P. Improved denoising diffusion probabilistic models. In International Conference on Machine Learning, 2021. ",
+        "bbox": [
+            500,
+            614,
+            885,
+            660
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Noguchi, A. and Harada, T. Image generation from small datasets via batch statistics adaptation. In IEEE/CVF International Conference on Computer Vision, 2019. ",
+        "bbox": [
+            500,
+            669,
+            885,
+            714
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Ojha, U., Li, Y., Lu, J., Efros, A. A., Lee, Y. J., Shechtman, E., and Zhang, R. Few-shot image generation via crossdomain correspondence. In IEEE/CVF Conference on Computer Vision and Pattern Recognition, 2021. ",
+        "bbox": [
+            500,
+            723,
+            885,
+            782
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Razavi, A., Van den Oord, A., and Vinyals, O. Generating diverse high-fidelity images with VQ-VAE-2. In Neural Information Processing Systems, 2019. ",
+        "bbox": [
+            500,
+            791,
+            885,
+            837
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Rezende, D. J., Mohamed, S., and Wierstra, D. Stochastic backpropagation and approximate inference in deep generative models. In International Conference on Machine Learning, 2014. ",
+        "bbox": [
+            500,
+            845,
+            885,
+            905
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "discarded",
+        "text": "Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning ",
+        "bbox": [
+            204,
+            58,
+            767,
+            70
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "Rombach, R., Blattmann, A., Lorenz, D., Esser, P., and Ommer, B. High-resolution image synthesis with latent diffusion models. In IEEE/CVF Conference on Computer Vision and Pattern Recognition, 2022. ",
+        "bbox": [
+            89,
+            85,
+            473,
+            145
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Zhu, J., Ma, H., Chen, J., and Yuan, J. Few-shot image generation with diffusion models. arXiv preprint arXiv:2211.03264, 2022. ",
+        "bbox": [
+            500,
+            85,
+            885,
+            128
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Ronneberger, O., Fischer, P., and Brox, T. U-net: Convolutional networks for biomedical image segmentation. In Medical Image Computing and Computer-Assisted Intervention, 2015. ",
+        "bbox": [
+            86,
+            155,
+            475,
+            215
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Sohl-Dickstein, J., Weiss, E., Maheswaranathan, N., and Ganguli, S. Deep unsupervised learning using nonequilibrium thermodynamics. In International Conference on Machine Learning, 2015. ",
+        "bbox": [
+            86,
+            226,
+            475,
+            286
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Song, J., Meng, C., and Ermon, S. Denoising diffusion implicit models. arXiv preprint arXiv:2010.02502, 2020. ",
+        "bbox": [
+            88,
+            296,
+            475,
+            327
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Song, Y. and Ermon, S. Generative modeling by estimating gradients of the data distribution. In Neural Information Processing Systems, 2019. ",
+        "bbox": [
+            88,
+            337,
+            473,
+            381
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Van den Oord, A., Kalchbrenner, N., Espeholt, L., Vinyals, O., Graves, A., et al. Conditional image generation with pixelcnn decoders. In Neural Information Processing Systems, 2016. ",
+        "bbox": [
+            86,
+            392,
+            473,
+            452
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Wang, Y., Wu, C., Herranz, L., Van de Weijer, J., GonzalezGarcia, A., and Raducanu, B. Transferring GANs: generating images from limited data. In European Conference on Computer Vision, 2018. ",
+        "bbox": [
+            86,
+            462,
+            475,
+            522
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Wang, Y., Gonzalez-Garcia, A., Berga, D., Herranz, L., Khan, F. S., and Weijer, J. v. d. Minegan: effective knowledge transfer from gans to target domains with few images. In IEEE/CVF Conference on Computer Vision and Pattern Recognition, 2020. ",
+        "bbox": [
+            88,
+            532,
+            475,
+            608
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Yu, F., Seff, A., Zhang, Y., Song, S., Funkhouser, T., and Xiao, J. LSUN: Construction of a large-scale image dataset using deep learning with humans in the loop. arXiv preprint arXiv:1506.03365, 2015. ",
+        "bbox": [
+            86,
+            618,
+            473,
+            679
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Yu, Y., Kruyff, D., Jiao, J., Becker, T., and Behrisch, M. Pseudo: Interactive pattern search in multivariate time series with locality-sensitive hashing and relevance feedback. IEEE Transactions on Visualization and Computer Graphics, 29(1):33–42, 2022. ",
+        "bbox": [
+            88,
+            689,
+            475,
+            763
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Zhang, R., Isola, P., Efros, A. A., Shechtman, E., and Wang, O. The unreasonable effectiveness of deep features as a perceptual metric. In IEEE Conference on Computer Vision and Pattern Recognition, 2018. ",
+        "bbox": [
+            84,
+            775,
+            475,
+            834
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "Zhao, Y., Ding, H., Huang, H., and Cheung, N.-M. A closer look at few-shot image generation. In IEEE/CVF Conference on Computer Vision and Pattern Recognition, 2022. ",
+        "bbox": [
+            86,
+            844,
+            475,
+            904
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "discarded",
+        "text": "Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning ",
+        "bbox": [
+            202,
+            58,
+            767,
+            70
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            493,
+            934
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "A. Detailed Derivations ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            82,
+            287,
+            99
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "A.1. Source and Target Model Distance ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            108,
+            362,
+            125
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "This subsection introduces the detailed derivation of source and target model distance, Equation (4) as follows, ",
+        "bbox": [
+            88,
+            132,
+            810,
+            148
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "equation",
+        "img_path": "images/0558c8d5440916d83ad4c1745c1c1afcb662653a596c0c26c954ad79fe25ddaa.jpg",
+        "text": "$$\n\\begin{array} { r l } & { \\quad \\mathrm { \\mathbb { D } } _ { \\mathrm { K L } } ( p _ { \\theta _ { \\delta } , \\phi } ( x _ { t - 1 } ^ { \\delta } | x _ { t } ) , p _ { \\theta _ { T } , \\phi } ( x _ { t - 1 } ^ { T } | x _ { t } ) ) } \\\\ & { = \\mathrm { \\mathbb { D } } _ { \\mathrm { K L } } ( p _ { \\theta _ { ( S , T ) } , \\phi } ( x _ { t - 1 } | x _ { t } , y = S ) , p _ { \\theta _ { ( S , T ) } , \\phi } ( x _ { t - 1 } | x _ { t } , y = T ) ) } \\\\ & { \\approx \\mathrm { \\mathbb { D } } _ { \\mathrm { K L } } \\bigl ( \\mathcal { N } ( x _ { t - 1 } ; \\mu _ { \\theta _ { ( S , T ) } } + \\sigma _ { t } ^ { 2 } \\gamma \\nabla _ { x _ { t } } \\log p _ { \\phi } ( y = S | x _ { t } ) , \\sigma _ { t } ^ { 2 } { \\bf I } ) , \\mathcal { N } ( x _ { t - 1 } ; \\mu _ { \\theta _ { ( S , T ) } } + \\sigma _ { t } ^ { 2 } \\gamma \\nabla _ { x _ { t } } \\log p _ { \\phi } ( y = S | x _ { t } ) , \\sigma _ { t } ^ { 2 } { \\bf I } ) \\bigr ) } \\\\ & { = \\mathrm { \\mathbb { E } } _ { t , x _ { 0 } , \\epsilon } [ \\frac { 1 } { 2 \\sigma _ { t } ^ { 2 } } \\| \\mu _ { \\theta _ { ( S , T ) } } + \\sigma _ { t } ^ { 2 } \\gamma \\nabla _ { x _ { t } } \\log p _ { \\phi } ( y = S | x _ { t } ) - \\mu _ { \\theta _ { ( S , T ) } } - \\sigma _ { t } ^ { 2 } \\gamma \\nabla _ { x _ { t } } \\log p _ { \\phi } ( y = T | x _ { t } ) \\| ^ { 2 } ] } \\\\ &  = \\mathrm { \\mathbb { E } } _ { t , x _ { 0 } , \\epsilon } [ C _ { 1 } \\| \\nabla _ { x _ { t } } \\log p _ { \\phi } ( y = S | x _ { t } ) - \\nabla _ { x _ { t } } \\log p _ { \\phi } ( y \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            116,
+            154,
+            772,
+            284
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "where $C _ { 1 } = \\gamma / 2$ is a constant. Since $C _ { 1 }$ is the constant of the scale, we can ignore this constant of the scale for the transfer gap and Equation (9) is the same as Equation (4). ",
+        "bbox": [
+            91,
+            286,
+            887,
+            318
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "A.2. Similarity-Guided Loss ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            333,
+            285,
+            349
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "In this subsection, we introduce the full proof how we obtain a similarity-guided loss, Equation (5). Inspired by (Ho et al., 2020), training is carried out by optimizing the typical variational limit on negative log-likelihood: ",
+        "bbox": [
+            89,
+            357,
+            883,
+            388
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "equation",
+        "img_path": "images/8ddf0a9a08db25cc5a4a2ba9b4d2077ec4f604bc38048698b68ebaf9098fcd81.jpg",
+        "text": "$$\n\\begin{array} { r l } { \\mathbb { E } [ - \\log p _ { \\theta , \\phi } ( x _ { 0 } | y = \\mathcal { T } ) ] \\le \\mathbb { E } _ { q } \\left[ - \\log \\frac { p _ { \\theta , \\phi } ( x _ { 0 : T } | y = \\mathcal { T } ) } { q ( x _ { 1 : T } | x _ { 0 } ) } \\right] } & { } \\\\ { = \\mathbb { E } _ { q } \\left[ - \\log p ( x _ { T } ) - \\displaystyle \\sum _ { t \\ge 1 } \\log \\frac { p _ { \\theta , \\phi } ( x _ { t - 1 } | x _ { t } , y = \\mathcal { T } ) } { q ( x _ { t } | x _ { t - 1 } ) } \\right] : = L . } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            196,
+            393,
+            776,
+            482
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "According to (Ho et al., 2020), $q ( x _ { t } | x _ { 0 } )$ can be expressed as: ",
+        "bbox": [
+            88,
+            494,
+            490,
+            511
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "equation",
+        "img_path": "images/c97bb3eed9ee7b678c82ad1d6488b205c34f0a6bae86b98642c7aae328368497.jpg",
+        "text": "$$\n\\begin{array} { r } { q ( x _ { t } | x _ { 0 } ) = \\mathcal { N } \\left( x _ { t } ; \\sqrt { \\bar { \\alpha } _ { t } } x _ { 0 } , ( 1 - \\bar { \\alpha } _ { t } ) \\right) . } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            356,
+            517,
+            617,
+            536
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "Training efficiency can be obtained by optimizing the random elements of $L$ in Equation (10) using the stochastic gradient descent. Further progress is made via variance reduction by rewriting $L$ in Equation (10) with Equation (11) as Ho et al. (2020): ",
+        "bbox": [
+            88,
+            551,
+            887,
+            597
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "equation",
+        "img_path": "images/15e36f2b73e9443c61c25a21bbae3f5515e9bc1c1e8c4b9b77c54bce4eecf0bf.jpg",
+        "text": "$$\n\\begin{array} { r l } & { L = \\mathbb { E } _ { q } \\underbrace { \\big [ \\mathrm { D } _ { \\mathrm { K L } } \\left( q ( x _ { T } | x _ { 0 } , p ( x _ { T } | y = T ) \\right) } _ { L _ { T } } + \\underset { t > 1 } { \\sum } \\underbrace { \\mathrm { D } _ { \\mathrm { K L } } \\left( q ( x _ { t - 1 } | x _ { t } , x _ { 0 } ) , p _ { \\theta , \\phi } ( x _ { t - 1 } | x _ { t } , y = T ) \\right) } _ { L _ { t - 1 } } } \\\\ & { \\quad \\quad - \\underbrace { \\log p _ { \\theta , \\phi } ( x _ { 0 } | x _ { 1 } , y = T ) } _ { L _ { 0 } } \\big ] . } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            192,
+            602,
+            781,
+            684
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "As Dhariwal & Nichol (2021), the conditional reverse noise process $p _ { \\theta , \\phi } ( x _ { t - 1 } | x _ { t } , y )$ is: ",
+        "bbox": [
+            89,
+            696,
+            665,
+            713
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "equation",
+        "img_path": "images/da4c8c848222baa41244e6db32cfbda125873de198177e073ae63a070510bd65.jpg",
+        "text": "$$\np _ { \\theta , \\phi } ( x _ { t - 1 } | x _ { t } , y ) \\approx \\mathcal { N } \\left( x _ { t - 1 } ; \\mu _ { \\theta } ( x _ { t } , t ) + \\sigma _ { t } ^ { 2 } \\gamma \\nabla _ { x _ { t } } \\log p _ { \\phi } ( y | x _ { t } ) , \\sigma _ { t } ^ { 2 } \\mathbf { I } \\right) .\n$$",
+        "text_format": "latex",
+        "bbox": [
+            254,
+            719,
+            720,
+            739
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "The $L _ { t - 1 }$ with Equation (13) can be rewrited as: ",
+        "bbox": [
+            88,
+            753,
+            406,
+            770
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "equation",
+        "img_path": "images/ae3941ad88c7fc5f18958a3a973917de441306872a03dbc57b45ee41d78a5acf.jpg",
+        "text": "$$\n\\begin{array} { r l } & { L _ { t - 1 } : = \\operatorname { D } _ { \\mathrm { K L } } \\big ( q ( x _ { t - 1 } | x _ { t } , x _ { 0 } ) , p _ { \\theta , \\phi } ( x _ { t - 1 } | x _ { t } , y = \\mathcal { T } ) \\big ) } \\\\ & { \\qquad = \\mathbb { E } _ { q } \\left[ \\displaystyle \\frac { 1 } { 2 \\sigma _ { t } ^ { 2 } } \\left\\| \\tilde { \\mu } _ { t } ( x _ { t } , x _ { 0 } ) - \\mu _ { t } ( x _ { t } , x _ { 0 } ) - \\sigma _ { t } ^ { 2 } \\gamma \\nabla _ { x _ { t } } \\log p _ { \\phi } ( y | x _ { t } ) \\right\\| ^ { 2 } \\right] } \\\\ & { \\qquad = \\mathbb { E } _ { t , x _ { 0 } , \\epsilon } \\left[ C _ { 2 } \\left\\| \\epsilon _ { t } - \\epsilon _ { \\theta } ( x _ { t } , t ) - \\hat { \\sigma } _ { t } ^ { 2 } \\gamma \\nabla _ { x _ { t } } \\log p _ { \\phi } ( y = \\mathcal { T } | x _ { t } ) \\right\\| ^ { 2 } \\right] \\ , } \\end{array}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            250,
+            775,
+            720,
+            861
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "where C2 = t2σ2αt(1−α¯t) is a constant, and $\\begin{array} { r } { \\hat { \\sigma } _ { t } = \\left( 1 - \\bar { \\alpha } _ { t - 1 } \\right) \\sqrt { \\frac { \\alpha _ { t } } { 1 - \\bar { \\alpha } _ { t } } } } \\end{array}$ We define the $L _ { t - 1 }$ as similarity-guided DPMs train loss during training as (Ho et al., 2020). ",
+        "bbox": [
+            88,
+            867,
+            892,
+            906
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "discarded",
+        "text": "Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning ",
+        "bbox": [
+            204,
+            56,
+            767,
+            70
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "discarded",
+        "text": "12 ",
+        "bbox": [
+            478,
+            922,
+            495,
+            935
+        ],
+        "page_idx": 11
+    },
+    {
+        "type": "text",
+        "text": "B. Additional Experiments ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            83,
+            315,
+            101
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "In this section, we present additional experimental results, including the qualitative evaluation of $\\mathrm { F F H Q  ; }$ Sunglasses and $\\mathrm { F F H Q }  \\mathrm { I }$ Babies in Appendix B.1, the quantitative evaluation of $\\mathrm { F F H Q }  \\mathrm { S l }$ ketches and $\\mathrm { F F H Q } $ Amedeo’s paintings in Appendix B.2, the sensitivity analysis in Appendix B.3, and an anonymous user study in Appendix B.4 to compare the proposed method with DDPM-PA. ",
+        "bbox": [
+            88,
+            109,
+            885,
+            169
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "B.1. Additional Qualitative Evaluation ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            185,
+            357,
+            200
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "image",
+        "img_path": "images/fc872f0e401e5a3850820ba332fc82da348ea24224e391a6b433c2ac39607290.jpg",
+        "image_caption": [
+            "Figure 5. The 10-shot image generation samples on FFHQ Sunglasses and FFHQ Babies. "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            88,
+            213,
+            887,
+            670
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "In Figure 5, we provide qualitative results for the GAN-based and DDPM-based methods for the 10-shot $\\mathrm { F F H Q } $ Sunglasses and Babies task. The quantitative results are provided in Table 1. Compared to the GAN-based method (shown in the 2nd and 3rd rows), our approach (shown in the 5th and 6th rows) generates images of faces wearing sunglasses, displaying a wide variety of detailed hairstyles and facial features. Moreover, DPMs-ANT produces samples with more vivid and realistic reflections in the sunglasses. In particular, our method also manages to generate more realistic backgrounds. ",
+        "bbox": [
+            88,
+            710,
+            885,
+            786
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "discarded",
+        "text": "Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning ",
+        "bbox": [
+            205,
+            58,
+            767,
+            69
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 12
+    },
+    {
+        "type": "text",
+        "text": "Quantitative Evaluation of Different Iteration. As shown in Figure 6, the first row demonstrate that the orangial train the DPMs with limited iterations is hard to get a successfully transfer. The second raw shows that training with our similarity-guide method can boost the convergence to the taget domain. The third rows show that training further with adversrial noise can even faster converge. As shown in the 150 iteration of the right pictures, compared to the training with a similarity guide only (2nd row), ANT can get the face with sunglasses image. ",
+        "bbox": [
+            88,
+            84,
+            883,
+            160
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "image",
+        "img_path": "images/e553cbcfd48e052b02c9bc4cd1b008470dacee913e13e257f87fdfc155ae3923.jpg",
+        "image_caption": [
+            "Figure 6. This figure shows our ablation study with all models trained for in different iterations on a 10-shot sunglasses dataset: the first line - baseline (direct fine-tuning model), second line - DPMs-ANT w/o AN (only using similarity-guided training), and third line - DPMs-ANT (our method). "
+        ],
+        "image_footnote": [],
+        "bbox": [
+            106,
+            171,
+            870,
+            393
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "B.2. Additional Quantitative Evaluation ",
+        "text_level": 1,
+        "bbox": [
+            91,
+            465,
+            367,
+            481
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "As depicted in Table 4, our proposed DPMs-ANT method demonstrates superior performance over contemporary GAN-based and DPMs-based methods in terms of generation diversity for the given adaptation scenarios in $\\mathrm { F F H Q }  \\mathrm { S l }$ ketches and $\\mathrm { F F H Q } $ Amedeo’s paintings. Especially, we achieve $0 . 5 4 4 { \\pm } 0 . 0 2 5$ for the FFHQ sketches, much better than other methods. ",
+        "bbox": [
+            88,
+            489,
+            885,
+            549
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "table",
+        "img_path": "images/2c271a0dae0fdcef844a965f1c4a85cf0e6088516384ef82ab9c840e89cb2221.jpg",
+        "table_caption": [
+            "Table 4. The Intra-LPIPS (↑) results for both DDPM-based strategies and GAN-based baselines are presented for 10-shot image generation tasks. The best results are marked as bold. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Methods</td><td>FFHQ → Sketches</td><td>FFHQ → Amedeo&#x27;s paintings</td></tr><tr><td>TGAN</td><td>0.394±0.023</td><td>0.548±0.026</td></tr><tr><td>TGAN+ADA</td><td>0.427±0.022</td><td>0.560±0.019</td></tr><tr><td>EWC</td><td>0.430±0.018</td><td>0.594±0.028</td></tr><tr><td>CDC DCL</td><td>0.454±0.017</td><td>0.620±0.029</td></tr><tr><td></td><td>0.461±0.021</td><td>0.616±0.043</td></tr><tr><td>DDPM-PA</td><td>0.495±0.024</td><td>0.626±0.022</td></tr><tr><td>DDPM-ANT (Ours)</td><td>0.544±0.025</td><td>0.620±0.021</td></tr></table>",
+        "bbox": [
+            279,
+            590,
+            689,
+            748
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "B.3. Sensitivity Analysis ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            761,
+            256,
+            775
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "In this subsection, we study the effects of hyperparameters, including $\\gamma$ , $\\omega$ for the adversarial noise selection, and the count of training iterations. All hyperparameters experiments are conducted using a pre-trained LDM, and for evaluation purposes, we generate 1,000 and 10,000 images to compute the Intra-LPIPS and FID metrics, respectively. ",
+        "bbox": [
+            88,
+            785,
+            887,
+            829
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "text",
+        "text": "Effects of Similarity-guided Training Scale $\\gamma .$ . Table 5 shows the changes in FID (↓) and Intra-LPIPS (↑) scores for $\\mathrm { F F H Q }  \\mathbb { S }$ unglasses as $\\gamma$ (in Equation (6)) increases. Initially, the FID score decrease, as the generated images gradually become closer to the target domain. At $\\gamma = 5$ , the FID reaches its lowest value of 18.13. Beyond this point, the FID score increases as the generated images become too similar to the target images or become random noise, as in the failed case, leading to lower diversity and fidelity. The Intra-LPIPS score consistently decreases with increasing gamma, further supporting the idea that larger values of $\\gamma$ lead to overfitting with the target image. Therefore, we select $\\gamma = 5$ as a trade-off. ",
+        "bbox": [
+            88,
+            844,
+            885,
+            905
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "discarded",
+        "text": "Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning ",
+        "bbox": [
+            204,
+            58,
+            767,
+            70
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 13
+    },
+    {
+        "type": "table",
+        "img_path": "images/bfcbde250581fbcabe733fb9a6edf01de6d9a7fd17e3733a73304e41c9af5edc.jpg",
+        "table_caption": [
+            "Table 5. Effects of $\\gamma$ in $\\mathrm { F F H Q } $ Sunglasses case in terms of FID and Intra-LPIPS. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Y</td><td>FID (↓) Intra-LPIPS (↑)</td></tr><tr><td>1</td><td>20.75 0.641 ± 0.014</td></tr><tr><td>3 18.86</td><td>0.627 ± 0.013</td></tr><tr><td>5</td><td>18.13 0.613 ± 0.011</td></tr><tr><td>7</td><td>24.12 0.603 ± 0.017</td></tr><tr><td>9 29.48</td><td>0.592 ± 0.017</td></tr></table>",
+        "bbox": [
+            374,
+            111,
+            598,
+            215
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "table",
+        "img_path": "images/694340c2ebbb811335d10fb74f3bae7fd340a4cfcf14b1d079958f89a90b8511.jpg",
+        "table_caption": [
+            "Table 6. Effects of $\\omega$ in $\\mathrm { F F H Q } $ Sunglasses case in terms of FID and Intra-LPIPS. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>W</td><td>FID (↓) Intra-LPIPS (↑)</td></tr><tr><td>0.01 18.42</td><td>0.616 ± 0.020</td></tr><tr><td>0.02</td><td>18.13 0.613 ± 0.011</td></tr><tr><td>0.03</td><td>18.42 0.613 ± 0.016</td></tr><tr><td>0.04</td><td>19.11 0.614 ± 0.013</td></tr><tr><td>0.05</td><td>19.48 0.623 ± 0.015</td></tr></table>",
+        "bbox": [
+            364,
+            250,
+            607,
+            354
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "table",
+        "img_path": "images/8c34c67fca8b236ea4f66a8050813950b85f745002a2c8d76786bb56088a74a8.jpg",
+        "table_caption": [
+            "Table 7. Effects of training iteration in FFHQ Sunglasses case in terms of FID and Intra-LPIPS. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>Iteration</td><td>FID (↓) Intra-LPIPS (↑)</td></tr><tr><td>0 111.32</td><td>0.650 ± 0.071</td></tr><tr><td>50</td><td>93.82 0.666 ± 0.020</td></tr><tr><td>100</td><td>58.27 0.666 ± 0.015</td></tr><tr><td>150</td><td>31.08 0.654 ± 0.017</td></tr><tr><td>200 19.51</td><td>0.635 ± 0.014</td></tr><tr><td>250</td><td>18.34 0.624 ± 0.011</td></tr><tr><td>300</td><td>18.13 0.613 ± 0.011</td></tr><tr><td>350</td><td>20.06 0.604 ± 0.016</td></tr><tr><td>400 21.17</td><td>0.608 ± 0.019</td></tr></table>",
+        "bbox": [
+            352,
+            388,
+            620,
+            555
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            89,
+            582,
+            887,
+            612
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Effects of Adversarial Noise Selection Scale $\\omega$ . As shown in Table 6, the FID (↓) and Intra-LPIPS (↑) scores for the $\\mathrm { F F H Q } $ sunglasses vary with an increase of $\\omega$ (from Equation (7)). Initially, the FID score decreases as the generated images gradually grow closer to the target image. When $\\omega = 0 . 0 2$ , the FID reaches its lowest value of 18.13. Beyond this point, the FID score increases because the synthesized images become too similar to the target image, which lowers diversity. The Intra-LPIPS score consistently decreases as $\\omega$ increases, further supporting that larger $\\omega$ values lead to overfitting with the target image. We also note that the results are relatively stable when $\\omega$ is between 0.1 and 0.3. As such, we choose $\\omega = 0 . 0 2$ as a balance between fidelity and diversity. ",
+        "bbox": [
+            88,
+            628,
+            887,
+            736
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "Effects of Training Iteration. As illustrated in Table 7, the FID (↓) and Intra-LPIPS $( \\uparrow )$ for $\\mathrm { F F H Q }  \\Sigma$ unglasses vary as training iterations increase. Initially, the FID value drops significantly as the generated image gradually resembles the target image, reaching its lowest at 18.13 with 300 training iterations. After this point, the FID score stabilizes after around 400 iterations as the synthesized images closely mirror the target image. The Intra-LPIPS score steadily decreases with an increase in iterations up to 400, further suggesting that a higher number of iterations can lead to overfitting to the target image. Therefore, we select 300 as an optimal number of training iterations, which offers a balance between image quality and diversity. ",
+        "bbox": [
+            88,
+            752,
+            885,
+            858
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "text",
+        "text": "GPU Memory. Table 8 illustrates the GPU memory usage for each module in batch size 1, comparing scenarios with and without the use of an adaptor. It reveals that our module results in only a slight increase in GPU memory consumption. ",
+        "bbox": [
+            84,
+            875,
+            887,
+            905
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "discarded",
+        "text": "Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning ",
+        "bbox": [
+            207,
+            56,
+            767,
+            70
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            922,
+            495,
+            934
+        ],
+        "page_idx": 14
+    },
+    {
+        "type": "table",
+        "img_path": "images/64ac994daddf5456243b56211174e484dc5f04be2bf16de75df1072630fe3ceb.jpg",
+        "table_caption": [
+            "Table 8. GPU memory consumption (MB) for each module, comparing scenarios with and without the use of the adaptor. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td></td><td>DPMs</td><td>DPMs+SG</td><td>DPMs+AN</td><td>DPMs+ANT</td></tr><tr><td>w/o Adaptor</td><td>17086</td><td>17130</td><td>17100</td><td>17188</td></tr><tr><td>w/ Adaptor</td><td>6010</td><td>6030</td><td>6022</td><td>6080</td></tr></table>",
+        "bbox": [
+            258,
+            101,
+            714,
+            162
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "B.4. Anonymous User Study ",
+        "text_level": 1,
+        "bbox": [
+            88,
+            188,
+            285,
+            203
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "We carried out an additional anonymous user study to assess the qualitative performance of our method in comparison to DDPM-PA. In this study, participants were shown three sets of images from each dataset, featuring DDPM-PA, our method (DDPM+ANT), and images from the target domain. For each set, we displayed five images from each method or the target image, as illustrated in our main paper. To maintain anonymity and neutrality, we labeled the methods as A/B instead of using the actual method names (PA and ANT). We recruited volunteers through an anonymous online platform for this study. During the study, participants were tasked with choosing the set of images (labeled as A or B, corresponding to PA or ANT) that they believed demonstrated higher quality and a closer resemblance to the target image set. ",
+        "bbox": [
+            88,
+            210,
+            887,
+            318
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "text",
+        "text": "Of the 60 participants, a significant $7 3 . 3 5 \\%$ favored our method $\\mathrm { ( D D P M + A N T }$ ), indicating that it produced images of superior quality and more effectively captured the intricate types of target domains, as shown in Table 4. Although this experiment did not comprehensively account for factors such as the participants’ gender, age, regional background, and others, the results nonetheless suggest that our images possess better visual quality to a notable extent. ",
+        "bbox": [
+            88,
+            324,
+            887,
+            385
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "table",
+        "img_path": "images/5b7b076d02e1804a6779790a06e063643888b7bbc9d52923c84542bae0518cb6.jpg",
+        "table_caption": [
+            "Table 9. Anonymous user study to assess the qualitative performance of our method (ANT) in comparison to DDPM-PA. "
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td></td><td>Sunglasses</td><td>Babies</td><td>Landscape</td><td>Raphael&#x27;s paintings</td><td>Average</td></tr><tr><td>DDPM-PA</td><td>20.0%</td><td>33.3%</td><td>20.0%</td><td>33.3%</td><td>26.65%</td></tr><tr><td>ANT</td><td>80.0%</td><td>66.7%</td><td>80.0%</td><td>66.7%</td><td>73.35%</td></tr></table>",
+        "bbox": [
+            207,
+            425,
+            767,
+            487
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "discarded",
+        "text": "Bridging Data Gaps in Diffusion Models with Adversarial Noise-Based Transfer Learning ",
+        "bbox": [
+            200,
+            56,
+            769,
+            70
+        ],
+        "page_idx": 15
+    },
+    {
+        "type": "discarded",
+        "text": "",
+        "bbox": [
+            478,
+            924,
+            495,
+            934
+        ],
+        "page_idx": 15
+    }
+]
